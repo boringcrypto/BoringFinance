@@ -8,8 +8,8 @@ BigInt.prototype.toJSON = function () {
 BigInt.prototype.decimal = function (divisor, decimalPlaces, sep) {
     let quotient = this / (10n ** BigInt(divisor));
     let remainder = (this % (10n ** BigInt(divisor))).toString();
-    remainder = '0'.repeat(divisor - remainder.length) + remainder;
-    return quotient + (sep || ".") + remainder.substr(0, decimalPlaces);
+    remainder = '0'.repeat(Number(divisor) - remainder.length) + remainder;
+    return quotient + (sep || ".") + remainder.substr(0, Number(decimalPlaces));
 }
 
 class SushiContracts {
@@ -35,8 +35,8 @@ class SushiContracts {
         else if (chainId == "0x3") {
             this.token = new web3.eth.Contract(this.abis.sushiToken, "0x81db9c598b3ebbdc92426422fc0a1d06e77195ec");
             this.chef = new web3.eth.Contract(this.abis.masterChef, "0xFF281cEF43111A83f09C656734Fa03E6375d432A");
-            this.baseInfo = new web3.eth.Contract(this.abis.baseInfo, "0xFb788b0d57cfC5B571e7Ff23E1546A0047348002");
-            this.userInfo = new web3.eth.Contract(this.abis.userInfo, "0x211DfDfBeb6e69975390955467E53b766a2c0743");
+            this.baseInfo = new web3.eth.Contract(this.abis.baseInfo, "0x39Bb002c6400f7F1679090fdAc722BC08e2a8C1e");
+            this.userInfo = new web3.eth.Contract(this.abis.userInfo, "0xe8f852908A61e074032382E9B5058F86fe2a0ea7");
         }
         else {
             console.log("Unknown network");
@@ -63,12 +63,16 @@ class SushiSwap {
     update(web3, currency) {
         this.contracts.update(web3);
 
+        this.web3 = web3;
+
         let chainId = web3.givenProvider.chainId;
         if (chainId == "0x1") {
             this.currency = currency || "0xdac17f958d2ee523a2206206994597c13d831ec7";
+            this.sushi_pool = 12;
         }
         else if (chainId == "0x3") {
             this.currency = currency || "0x292c703A980fbFce4708864Ae6E8C40584DAF323";
+            this.sushi_pool = 1;
         }
     }
 
@@ -96,6 +100,7 @@ class SushiSwap {
             this.pools = [];
             for (var i in result[1]) {
                 let pool = {};
+                pool.id = this.pools.length;
                 pool.logo = result[1][i].logo;                                  // The character used as logo for the pool
                 pool.name = result[1][i].name;                                  // The name of the pool, like Tutle Tether
                 pool.lpToken = result[1][i].lpToken;                            // Address of LP token contract. Currently uniswap, soon SushiSwap
@@ -125,7 +130,7 @@ class SushiSwap {
         this.base.pending = BigInt(0);                                          // Total pending SUSHI
         this.base.multiplier = this.base.block < this.base.bonusEndBlock ? this.base.BONUS_MULTIPLIER : BigInt(1);  // Current base multiplier
 
-        this.base.sushiRate = BigInt(result[1][12].token0rate);                 // The amount of SUSHIs in 1 wrapped Ether, times 1e18. This is taken from the ETH/SUSHI pool
+        this.base.sushiRate = BigInt(result[1][this.sushi_pool].token0rate);                 // The amount of SUSHIs in 1 wrapped Ether, times 1e18. This is taken from the ETH/SUSHI pool
         this.base.sushiValueInETH = BigInt("1000000000000000000") * BigInt("1000000000000000000") / this.base.sushiRate
         this.base.sushiValueInCurrency = this.ETHtoCurrency(this.base.sushiValueInETH);
 
@@ -149,14 +154,20 @@ class SushiSwap {
             pool.sushiPerBlockInETH = pool.sushiPerBlock * BigInt("1000000000000000000") / this.base.sushiRate;                 // SUSHI value rewarded to this pool every block in ETH
             pool.sushiPerBlockInCurrency = pool.sushiPerBlockInETH * this.base.eth_rate / BigInt("1000000000000000000");        // SUSHI value rewarded to this pool every block in currncy tokens
 
-            pool.shareOfUniswapPool = pool.totalSupply * BigInt("1000000000000000000") / pool.uniTotalSupply;       // Staked share of all lp tokens. 100% = 1e18.
+            pool.shareOfUniswapPool = pool.uniTotalSupply ? pool.totalSupply * BigInt("1000000000000000000") / pool.uniTotalSupply : 0n;       // Staked share of all lp tokens. 100% = 1e18.
             pool.totalStakedToken0 = pool.reserve0 * pool.shareOfUniswapPool / BigInt("1000000000000000000");       // Staked lp tokens contain this much of token0.
             pool.totalStakedToken1 = pool.reserve1 * pool.shareOfUniswapPool / BigInt("1000000000000000000");       // Staked lp tokens contain this much of token1.
             pool.valueStakedToken0 = pool.totalStakedToken0 * BigInt("1000000000000000000") / pool.token0rate;      // Value of token0 in staked lp tokens in wrapped Ether
             pool.valueStakedToken1 = pool.totalStakedToken1 * BigInt("1000000000000000000") / pool.token1rate;      // Value of token1 in staked lp tokens in wrapped Ether
 
-            pool.hourlyROI = pool.sushiPerBlockInETH * BigInt(276000000) / (pool.valueStakedToken0 + pool.valueStakedToken1);   // Hourly ROI
-            pool.dailyROI = pool.sushiPerBlockInETH * BigInt(6613000000) / (pool.valueStakedToken0 + pool.valueStakedToken1);   // Daily ROI
+            pool.shareOfPool = pool.totalSupply ? pool.balance * BigInt("1000000000000000000") / pool.totalSupply : 0n;
+            pool.userStakedToken0 = pool.totalStakedToken0 * pool.shareOfPool / BigInt("1000000000000000000");       // Staked lp tokens contain this much of token0.
+            pool.userStakedToken1 = pool.totalStakedToken1 * pool.shareOfPool / BigInt("1000000000000000000");       // Staked lp tokens contain this much of token1.
+            pool.valueUserStakedToken0 = pool.userStakedToken0 * BigInt("1000000000000000000") / pool.token0rate;      // Value of token0 in staked lp tokens in wrapped Ether
+            pool.valueUserStakedToken1 = pool.userStakedToken1 * BigInt("1000000000000000000") / pool.token1rate;      // Value of token1 in staked lp tokens in wrapped Ether
+
+            pool.hourlyROI = (pool.valueStakedToken0 + pool.valueStakedToken1) ? pool.sushiPerBlockInETH * BigInt(276000000) / (pool.valueStakedToken0 + pool.valueStakedToken1) : 0n;   // Hourly ROI
+            pool.dailyROI = (pool.valueStakedToken0 + pool.valueStakedToken1) ? pool.sushiPerBlockInETH * BigInt(6613000000) / (pool.valueStakedToken0 + pool.valueStakedToken1) : 0n;   // Daily ROI
             pool.monthlyROI = pool.dailyROI * BigInt(30);   // Monthly ROI
             pool.yearlyROI = pool.dailyROI * BigInt(365);   // Yearly ROI
 
@@ -164,6 +175,29 @@ class SushiSwap {
         }
         this.base.loaded = true;
         return this;
+    }
+
+    async getTokenList() {
+        return new Promise((resolve, reject) => {
+            var xhr = new XMLHttpRequest();
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    this.tokenlist = JSON.parse(xhr.responseText);
+                    console.log(this.tokenlist);
+                    resolve(this.tokenlist);
+                }
+                else {
+                    reject();
+                }
+            };
+            xhr.open('GET', 'tokenlist.json');
+            xhr.send();
+        })
+    }
+
+    async harvest(from, pool_id) {
+        console.log(pool_id);
+        this.contracts.chef.methods.withdraw(pool_id, 0).send({ from: from });
     }
 
     async stake(amount) {

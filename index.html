@@ -14,11 +14,16 @@
             await sushiswap.getInfo(addresses[0])
 
             // Display all info nicely in html
-            document.getElementById("json").textContent = JSON.stringify(sushiswap, null, 2);
+            document.getElementById("base").textContent
+                = JSON.stringify(sushiswap.base, null, 2);
+
+            document.getElementById("pools").textContent
+                = JSON.stringify(sushiswap.pools, null, 2);
         }, true);
     }
 </script>
 
 <h1>SushiSwapJs</h1>
-<pre id="json"></pre>
+<pre id="base"></pre>
+<pre id="pools"></pre>
 <button onclick="go()">Go!</button>
