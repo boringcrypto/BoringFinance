@@ -1,4 +1,18 @@
-﻿class SushiContracts {
+﻿// Add ability to serialize BigInt as JSON
+BigInt.prototype.toJSON = function () {
+    return this.toString();
+}
+
+// Returns a string where the value is divided by 10^divisor and cut off to decimalPlaces decimal places
+// Pass in sep to change the decimal point. No rounding done at the moment.
+BigInt.prototype.decimal = function (divisor, decimalPlaces, sep) {
+    let quotient = this / (10n ** BigInt(divisor));
+    let remainder = (this % (10n ** BigInt(divisor))).toString();
+    remainder = '0'.repeat(divisor - remainder.length) + remainder;
+    return quotient + (sep || ".") + remainder.substr(0, decimalPlaces);
+}
+
+class SushiContracts {
     constructor(web3) {
         this.abis = {
             erc20: [{ "constant": true, "inputs": [], "name": "name", "outputs": [{ "name": "", "type": "string" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "name": "spender", "type": "address" }, { "name": "value", "type": "uint256" }], "name": "approve", "outputs": [{ "name": "", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [], "name": "totalSupply", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "name": "from", "type": "address" }, { "name": "to", "type": "address" }, { "name": "value", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "name": "", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [], "name": "decimals", "outputs": [{ "name": "", "type": "uint8" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "name": "spender", "type": "address" }, { "name": "addedValue", "type": "uint256" }], "name": "increaseAllowance", "outputs": [{ "name": "", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": false, "inputs": [{ "name": "value", "type": "uint256" }], "name": "burn", "outputs": [], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [{ "name": "owner", "type": "address" }], "name": "balanceOf", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "symbol", "outputs": [{ "name": "", "type": "string" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "name": "spender", "type": "address" }, { "name": "subtractedValue", "type": "uint256" }], "name": "decreaseAllowance", "outputs": [{ "name": "", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": false, "inputs": [{ "name": "to", "type": "address" }, { "name": "value", "type": "uint256" }], "name": "transfer", "outputs": [{ "name": "", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [{ "name": "owner", "type": "address" }, { "name": "spender", "type": "address" }], "name": "allowance", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "inputs": [], "payable": false, "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [{ "indexed": true, "name": "from", "type": "address" }, { "indexed": true, "name": "to", "type": "address" }, { "indexed": false, "name": "value", "type": "uint256" }], "name": "Transfer", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "name": "owner", "type": "address" }, { "indexed": true, "name": "spender", "type": "address" }, { "indexed": false, "name": "value", "type": "uint256" }], "name": "Approval", "type": "event" }],
@@ -32,9 +46,8 @@
 
 class SushiSwap {
     constructor(web3, currency) {
-        this.base = {};
+        this.base = { loaded: false };
         this.pools = [];
-        this.loaded = false;
         this.contracts = new SushiContracts(web3);
         this.update(web3, currency);
     }
@@ -64,7 +77,7 @@ class SushiSwap {
     }
 
     async getInfo(address) {
-        if (!this.loaded) {
+        if (!this.base.loaded) {
             var result = await this.contracts.baseInfo.methods.getInfo().call({ gas: 5000000 });
             this.base = {};
             this.base.BONUS_MULTIPLIER = BigInt(result[0].BONUS_MULTIPLIER);    // Multiplier during the bonus period
@@ -149,7 +162,12 @@ class SushiSwap {
 
             pool.valueInCurrency = (pool.valueStakedToken0 + pool.valueStakedToken1) * this.base.eth_rate / BigInt("1000000000000000000"); // Value of lp tokens staked in currency
         }
+        this.base.loaded = true;
         return this;
+    }
+
+    async stake(amount) {
+        //this.contracts.masterChef.methods.
     }
 
     close() {

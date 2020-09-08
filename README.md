@@ -35,4 +35,6 @@ To keep the data up to date, use auto_update:
 
 To check all info that is available, check this live demo:
 
-Live DEMO: https://bartjman.github.io/SushiSwapJs/
+Live data DEMO: https://bartjman.github.io/SushiSwapJs/
+
+Live UI DEMO (WIP): https://bartjman.github.io/SushiSwapJs/pages/demo_ui.html
