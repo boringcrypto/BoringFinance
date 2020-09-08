@@ -59,6 +59,10 @@ class SushiSwap {
         }
     }
 
+    ETHtoCurrency(value) {
+        return value * this.base.eth_rate / BigInt("1000000000000000000");
+    }
+
     async getInfo(address) {
         if (!this.loaded) {
             var result = await this.contracts.baseInfo.methods.getInfo().call({ gas: 5000000 });
@@ -109,6 +113,8 @@ class SushiSwap {
         this.base.multiplier = this.base.block < this.base.bonusEndBlock ? this.base.BONUS_MULTIPLIER : BigInt(1);  // Current base multiplier
 
         this.base.sushiRate = BigInt(result[1][12].token0rate);                 // The amount of SUSHIs in 1 wrapped Ether, times 1e18. This is taken from the ETH/SUSHI pool
+        this.base.sushiValueInETH = BigInt("1000000000000000000") * BigInt("1000000000000000000") / this.base.sushiRate
+        this.base.sushiValueInCurrency = this.ETHtoCurrency(this.base.sushiValueInETH);
 
         for (i in result[1]) {
             let pool = this.pools[i];
