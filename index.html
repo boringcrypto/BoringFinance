@@ -1,22 +1,25 @@
 <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.2.11/dist/web3.min.js"></script>
 <script src="sushiswap.js"></script>
-<h1>SushiSwapJs</h1>
-<pre id="json"></pre>
-<button onclick="go()">Go!</button>
 <script>
-    function go() {
+    async function go() {
         // Connect to wallet
         web3 = new Web3(window.ethereum);
-        window.ethereum.enable().then(function (addresses) {
-            // Create SushiSwapJs
-            let sushiswap = new SushiSwap(web3);
+        let addresses = await window.ethereum.enable();
 
+        // Create SushiSwapJs
+        let sushiswap = new SushiSwap(web3);
+
+        sushiswap.auto_update(async function () {
             // Retieve all info for the first wallet address
-            sushiswap.getInfo(addresses[0]).then(function (info) {
-                // Display all info nicely in html
-                document.getElementById("json").textContent = JSON.stringify(info, (key, value) =>
-                    typeof value === 'bigint' ? value.toString() : value, 2);
-            });
+            await sushiswap.getInfo(addresses[0])
+
+            // Display all info nicely in html
+            document.getElementById("json").textContent = JSON.stringify(sushiswap, (key, value) =>
+                typeof value === 'bigint' ? value.toString() : value, 2);
         });
     }
 </script>
+
+<h1>SushiSwapJs</h1>
+<pre id="json"></pre>
+<button onclick="go()">Go!</button>

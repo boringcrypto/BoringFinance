@@ -39,6 +39,14 @@ class SushiSwap {
         this.update(web3, currency);
     }
 
+    auto_update(callback, insta_call) {
+        // Call the callback directly once on subscribe.
+        if (insta_call) {
+            callback();
+        }
+        this.subscription = web3.eth.subscribe('newBlockHeaders', callback);
+    }
+
     update(web3, currency) {
         this.contracts.update(web3);
 
@@ -136,5 +144,11 @@ class SushiSwap {
             pool.valueInCurrency = (pool.valueStakedToken0 + pool.valueStakedToken1) * this.base.eth_rate / BigInt("1000000000000000000"); // Value of lp tokens staked in currency
         }
         return this;
+    }
+
+    close() {
+        if (this.subscription) {
+            this.subscription.unsubscribe();
+        }
     }
 }

@@ -1,7 +1,7 @@
 # SushiSwapJs
 Use SushiSwap from js with ease.
 
-SushiSwapJs is a simple javascript library that uses a few helper smatr contracts to make working with SushiSwap easier and much much faster.
+SushiSwapJs is a simple javascript library that uses a few helper smart contracts to make working with SushiSwap easier and much much faster.
 
 - Get all info of all pools (including user data) in a single js call (2 web3 calls behind the scenes)
 - Regularly requery to create a live dashboard (one single web3 call to update behind the scenes)
@@ -24,6 +24,14 @@ This will populate **base** and **pools** on the sushiswap object. To get a user
 To get the monthly ROI on the Compound Truffle pool (nr. 4):
 
     sushiswap.pools[4].monthlyROI
+
+To keep the data up to date, use auto_update:
+
+    sushiswap.auto_update(() => {
+        sushiswap.getInfo(address)
+
+        // Your code to update the UI
+    })
 
 To check all info that is available, check this live demo:
 
