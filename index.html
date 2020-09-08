@@ -16,7 +16,7 @@
             // Display all info nicely in html
             document.getElementById("json").textContent = JSON.stringify(sushiswap, (key, value) =>
                 typeof value === 'bigint' ? value.toString() : value, 2);
-        });
+        }, true);
     }
 </script>
 
