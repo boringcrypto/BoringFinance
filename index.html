@@ -2,18 +2,21 @@
 <script src="sushiswap.js"></script>
 <h1>SushiSwapJs</h1>
 <pre id="json"></pre>
+<button onclick="go()">Go!</button>
 <script>
-    // Connect to wallet
-    web3 = new Web3(window.ethereum);
-    window.ethereum.enable().then(function (addresses) {
-        // Create SushiSwapJs
-        let sushiswap = new SushiSwap(web3);
+    function go() {
+        // Connect to wallet
+        web3 = new Web3(window.ethereum);
+        window.ethereum.enable().then(function (addresses) {
+            // Create SushiSwapJs
+            let sushiswap = new SushiSwap(web3);
 
-        // Retieve all info for the first wallet address
-        sushiswap.getInfo(addresses[0]).then(function (info) {
-            // Display all info nicely in html
-            document.getElementById("json").textContent = JSON.stringify(info, (key, value) =>
-                typeof value === 'bigint' ? value.toString() : value, 2);
+            // Retieve all info for the first wallet address
+            sushiswap.getInfo(addresses[0]).then(function (info) {
+                // Display all info nicely in html
+                document.getElementById("json").textContent = JSON.stringify(info, (key, value) =>
+                    typeof value === 'bigint' ? value.toString() : value, 2);
+            });
         });
-    });
+    }
 </script>
