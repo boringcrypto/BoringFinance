@@ -248,6 +248,10 @@ class SushiSwap {
         //this.contracts.masterChef.methods.
     }
 
+    async remove(token0, token1, amount) {
+
+    }
+
     close() {
         if (this.subscription) {
             this.subscription.unsubscribe();

@@ -51,6 +51,11 @@
                         {{ pool.userStakedToken1.decimal(pool.token0decimals, 4) }} {{ pool.token1symbol }}
                     </td>
                     <td>
+                        {{ pool.uniBalance.decimal(18, 6) }}<br />
+                        <button class="btn btn-primary"
+                            @click="sushiswap.harvest(pool.token0, pool.token1, pool.uniBalance)">Remove</button>
+                    </td>
+                    <td>
                         {{ pool.pending.decimal(18, 4) }}<br />
                         <button class="btn btn-primary" @click="sushiswap.harvest(address, pool.id)">Harvest</button>
                     </td>
