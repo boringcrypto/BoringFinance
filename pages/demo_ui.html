@@ -21,40 +21,45 @@
 
 <body>
     <div id="app" class="container">
+        <button class="btn btn-primary float-right mt-3" v-if="address == '0x0000000000000000000000000000000000000000'"
+            @click="connect">Connect!</button>
         <h1>SushiSwapJs UI Example</h1>
-        <button class="btn btn-primary" v-if="!address" @click="connect">Connect!</button>
         <div v-if="base.loaded">
             <p>
-                Balance: {{ base.sushiBalance.decimal(18, 4) }}<br>
-                Pending: {{ base.pending.decimal(18, 4) }}<br>
-                <br>
-                Total value: ${{ totalValue.decimal(12, 2) }}M
+                SUSHI Balance: {{ base.sushiBalance.decimal(18, 4) }}<br />
+                SUSHI Pending: {{ base.pending.decimal(18, 4) }}<br />
+                <br />
+                Total value locked: ${{ totalValue.decimal(12, 2) }}M<br />
+                SUSHI Price: ${{ base.sushiValueInCurrency.decimal(6, 2) }}
             </p>
 
             <table class="table">
                 <thead>
                     <th colspan=2>Pool</th>
                     <th class="text-right">Value</th>
-                    <th>ROI</th>
-                    <th>Pending</th>
+                    <th class="text-right">ROI</th>
+                    <th class="text-right">Your stake</th>
                 </thead>
                 <tr v-for="pool in pools">
-                    <td class="display-4">{{ pool.logo }}</td>
+                    <td>
+                        <h2>{{ pool.logo }}</h2>
+                    </td>
                     <td>
                         {{ pool.name }}<br>
                         {{ pool.token0symbol}}-{{ pool.token1symbol }}
                     </td>
-                    <td>
-                        ${{ (pool.valueStakedToken0InCurrency + pool.valueStakedToken1InCurrency).decimal(12, 2) }}M
+                    <td class="text-right">
+                        ${{ pool.valueInCurrency.decimal(12, 2) }}M
                     </td>
                     <td class="text-right">
                         Daily: {{ pool.dailyROI.decimal(4, 2) }}<br />
                         Monthly: {{ pool.monthlyROI.decimal(4, 2) }}<br />
                         Yearly: {{ pool.yearlyROI.decimal(4, 2) }}
                     </td>
-                    <td>
+                    <td class="text-right">
                         {{ pool.userStakedToken0.decimal(pool.token0decimals, 4) }} {{ pool.token0symbol }}<br />
-                        {{ pool.userStakedToken1.decimal(pool.token0decimals, 4) }} {{ pool.token1symbol }}
+                        {{ pool.userStakedToken1.decimal(pool.token1decimals, 4) }} {{ pool.token1symbol }}<br />
+                        {{ pool.pending.decimal(18, 4) }} SUSHI
                     </td>
                 </tr>
             </table>
@@ -76,29 +81,32 @@
                 totalValue: function () {
                     let total = 0n;
                     for (i in this.pools) {
-                        total += BigInt(this.pools[i].valueStakedToken0InCurrency) + BigInt(this.pools[i].valueStakedToken1InCurrency)
+                        total += BigInt(this.pools[i].valueInCurrency)
                     }
                     return total;
                 }
             },
+            mounted: async function () {
+                // Connect to wallet
+                web3 = new Web3(window.ethereum);
+                this.address = "0x0000000000000000000000000000000000000000";
+
+                // Create SushiSwapJs
+                this.sushiswap = new SushiSwap(web3);
+
+                this.sushiswap.auto_update(async () => {
+                    // Retieve all info for the first wallet address
+                    await this.sushiswap.getInfo(this.address)
+                    this.base = this.sushiswap.base;
+                    this.pools = this.sushiswap.pools;
+                }, true);
+
+                this.tokenlist = await this.sushiswap.getTokenList();
+                //console.log(this.tokenlist);
+            },
             methods: {
                 connect: async function () {
-                    // Connect to wallet
-                    web3 = new Web3(window.ethereum);
                     this.address = (await window.ethereum.enable())[0];
-
-                    // Create SushiSwapJs
-                    this.sushiswap = new SushiSwap(web3);
-
-                    this.sushiswap.auto_update(async () => {
-                        // Retieve all info for the first wallet address
-                        await this.sushiswap.getInfo(this.address)
-                        this.base = this.sushiswap.base;
-                        this.pools = this.sushiswap.pools;
-                    }, true);
-
-                    this.tokenlist = await this.sushiswap.getTokenList();
-                    //console.log(this.tokenlist);
                 }
             }
         })
