@@ -49,67 +49,93 @@
                 <div class="col-12 col-md-6 col-lg-4 mb-3">
                     <div class="card">
                         <div class="card-body">
-                            <div class="card-body">
-                                <h3 class="card-title">In the bar</h3>
-                                <p>
-                                    SUSHI in the bar: {{ bar.barSushi.decimal(18, 4) }}<br>
-                                    Your SUSHI stake: {{ bar.sushiStake.decimal(18, 4) }}<br>
-                                    <br>
-                                    Your xSUSHI: {{ bar.xsushi.decimal(18, 4) }}
-                                </p>
-                                <div class="input-group mb-3">
-                                    <input type="number" v-model="leaveAmount" placeholder="xSUSHI"><br>
-                                    <div class="input-group-append">
-                                        <span class="input-group-text" style="cursor: pointer;"
-                                            @click="leaveAmount = Number(bar.xsushi / 1000000000000n) / 1000000">Max</span>
-                                    </div>
+                            <h3 class="card-title">In the bar</h3>
+                            <p>
+                                SUSHI in the bar: {{ bar.barSushi.decimal(18, 4) }}<br>
+                                Your SUSHI stake: {{ bar.sushiStake.decimal(18, 4) }}<br>
+                                <br>
+                                Your xSUSHI: {{ bar.xsushi.decimal(18, 4) }}
+                            </p>
+                            <div class="input-group mb-3">
+                                <input type="number" v-model="leaveAmount" placeholder="xSUSHI"><br>
+                                <div class="input-group-append">
+                                    <span class="input-group-text" style="cursor: pointer;"
+                                        @click="leaveAmount = Number(bar.xsushi / 1000000000000n) / 1000000">Max</span>
                                 </div>
+                            </div>
 
-                                <button class="btn btn-primary" @click="bar.leave(leaveWei)">Leave the bar</button>
-                                </p>
-                            </div>
+                            <button class="btn btn-primary" @click="bar.leave(leaveWei)">Leave the bar</button>
+                            </p>
                         </div>
                     </div>
                 </div>
                 <div class="col-12 col-md-6 col-lg-4 mb-3">
                     <div class="card">
                         <div class="card-body">
-                            <div class="card-body">
-                                <h3 class="card-title">Outside</h3>
-                                <p>
-                                    Sushi: {{ bar.sushi.decimal(18, 4) }}<br>
-                                </p>
-                                <div class="input-group mb-3">
-                                    <input type="number" v-model="enterAmount" placeholder="SUSHI"><br>
-                                    <div class="input-group-append">
-                                        <span class="input-group-text" style="cursor: pointer;"
-                                            @click="enterAmount = Number(bar.sushi / 1000000000000n) / 1000000">Max</span>
-                                    </div>
+                            <h3 class="card-title">Outside</h3>
+                            <p>
+                                Sushi: {{ bar.sushi.decimal(18, 4) }}<br>
+                            </p>
+                            <div class="input-group mb-3">
+                                <input type="number" v-model="enterAmount" placeholder="SUSHI"><br>
+                                <div class="input-group-append">
+                                    <span class="input-group-text" style="cursor: pointer;"
+                                        @click="enterAmount = Number(bar.sushi / 1000000000000n) / 1000000">Max</span>
                                 </div>
-                                <button v-if="!bar.allowance || bar.allowance < enterAmount" class="btn btn-primary"
-                                    @click="bar.allow()">Allow</button>
-                                <button v-else="" class="btn btn-primary" @click="bar.enter(enterWei)">Enter the
-                                    bar</button>
-                                </p>
                             </div>
+                            <button v-if="!bar.allowance || bar.allowance < enterAmount" class="btn btn-primary"
+                                @click="bar.allow()">Allow</button>
+                            <button v-else="" class="btn btn-primary" @click="bar.enter(enterWei)">Enter the
+                                bar</button>
+                            </p>
                         </div>
                     </div>
                 </div>
                 <div class="col-12 col-md-6 col-lg-4 mb-3">
                     <div class="card">
                         <div class="card-body">
-                            <div class="card-body">
-                                <h3 class="card-title">What is this?</h3>
-                                <p>
-                                    Everytime someone trades on SushiSwap, 0.05% will go to the SushiMaker. The
-                                    SushiMaker converts
-                                    this into SUSHI and sends it to the SushiBar.<br>
-                                    <br>
-                                    When you stake SUSHI into the SushiBar, you get xSUSHI. When you leave the bar, you
-                                    get your SUSHI
-                                    back plus your share of the extra SUSHI from the SushiMaker.<br>
-                                </p>
-                            </div>
+                            <h3 class="card-title">What is this?</h3>
+                            <p>
+                                Everytime someone trades on SushiSwap, 0.05% will go to the SushiMaker. The
+                                SushiMaker converts
+                                this into SUSHI and sends it to the SushiBar.<br>
+                                <br>
+                                When you stake SUSHI into the SushiBar, you get xSUSHI. When you leave the bar, you
+                                get your SUSHI
+                                back plus your share of the extra SUSHI from the SushiMaker.<br>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">What's cooking in the Kitchen?</h3>
+                            <p>
+                                Here's what's currently waiting in the SushiMaker.
+                            </p>
+                            <table class="mb-3" style="min-width: 500px;">
+                                <thead>
+                                    <th>Pool</th>
+                                    <th class="text-right">Value</th>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="pair in pairs">
+                                        <td>{{ pairNames[pair.pair] }}</td>
+                                        <td class="text-right">
+                                            ${{ (pair.valueToken0InCurrency + pair.valueToken1InCurrency).decimal(6, 2) }}
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-primary ml-3"
+                                                @click="convert(pair.token0, pair.token1)">Serve it
+                                                up!</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p>
+                                If you serve it, it will go to the bar, but you'll have to share it with everyone...
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -126,8 +152,13 @@
             data: {
                 address: null,
                 bar: null,
+                ethRate: 0,
+                pairs: [],
                 enterAmount: 0,
-                leaveAmount: 0
+                leaveAmount: 0,
+                pairNames: {
+                    "0x795065dCc9f64b5614C407a6EFDC400DA6221FB0": "SUSHI/ETH"
+                }
             },
             computed: {
                 enterWei: function () {
@@ -149,7 +180,14 @@
                     this.bar = await this.sushiswap.getBar(this.address);
                     this.sushiswap.auto_update(async () => {
                         await this.bar.poll();
-                    });
+
+                        await this.sushiswap.getMakerInfo();
+                        this.ethRate = this.sushiswap.ethRate;
+                        this.pairs = this.sushiswap.makerPairs;
+                    }, true);
+                },
+                convert: async function (token0, token1) {
+                    await this.sushiswap.makerConvert(this.address, token0, token1);
                 }
             }
         })

@@ -27,13 +27,14 @@ class SushiContracts {
 
             baseInfo: [{ "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }], "name": "OwnershipTransferred", "type": "event" }, { "inputs": [], "name": "getInfo", "outputs": [{ "components": [{ "internalType": "uint256", "name": "BONUS_MULTIPLIER", "type": "uint256" }, { "internalType": "uint256", "name": "bonusEndBlock", "type": "uint256" }, { "internalType": "address", "name": "devaddr", "type": "address" }, { "internalType": "address", "name": "migrator", "type": "address" }, { "internalType": "address", "name": "owner", "type": "address" }, { "internalType": "uint256", "name": "startBlock", "type": "uint256" }, { "internalType": "address", "name": "sushi", "type": "address" }, { "internalType": "uint256", "name": "sushiPerBlock", "type": "uint256" }, { "internalType": "uint256", "name": "totalAllocPoint", "type": "uint256" }, { "internalType": "uint256", "name": "sushiTotalSupply", "type": "uint256" }, { "internalType": "address", "name": "sushiOwner", "type": "address" }], "internalType": "struct BaseInfo", "name": "", "type": "tuple" }, { "components": [{ "internalType": "string", "name": "logo", "type": "string" }, { "internalType": "string", "name": "name", "type": "string" }, { "internalType": "contract IUniswapPair", "name": "lpToken", "type": "address" }, { "internalType": "uint256", "name": "allocPoint", "type": "uint256" }, { "internalType": "uint256", "name": "lastRewardBlock", "type": "uint256" }, { "internalType": "uint256", "name": "accSushiPerShare", "type": "uint256" }, { "internalType": "contract IERC20", "name": "token0", "type": "address" }, { "internalType": "contract IERC20", "name": "token1", "type": "address" }, { "internalType": "string", "name": "token0name", "type": "string" }, { "internalType": "string", "name": "token1name", "type": "string" }, { "internalType": "string", "name": "token0symbol", "type": "string" }, { "internalType": "string", "name": "token1symbol", "type": "string" }, { "internalType": "uint256", "name": "token0decimals", "type": "uint256" }, { "internalType": "uint256", "name": "token1decimals", "type": "uint256" }], "internalType": "struct PoolInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "names_", "type": "address" }, { "internalType": "address", "name": "masterChef_", "type": "address" }], "name": "setContracts", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }],
             userInfo: [{ "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }], "name": "OwnershipTransferred", "type": "event" }, { "inputs": [{ "internalType": "address", "name": "token", "type": "address" }], "name": "getETHRate", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getMyInfoInUSDT", "outputs": [{ "components": [{ "internalType": "uint256", "name": "block", "type": "uint256" }, { "internalType": "uint256", "name": "timestamp", "type": "uint256" }, { "internalType": "uint256", "name": "eth_rate", "type": "uint256" }, { "internalType": "uint256", "name": "sushiBalance", "type": "uint256" }, { "internalType": "address", "name": "delegates", "type": "address" }, { "internalType": "uint256", "name": "currentVotes", "type": "uint256" }, { "internalType": "uint256", "name": "nonces", "type": "uint256" }], "internalType": "struct UserInfo", "name": "", "type": "tuple" }, { "components": [{ "internalType": "uint256", "name": "lastRewardBlock", "type": "uint256" }, { "internalType": "uint256", "name": "accSushiPerShare", "type": "uint256" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }, { "internalType": "uint256", "name": "totalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "uniBalance", "type": "uint256" }, { "internalType": "uint256", "name": "uniTotalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "uniAllowance", "type": "uint256" }, { "internalType": "uint256", "name": "reserve0", "type": "uint256" }, { "internalType": "uint256", "name": "reserve1", "type": "uint256" }, { "internalType": "uint256", "name": "token0rate", "type": "uint256" }, { "internalType": "uint256", "name": "token1rate", "type": "uint256" }, { "internalType": "uint256", "name": "rewardDebt", "type": "uint256" }, { "internalType": "uint256", "name": "pending", "type": "uint256" }], "internalType": "struct UserPoolInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "address", "name": "currency", "type": "address" }], "name": "getUserInfo", "outputs": [{ "components": [{ "internalType": "uint256", "name": "block", "type": "uint256" }, { "internalType": "uint256", "name": "timestamp", "type": "uint256" }, { "internalType": "uint256", "name": "eth_rate", "type": "uint256" }, { "internalType": "uint256", "name": "sushiBalance", "type": "uint256" }, { "internalType": "address", "name": "delegates", "type": "address" }, { "internalType": "uint256", "name": "currentVotes", "type": "uint256" }, { "internalType": "uint256", "name": "nonces", "type": "uint256" }], "internalType": "struct UserInfo", "name": "", "type": "tuple" }, { "components": [{ "internalType": "uint256", "name": "lastRewardBlock", "type": "uint256" }, { "internalType": "uint256", "name": "accSushiPerShare", "type": "uint256" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }, { "internalType": "uint256", "name": "totalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "uniBalance", "type": "uint256" }, { "internalType": "uint256", "name": "uniTotalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "uniAllowance", "type": "uint256" }, { "internalType": "uint256", "name": "reserve0", "type": "uint256" }, { "internalType": "uint256", "name": "reserve1", "type": "uint256" }, { "internalType": "uint256", "name": "token0rate", "type": "uint256" }, { "internalType": "uint256", "name": "token1rate", "type": "uint256" }, { "internalType": "uint256", "name": "rewardDebt", "type": "uint256" }, { "internalType": "uint256", "name": "pending", "type": "uint256" }], "internalType": "struct UserPoolInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "uniFactory_", "type": "address" }, { "internalType": "address", "name": "masterChef_", "type": "address" }, { "internalType": "address", "name": "sushi_", "type": "address" }, { "internalType": "address", "name": "WETH_", "type": "address" }], "name": "setContracts", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }],
+            makerInfo: [{ "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }], "name": "OwnershipTransferred", "type": "event" }, { "inputs": [{ "internalType": "address", "name": "pair", "type": "address" }], "name": "addPair", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "token", "type": "address" }], "name": "getETHRate", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "currency", "type": "address" }], "name": "getPairs", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }, { "components": [{ "internalType": "address", "name": "pair", "type": "address" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }, { "internalType": "uint256", "name": "totalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "reserve0", "type": "uint256" }, { "internalType": "uint256", "name": "reserve1", "type": "uint256" }, { "internalType": "uint256", "name": "token0rate", "type": "uint256" }, { "internalType": "uint256", "name": "token1rate", "type": "uint256" }, { "internalType": "address", "name": "token0", "type": "address" }, { "internalType": "address", "name": "token1", "type": "address" }], "internalType": "struct PairInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "remove", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "sushiMaker_", "type": "address" }, { "internalType": "address", "name": "factory_", "type": "address" }, { "internalType": "address", "name": "sushi_", "type": "address" }, { "internalType": "address", "name": "WETH_", "type": "address" }], "name": "setContracts", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }],
         }
     }
 
     update(web3) {
         let chainId = web3.givenProvider.chainId;
         if (chainId == "0x1") {
-            this.sushi = new web3.eth.Contract(this.abis.sushi, "0x6b3595068778dd592e39a122f4f5a5cf09c90fe2");
+            this.sushi = new web3.eth.Contract(this.abis.sushi, "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2");
             this.chef = new web3.eth.Contract(this.abis.chef, "0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd");
             this.factory = new web3.eth.Contract(this.abis.factory, "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac");
             this.router = new web3.eth.Contract(this.abis.router, "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F");
@@ -42,6 +43,7 @@ class SushiContracts {
 
             this.baseInfo = new web3.eth.Contract(this.abis.baseInfo, "0xBb7dF27209ea65Ae02Fe02E76cC1C0247765dcFF");
             this.userInfo = new web3.eth.Contract(this.abis.userInfo, "0x39Ec6247dE60d885239aD0bcE1bC9f1553f4EF75");
+            this.makerInfo = new web3.eth.Contract(this.abis.makerInfo, "0x11db09195c70897021f13Fac5DF6a3c30b6A4b30");
         }
         else if (chainId == "0x3") {
             this.sushi = new web3.eth.Contract(this.abis.sushi, "0x81db9c598b3ebbdc92426422fc0a1d06e77195ec");
@@ -94,6 +96,7 @@ class SushiSwap {
     constructor(web3, currency) {
         this.base = { loaded: false };
         this.pools = [];
+        this.makerPairs = [];
         this.contracts = new SushiContracts(web3);
         this.update(web3, currency);
     }
@@ -236,6 +239,39 @@ class SushiSwap {
         return this;
     }
 
+    async getMakerInfo() {
+        var result = await this.contracts.makerInfo.methods.getPairs(this.currency).call({ gas: 5000000 });
+        this.base.eth_rate = BigInt(result[0]);
+
+        for (var i in result[1]) {
+            let pair = {};
+            pair.pair = result[1][i].pair;
+            pair.balance = BigInt(result[1][i].balance);
+            pair.totalSupply = BigInt(result[1][i].totalSupply);
+            pair.reserve0 = BigInt(result[1][i].reserve0);
+            pair.reserve1 = BigInt(result[1][i].reserve1);
+            pair.token0rate = BigInt(result[1][i].token0rate);
+            pair.token1rate = BigInt(result[1][i].token1rate);
+            pair.token0 = result[1][i].token0;
+            pair.token1 = result[1][i].token1;
+
+            pair.shareOfPool = pair.totalSupply ? pair.balance * BigInt("1000000000000000000") / pair.totalSupply : 0n;
+            pair.totalToken0 = pair.reserve0 * pair.shareOfPool / BigInt("1000000000000000000");
+            pair.totalToken1 = pair.reserve1 * pair.shareOfPool / BigInt("1000000000000000000");
+            pair.valueToken0 = pair.totalToken0 * BigInt("1000000000000000000") / pair.token0rate;
+            pair.valueToken1 = pair.totalToken1 * BigInt("1000000000000000000") / pair.token1rate;
+            pair.valueToken0InCurrency = this.ETHtoCurrency(pair.valueToken0);
+            pair.valueToken1InCurrency = this.ETHtoCurrency(pair.valueToken1);
+
+            if (i >= this.makerPairs.length) {
+                this.makerPairs.push(pair);
+            } else {
+                this.makerPairs[i] = pair;
+            }
+        }
+        console.log(this.makerPairs);
+    }
+
     async getBar(address) {
         let bar = new SushiBar(this.web3, address, this.contracts);
         await bar.poll();
@@ -261,8 +297,11 @@ class SushiSwap {
     }
 
     async harvest(from, pool_id) {
-        console.log(pool_id);
         this.contracts.chef.methods.withdraw(pool_id, 0).send({ from: from });
+    }
+
+    async makerConvert(from, token0, token1) {
+        this.contracts.maker.methods.convert(token0, token1).send({ from: from });
     }
 
     async stake(amount) {
