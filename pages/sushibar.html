@@ -21,47 +21,61 @@
 
 <body>
     <div id="app" class="container">
-        <h1>SushiBar</h1>
+        <h1>🍣 SushiBar</h1>
         <button class="btn btn-primary" v-if="!address" @click="connect">Connect!</button>
         <div v-if="bar">
             <div class="row">
                 <div class="col-12 col-md-6">
-                    <h2>In the bar</h2>
-                    <p>
-                        Your xSUSHI: {{ bar.xsushi.decimal(18, 4) }}<br>
-                        Total xSUSHI: {{ bar.totalXSushi.decimal(18, 4) }}<br>
-                    <div class="input-group mb-3">
-                        <input type="number" v-model="leaveAmount" placeholder="xSUSHI"><br>
-                        <div class="input-group-append">
-                            <span class="input-group-text" style="cursor: pointer;"
-                                @click="leaveAmount = Number(bar.xsushi / 1000000000000n) / 1000000">Max</span>
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">In the bar</h3>
+                            <div class="card-body">
+                                <p>
+                                    Your xSUSHI: {{ bar.xsushi.decimal(18, 4) }}<br>
+                                    Total xSUSHI: {{ bar.totalXSushi.decimal(18, 4) }}<br>
+                                <div class="input-group mb-3">
+                                    <input type="number" v-model="leaveAmount" placeholder="xSUSHI"><br>
+                                    <div class="input-group-append">
+                                        <span class="input-group-text" style="cursor: pointer;"
+                                            @click="leaveAmount = Number(bar.xsushi / 1000000000000n) / 1000000">Max</span>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary" @click="bar.leave(leaveWei)">Leave the bar</button>
+                                </p>
+                            </div>
                         </div>
                     </div>
-
-                    <button class="btn btn-primary" @click="bar.leave(leaveWei)">Leave the bar</button>
-                    </p>
                 </div>
-                <div class="col-12 col-md-6">
-                    <h2>Outside</h2>
-                    <p>
-                        Sushi: {{ bar.sushi.decimal(18, 4) }}<br>
+                <div class="card col-12 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">Outside</h3>
+                            <div class="card-body">
+                                <p>
+                                    Sushi: {{ bar.sushi.decimal(18, 4) }}<br>
 
-                    <div class="input-group mb-3">
-                        <input type="number" v-model="enterAmount" placeholder="SUSHI"><br>
-                        <div class="input-group-append">
-                            <span class="input-group-text" style="cursor: pointer;"
-                                @click="enterAmount = Number(bar.sushi / 1000000000000n) / 1000000">Max</span>
+                                <div class="input-group mb-3">
+                                    <input type="number" v-model="enterAmount" placeholder="SUSHI"><br>
+                                    <div class="input-group-append">
+                                        <span class="input-group-text" style="cursor: pointer;"
+                                            @click="enterAmount = Number(bar.sushi / 1000000000000n) / 1000000">Max</span>
+                                    </div>
+                                </div>
+                                <button v-if="!bar.allowance || bar.allowance < enterAmount" class="btn btn-primary"
+                                    @click="bar.allow()">Allow</button>
+                                <button v-else="" class="btn btn-primary" @click="bar.enter(enterWei)">Enter the
+                                    bar</button>
+                                </p>
+                            </div>
                         </div>
                     </div>
-                    <button v-if="!bar.allowance || bar.allowance < enterAmount" class="btn btn-primary"
-                        @click="bar.allow()">Allow</button>
-                    <button v-else="" class="btn btn-primary" @click="bar.enter(enterWei)">Enter the bar</button>
-                    </p>
                 </div>
             </div>
         </div>
     </div>
 </body>
+
 
 <script>
     function createApp() {
