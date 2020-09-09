@@ -219,8 +219,19 @@ class SushiSwap {
             pool.monthlyROI = pool.dailyROI * BigInt(30);   // Monthly ROI
             pool.yearlyROI = pool.dailyROI * BigInt(365);   // Yearly ROI
 
+            pool.hourlyInCurrency = pool.sushiPerBlockInCurrency * pool.shareOfPool * BigInt(276) / BigInt("1000000000000000000");
+            pool.dailyInCurrency = pool.sushiPerBlockInCurrency * pool.shareOfPool * BigInt(6613) / BigInt("1000000000000000000");
+            pool.monthlyInCurrency = pool.dailyInCurrency * BigInt(30);
+            pool.yearlyInCurrency = pool.dailyInCurrency * BigInt(365);
+
             pool.valueInCurrency = (pool.valueStakedToken0 + pool.valueStakedToken1) * this.base.eth_rate / BigInt("1000000000000000000"); // Value of lp tokens staked in currency
         }
+
+        this.base.sushiBalanceInETH = this.base.sushiBalance * BigInt("1000000000000000000") / this.base.sushiRate;
+        this.base.sushiBalanceInCurrency = this.ETHtoCurrency(this.base.sushiBalanceInETH);
+        this.base.pendingInETH = this.base.pending * BigInt("1000000000000000000") / this.base.sushiRate;
+        this.base.pendingInCurrency = this.ETHtoCurrency(this.base.pendingInETH);
+
         this.base.loaded = true;
         return this;
     }

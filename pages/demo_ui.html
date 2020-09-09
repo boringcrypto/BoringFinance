@@ -26,8 +26,9 @@
         <h1>SushiSwapJs UI Example</h1>
         <div v-if="base.loaded">
             <p>
-                SUSHI Balance: {{ base.sushiBalance.decimal(18, 4) }}<br />
-                SUSHI Pending: {{ base.pending.decimal(18, 4) }}<br />
+                SUSHI Balance: {{ base.sushiBalance.decimal(18, 4) }} - $
+                {{ base.sushiBalanceInCurrency.decimal(6, 2) }}<br />
+                SUSHI Pending: {{ base.pending.decimal(18, 4) }} - $ {{ base.pendingInCurrency.decimal(6, 2) }}<br />
                 <br />
                 Total value locked: ${{ totalValue.decimal(12, 2) }}M<br />
                 SUSHI Price: ${{ base.sushiValueInCurrency.decimal(6, 2) }}
@@ -52,9 +53,10 @@
                         ${{ pool.valueInCurrency.decimal(12, 2) }}M
                     </td>
                     <td class="text-right">
-                        Daily: {{ pool.dailyROI.decimal(4, 2) }}<br />
-                        Monthly: {{ pool.monthlyROI.decimal(4, 2) }}<br />
-                        Yearly: {{ pool.yearlyROI.decimal(4, 2) }}
+                        Daily: {{ pool.dailyROI.decimal(4, 2) }}% (${{ pool.dailyInCurrency.decimal(6, 2) }})<br />
+                        Monthly: {{ pool.monthlyROI.decimal(4, 2) }}%
+                        (${{ pool.monthlyInCurrency.decimal(6, 2) }})<br />
+                        Yearly: {{ pool.yearlyROI.decimal(4, 2) }}% (${{ pool.yearlyInCurrency.decimal(6, 2) }})
                     </td>
                     <td class="text-right">
                         {{ pool.userStakedToken0.decimal(pool.token0decimals, 4) }} {{ pool.token0symbol }}<br />
@@ -90,6 +92,7 @@
                 // Connect to wallet
                 web3 = new Web3(window.ethereum);
                 this.address = "0x0000000000000000000000000000000000000000";
+                this.address = "0x3d850dd2ce37f6c930ff8d0074ace3d63dca246d";
 
                 // Create SushiSwapJs
                 this.sushiswap = new SushiSwap(web3);
