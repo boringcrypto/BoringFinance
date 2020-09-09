@@ -25,14 +25,17 @@
         <button class="btn btn-primary" v-if="!address" @click="connect">Connect!</button>
         <div v-if="bar">
             <div class="row">
-                <div class="col-12 col-md-6">
+                <div class="col-12 col-md-6 mb-3">
                     <div class="card">
                         <div class="card-body">
                             <h3 class="card-title">In the bar</h3>
                             <div class="card-body">
                                 <p>
-                                    Your xSUSHI: {{ bar.xsushi.decimal(18, 4) }}<br>
-                                    Total xSUSHI: {{ bar.totalXSushi.decimal(18, 4) }}<br>
+                                    SUSHI in the bar: {{ bar.barSushi.decimal(18, 4) }}<br>
+                                    Your SUSHI stake: {{ bar.sushiStake.decimal(18, 4) }}<br>
+                                    <br>
+                                    Your xSUSHI: {{ bar.xsushi.decimal(18, 4) }}
+                                </p>
                                 <div class="input-group mb-3">
                                     <input type="number" v-model="leaveAmount" placeholder="xSUSHI"><br>
                                     <div class="input-group-append">
@@ -47,14 +50,14 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-12 col-md-6">
+                <div class="col-12 col-md-6 mb-3">
                     <div class="card">
                         <div class="card-body">
                             <h3 class="card-title">Outside</h3>
                             <div class="card-body">
                                 <p>
                                     Sushi: {{ bar.sushi.decimal(18, 4) }}<br>
-
+                                </p>
                                 <div class="input-group mb-3">
                                     <input type="number" v-model="enterAmount" placeholder="SUSHI"><br>
                                     <div class="input-group-append">
@@ -66,6 +69,28 @@
                                     @click="bar.allow()">Allow</button>
                                 <button v-else="" class="btn btn-primary" @click="bar.enter(enterWei)">Enter the
                                     bar</button>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">What is this?</h3>
+                            <div class="card-body">
+                                <p>
+                                    Everytime someone trades on SushiSwap, 0.05% will go to the SushiMaker. The
+                                    SushiMaker converts
+                                    this into SUSHI and sends it to the SushiBar.<br>
+                                    <br>
+                                    When you stake SUSHI into the SushiBar, you get xSUSHI. When you leave the bar, you
+                                    get your SUSHI
+                                    back plus your share of the extra SUSHI from the SushiMaker.<br>
+                                    <br>
+                                    Currently SushiSwap doesn't yet send the fee to the SushiMaker. This will be enabled
+                                    sometime
+                                    after migration.
                                 </p>
                             </div>
                         </div>

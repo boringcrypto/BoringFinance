@@ -35,6 +35,7 @@ class SushiContracts {
             this.uniFactory = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
             this.factory = "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac";
             this.router = "";
+            this.maker = "0x54844afe358ca98e4d09aae869f25bfe072e1b1a";
             this.bar = new web3.eth.Contract(this.abis.sushiBar, "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272");
             this.baseInfo = new web3.eth.Contract(this.abis.baseInfo, "0xBb7dF27209ea65Ae02Fe02E76cC1C0247765dcFF");
             this.userInfo = new web3.eth.Contract(this.abis.userInfo, "0x39Ec6247dE60d885239aD0bcE1bC9f1553f4EF75");
@@ -64,6 +65,8 @@ class SushiBar {
         this.xsushi = BigInt(await this.contracts.bar.methods.balanceOf(this.address).call());
         this.totalXSushi = BigInt(await this.contracts.bar.methods.totalSupply().call());
         this.allowance = BigInt(await this.contracts.token.methods.allowance(this.address, this.contracts.bar._address).call());
+
+        this.sushiStake = this.barSushi * this.xsushi / this.totalXSushi;
     }
 
     async allow() {
