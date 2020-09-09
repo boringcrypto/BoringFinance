@@ -76,7 +76,7 @@
                 totalValue: function () {
                     let total = 0n;
                     for (i in this.pools) {
-                        total += this.pools[i].valueStakedToken0InCurrency + this.pools[i].valueStakedToken1InCurrency
+                        total += BigInt(this.pools[i].valueStakedToken0InCurrency) + BigInt(this.pools[i].valueStakedToken1InCurrency)
                     }
                     return total;
                 }
