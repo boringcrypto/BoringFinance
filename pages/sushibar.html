@@ -17,19 +17,40 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.2.11/dist/web3.min.js"></script>
     <script src="../sushiswap.js"></script>
+    <style>
+        body,
+        html {
+            height: 100%;
+        }
+
+        .bg {
+            /* The image used */
+            background-image: url("/img/bar.jpg");
+
+            /* Full height */
+            height: 100%;
+
+            /* Center and scale the image nicely */
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+    </style>
 </head>
 
 <body>
-    <div id="app" class="container">
-        <h1>🍣 SushiBar</h1>
-        <button class="btn btn-primary" v-if="!address" @click="connect">Connect!</button>
+    <div id="app" class="container-fluid bg">
+        <h1 class="text-center">SushiBar</h1>
+        <div class="text-center" v-if="!address">
+            <button class="btn btn-primary" @click="connect">Connect!</button>
+        </div>
         <div v-if="bar">
             <div class="row">
-                <div class="col-12 col-md-6 mb-3">
+                <div class="col-12 col-md-6 col-lg-4 mb-3">
                     <div class="card">
                         <div class="card-body">
-                            <h3 class="card-title">In the bar</h3>
                             <div class="card-body">
+                                <h3 class="card-title">In the bar</h3>
                                 <p>
                                     SUSHI in the bar: {{ bar.barSushi.decimal(18, 4) }}<br>
                                     Your SUSHI stake: {{ bar.sushiStake.decimal(18, 4) }}<br>
@@ -50,11 +71,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-12 col-md-6 mb-3">
+                <div class="col-12 col-md-6 col-lg-4 mb-3">
                     <div class="card">
                         <div class="card-body">
-                            <h3 class="card-title">Outside</h3>
                             <div class="card-body">
+                                <h3 class="card-title">Outside</h3>
                                 <p>
                                     Sushi: {{ bar.sushi.decimal(18, 4) }}<br>
                                 </p>
@@ -74,7 +95,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-12 col-md-6 mb-3">
+                <div class="col-12 col-md-6 col-lg-4 mb-3">
                     <div class="card">
                         <div class="card-body">
                             <h3 class="card-title">What is this?</h3>
