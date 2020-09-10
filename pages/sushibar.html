@@ -44,7 +44,7 @@
         <div class="text-center" v-if="!address">
             <button class="btn btn-primary" @click="connect">Connect!</button>
         </div>
-        <div v-if="bar">
+        <div v-if="bar" style="min-height: 100%;">
             <div class="row">
                 <div class="col-12 col-md-6 col-lg-4 mb-3">
                     <div class="card">
@@ -148,6 +148,14 @@
                 </div>
             </div>
         </div>
+        <footer class="text-center py-2" style="visibility: hidden;">
+            Quickly flung together by <a href="https://twitter.com/Boring_Crypto">@Boring_Crypto</a> with the help
+            of 🥡 and 🍺.
+        </footer>
+        <footer class="fixed-bottom text-center py-2" style="background:#7f7f7f; background:rgba(0,0,0,0.5);">
+            Quickly flung together by <a href="https://twitter.com/Boring_Crypto">@Boring_Crypto</a> with the help
+            of 🥡 and 🍺.
+        </footer>
     </div>
 </body>
 
