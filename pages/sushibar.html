@@ -96,13 +96,16 @@
                         <div class="card-body">
                             <h3 class="card-title">What is this?</h3>
                             <p>
-                                Everytime someone trades on SushiSwap, 0.05% will go to the SushiMaker. The
-                                SushiMaker converts
-                                this into SUSHI and sends it to the SushiBar.<br>
+                                Everytime someone trades on SushiSwap, 0.05% will go to the Kitchen. Anyone can be
+                                kind and serve it up. This will turn it into yummy SUSHI and deliver it to everyone
+                                in the bar. So everyone will hav a little more SUSHI.<br>
                                 <br>
-                                When you stake SUSHI into the SushiBar, you get xSUSHI. When you leave the bar, you
-                                get your SUSHI
-                                back plus your share of the extra SUSHI from the SushiMaker.<br>
+                                When you stake enter the SushiBar, you get xSUSHI for you SUSHI. You will keep the same
+                                amount of xSUSHI. Everytime someone serves up delicious SUSHI, your xSUSHI will be worth
+                                a little more SUSHI.<br>
+                                <br>
+                                If you leave the bar now, you'll get around {{ bar.sushiStake.decimal(18, 4) }}
+                                SUSHI.<br>
                             </p>
                         </div>
                     </div>
@@ -112,7 +115,7 @@
                         <div class="card-body">
                             <h3 class="card-title">What's cooking in the Kitchen?</h3>
                             <p>
-                                Here's what's currently waiting in the SushiMaker.
+                                Here's what's currently waiting in the Kitchen.
                             </p>
                             <table class="mb-3">
                                 <thead>
