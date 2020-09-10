@@ -269,7 +269,6 @@ class SushiSwap {
                 this.makerPairs[i] = pair;
             }
         }
-        console.log(this.makerPairs);
     }
 
     async getBar(address) {
@@ -284,7 +283,6 @@ class SushiSwap {
             xhr.onload = () => {
                 if (xhr.status >= 200 && xhr.status < 300) {
                     this.tokenlist = JSON.parse(xhr.responseText);
-                    console.log(this.tokenlist);
                     resolve(this.tokenlist);
                 }
                 else {
