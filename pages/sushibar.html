@@ -110,12 +110,17 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-12 mb-3">
+            </div>
+            <div class="row">
+                <div class="col-12 col-lg-6 mb-3">
                     <div class="card">
                         <div class="card-body">
                             <h3 class="card-title">What's cooking in the Kitchen?</h3>
                             <p>
-                                Here's what's currently waiting in the Kitchen.
+                                Here's what's currently waiting in the Kitchen. It's not quite yours until someone
+                                serves it up. There's a total of ${{ totalKitchen.decimal(6, 2) }} waiting to be served.
+                                Your
+                                share of that is ${{ totalUserShare.decimal(6, 2) }} if it was all served now.
                             </p>
                             <table class="mb-3">
                                 <thead>
@@ -124,10 +129,10 @@
                                     <th class="text-right">Your share</th>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="pair in pairs">
+                                    <tr v-for="pair, i in pairs" v-if="i != 2">
                                         <td class="pr-3">{{ pairNames[pair.pair] }}</td>
                                         <td class="text-right">
-                                            ${{ (pair.valueToken0InCurrency + pair.valueToken1InCurrency).decimal(6, 2) }}
+                                            ${{ pair.totalValueInCurrency.decimal(6, 2) }}
                                         </td>
                                         <td class="text-right">
                                             ${{ userShare(pair).decimal(6, 2) }}
@@ -194,6 +199,24 @@
                 }
             },
             computed: {
+                totalKitchen: function () {
+                    var total = 0n;
+                    for (var i = 0; i < this.pairs.length; i++) {
+                        if (i != 2) {
+                            total += this.pairs[i].totalValueInCurrency;
+                        }
+                    }
+                    return total;
+                },
+                totalUserShare: function () {
+                    var total = 0n;
+                    for (var i = 0; i < this.pairs.length; i++) {
+                        if (i != 2) {
+                            total += this.userShare(this.pairs[i]);
+                        }
+                    }
+                    return total;
+                },
                 enterWei: function () {
                     return BigInt(Number(this.enterAmount) * 1000000) * 1000000000000n
                 },
