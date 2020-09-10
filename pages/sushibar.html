@@ -114,16 +114,20 @@
                             <p>
                                 Here's what's currently waiting in the SushiMaker.
                             </p>
-                            <table class="mb-3" style="min-width: 500px;">
+                            <table class="mb-3">
                                 <thead>
                                     <th>Pool</th>
                                     <th class="text-right">Value</th>
+                                    <th class="text-right">Your share</th>
                                 </thead>
                                 <tbody>
                                     <tr v-for="pair in pairs">
-                                        <td>{{ pairNames[pair.pair] }}</td>
+                                        <td class="pr-3">{{ pairNames[pair.pair] }}</td>
                                         <td class="text-right">
                                             ${{ (pair.valueToken0InCurrency + pair.valueToken1InCurrency).decimal(6, 2) }}
+                                        </td>
+                                        <td class="text-right">
+                                            ${{ userShare(pair).decimal(6, 2) }}
                                         </td>
                                         <td>
                                             <button class="btn btn-primary ml-3"
@@ -203,6 +207,9 @@
                         this.ethRate = this.sushiswap.ethRate;
                         this.pairs = this.sushiswap.makerPairs;
                     }, true);
+                },
+                userShare: function (pair) {
+                    return (pair.totalValueInCurrency * this.bar.poolShare / BigInt("1000000000000000000"));
                 },
                 convert: async function (token0, token1) {
                     await this.sushiswap.makerConvert(this.address, token0, token1);

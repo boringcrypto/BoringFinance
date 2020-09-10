@@ -76,6 +76,7 @@ class SushiBar {
         this.totalXSushi = BigInt(await this.contracts.bar.methods.totalSupply().call());
         this.allowance = BigInt(await this.contracts.sushi.methods.allowance(this.address, this.contracts.bar._address).call());
 
+        this.poolShare = this.xsushi * BigInt("1000000000000000000") / this.totalXSushi;
         this.sushiStake = this.barSushi * this.xsushi / this.totalXSushi;
     }
 
@@ -262,6 +263,7 @@ class SushiSwap {
             pair.valueToken1 = pair.totalToken1 * BigInt("1000000000000000000") / pair.token1rate;
             pair.valueToken0InCurrency = this.ETHtoCurrency(pair.valueToken0);
             pair.valueToken1InCurrency = this.ETHtoCurrency(pair.valueToken1);
+            pair.totalValueInCurrency = pair.valueToken0InCurrency + pair.valueToken1InCurrency;
 
             if (i >= this.makerPairs.length) {
                 this.makerPairs.push(pair);
