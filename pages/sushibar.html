@@ -16,6 +16,7 @@
         crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.2.11/dist/web3.min.js"></script>
+    <script src="../js/abi-decode.js"></script>
     <script src="../sushiswap.js"></script>
     <style>
         body,
@@ -34,15 +35,16 @@
             background-position: center;
             background-repeat: no-repeat;
             background-size: cover;
+            background-attachment: fixed;
         }
     </style>
 </head>
 
-<body>
-    <div id="app" class="container-fluid bg">
+<body class="bg">
+    <div id="app" class="container-fluid">
         <h1 class="text-center">SushiBar</h1>
         <div class="text-center" v-if="!address">
-            <button class="btn btn-primary" @click="connect">Connect!</button>
+            <button class="btn btn-lg btn-primary" @click="connect">Connect!</button>
         </div>
         <div v-if="bar" style="min-height: 100%;">
             <div class="row">
@@ -122,7 +124,7 @@
                                 Your
                                 share of that is ${{ totalUserShare.decimal(6, 2) }} if it was all served now.
                             </p>
-                            <table class="mb-3">
+                            <table class="w-100 mb-3">
                                 <thead>
                                     <th>Pool</th>
                                     <th class="text-right">Value</th>
@@ -137,11 +139,42 @@
                                         <td class="text-right">
                                             ${{ userShare(pair).decimal(6, 2) }}
                                         </td>
-                                        <td>
-                                            <button class="btn btn-primary ml-3"
+                                        <td class="text-right">
+                                            <button class="btn btn-sm btn-primary ml-3"
                                                 @click="convert(pair.token0, pair.token1)">Serve it
                                                 up!</button>
                                         </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p>
+                                If you serve it, it will go to the bar, but you'll have to share it with everyone...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">Who's serving?</h3>
+                            <p>
+                                Thanks to these generous chefs we've enjoyed some great sushi!
+                            </p>
+                            <table class="w-100 mb-3">
+                                <thead>
+                                    <th>From</th>
+                                    <th>Pool</th>
+                                    <th class="text-right">Amount</th>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="serve in servesOrdered.slice(0, 25)">
+                                        <td :title="serve.from">
+                                            <a :href="'https://etherscan.io/tx/' + serve.txid">
+                                                {{ serve.from.substr(0, 10) }}
+                                            </a>
+                                        </td>
+                                        <td>{{ pairNames[serve.pair] }}</td>
+                                        <td class="text-right">{{ serve.amount.decimal(18, 2) }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -174,6 +207,7 @@
                 bar: null,
                 ethRate: 0,
                 pairs: [],
+                serves: [],
                 enterAmount: 0,
                 leaveAmount: 0,
                 pairNames: {
@@ -217,6 +251,9 @@
                     }
                     return total;
                 },
+                servesOrdered: function () {
+                    return this.serves.sort((a, b) => b.block - a.block);
+                },
                 enterWei: function () {
                     return BigInt(Number(this.enterAmount) * 1000000) * 1000000000000n
                 },
@@ -241,6 +278,8 @@
                         this.ethRate = this.sushiswap.ethRate;
                         this.pairs = this.sushiswap.makerPairs;
                     }, true);
+
+                    await this.sushiswap.getServings(this.serves);
                 },
                 userShare: function (pair) {
                     return (pair.totalValueInCurrency * this.bar.poolShare / BigInt("1000000000000000000"));
