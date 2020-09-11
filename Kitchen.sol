@@ -45,11 +45,11 @@ interface IMasterChef {
     function pendingSushi(uint256 nr, address who) external view returns (uint256);
 }
 
-interface IUniswapFactory {
+interface IFactory {
     function getPair(address token0, address token1) external view returns (address);
 }
 
-interface IUniswapPair is IERC20 {
+interface IPair is IERC20 {
     function token0() external view returns (address);
     function token1() external view returns (address);
     function getReserves() external view returns (uint112, uint112, uint32);
@@ -139,7 +139,7 @@ struct BaseInfo {
 struct PoolInfo {
     string logo;
     string name;
-    IUniswapPair lpToken;           // Address of LP token contract.
+    IPair lpToken;           // Address of LP token contract.
     uint256 allocPoint;       // How many allocation points assigned to this pool. SUSHIs to distribute per block.
     uint256 lastRewardBlock;  // Last block number that SUSHIs distribution occurs.
     uint256 accSushiPerShare; // Accumulated SUSHIs per share, times 1e12. See below.
@@ -181,12 +181,12 @@ struct UserPoolInfo {
 
 contract SushiSwapBaseInfo is Ownable {
     // Mainnet
-    ISushiSwapPoolNames names = ISushiSwapPoolNames(0xb373a5def62A907696C0bBd22Dc512e2Fc8cfC7E);
-    IMasterChef masterChef = IMasterChef(0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd);
+    //ISushiSwapPoolNames names = ISushiSwapPoolNames(0xb373a5def62A907696C0bBd22Dc512e2Fc8cfC7E);
+    //IMasterChef masterChef = IMasterChef(0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd);
     
     // Ropsten
-    //ISushiSwapPoolNames names = ISushiSwapPoolNames(0x7685f4c573cE27C94F6aF70B330C29b9c41B8290);
-    //IMasterChef masterChef = IMasterChef(0xFF281cEF43111A83f09C656734Fa03E6375d432A);
+    ISushiSwapPoolNames names = ISushiSwapPoolNames(0x7685f4c573cE27C94F6aF70B330C29b9c41B8290);
+    IMasterChef masterChef = IMasterChef(0xFF281cEF43111A83f09C656734Fa03E6375d432A);
     
     function setContracts(address names_, address masterChef_) public onlyOwner {
         names = ISushiSwapPoolNames(names_);
@@ -212,7 +212,7 @@ contract SushiSwapBaseInfo is Ownable {
         PoolInfo[] memory pools = new PoolInfo[](poolLength);
         for (uint256 i = 0; i < poolLength; i++) {
             (address lpToken, uint256 allocPoint, uint256 lastRewardBlock, uint256 accSushiPerShare) = masterChef.poolInfo(i);
-            IUniswapPair uniV2 = IUniswapPair(lpToken);
+            IPair uniV2 = IPair(lpToken);
             pools[i].lpToken = uniV2;
             pools[i].allocPoint = allocPoint;
             pools[i].lastRewardBlock = lastRewardBlock;
@@ -243,13 +243,13 @@ contract SushiSwapUserInfo is Ownable
     using SafeMath for uint256;
 
     // Ropsten
-    IUniswapFactory uniFactory = IUniswapFactory(0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f);
+    IFactory factory = IFactory(0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f);
     IMasterChef masterChef = IMasterChef(0xFF281cEF43111A83f09C656734Fa03E6375d432A);
     ISushiToken sushi = ISushiToken(0x81DB9C598b3ebbdC92426422fc0A1d06E77195ec);
     address WETH = 0x078A84ee7991699DD198B7b95055AEd0C782A6eE;
 
-    function setContracts(address uniFactory_, address masterChef_, address sushi_, address WETH_) public onlyOwner {
-        uniFactory = IUniswapFactory(uniFactory_);
+    function setContracts(address factory_, address masterChef_, address sushi_, address WETH_) public onlyOwner {
+        factory = IFactory(factory_);
         masterChef = IMasterChef(masterChef_);
         sushi = ISushiToken(sushi_);
         WETH = WETH_;
@@ -259,7 +259,7 @@ contract SushiSwapUserInfo is Ownable
         uint256 eth_rate = 1e18;
         if (token != WETH)
         {
-            IUniswapPair pair = IUniswapPair(uniFactory.getPair(token, WETH));
+            IPair pair = IPair(factory.getPair(token, WETH));
             (uint112 reserve0, uint112 reserve1,) = pair.getReserves();
             if (pair.token0() == WETH) {
                 eth_rate = uint256(reserve1).mul(1e18).div(reserve0);
@@ -295,7 +295,7 @@ contract SushiSwapUserInfo is Ownable
             pools[i].pending = masterChef.pendingSushi(i, who);
 
             (address lpToken, , uint256 lastRewardBlock, uint256 accSushiPerShare) = masterChef.poolInfo(i);
-            IUniswapPair uniV2 = IUniswapPair(lpToken);
+            IPair uniV2 = IPair(lpToken);
             pools[i].totalSupply = uniV2.balanceOf(address(masterChef));
             pools[i].uniAllowance = uniV2.allowance(who, address(masterChef));
             pools[i].lastRewardBlock = lastRewardBlock;
@@ -316,3 +316,88 @@ contract SushiSwapUserInfo is Ownable
         return getUserInfo(msg.sender, 0x292c703A980fbFce4708864Ae6E8C40584DAF323);
     }
 }
+
+struct PairInfo {
+    address pair;
+    uint256 balance;
+    uint256 totalSupply;
+    uint256 reserve0;
+    uint256 reserve1;
+    uint256 token0rate;
+    uint256 token1rate;
+    address token0;
+    address token1;
+}
+
+contract SushiMakerInfo is Ownable
+{
+    using SafeMath for uint256;
+
+    address sushiMaker = 0x54844afe358Ca98E4D09AAe869f25bfe072E1B1a;
+    IFactory factory = IFactory(0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac);
+    ISushiToken sushi = ISushiToken(0x6B3595068778DD592e39A122f4f5a5cF09C90fE2);
+    address WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    
+    mapping(uint256 => address) pairs;
+    uint256 pairCount;
+
+    function setContracts(address sushiMaker_, address factory_, address sushi_, address WETH_) public onlyOwner {
+        sushiMaker = sushiMaker_;
+        factory = IFactory(factory_);
+        sushi = ISushiToken(sushi_);
+        WETH = WETH_;
+    }
+    
+    function addPair(address pair) public onlyOwner {
+        pairs[pairCount] = pair;
+        pairCount++;
+    }
+    
+    function remove() public onlyOwner {
+        pairCount--;
+        pairs[pairCount] = address(0);
+    }
+
+    function getETHRate(address token) public view returns(uint256) {
+        uint256 eth_rate = 1e18;
+        if (token != WETH)
+        {
+            IPair pair = IPair(factory.getPair(token, WETH));
+            if (address(pair) == address(0)) {
+                return 0;
+            }
+            (uint112 reserve0, uint112 reserve1,) = pair.getReserves();
+            if (pair.token0() == WETH) {
+                eth_rate = uint256(reserve1).mul(1e18).div(reserve0);
+            } else {
+                eth_rate = uint256(reserve0).mul(1e18).div(reserve1);
+            }
+        }
+        return eth_rate;
+    }
+    
+    function getPairs(address currency) public view returns(uint256, PairInfo[] memory) {
+        PairInfo[] memory infos = new PairInfo[](pairCount);
+
+        for (uint256 i = 0; i < pairCount; i++) {
+            infos[i].pair = pairs[i];
+
+            IPair pair = IPair(pairs[i]);
+            infos[i].balance = pair.balanceOf(sushiMaker);
+            infos[i].totalSupply = pair.totalSupply();
+            
+            (uint112 reserve0, uint112 reserve1,) = pair.getReserves();
+            infos[i].reserve0 = reserve0;
+            infos[i].reserve1 = reserve1;
+
+            infos[i].token0rate = getETHRate(pair.token0());
+            infos[i].token1rate = getETHRate(pair.token1());
+            
+            infos[i].token0 = pair.token0();
+            infos[i].token1 = pair.token1();
+        }
+        return (getETHRate(currency), infos);
+    }
+}
+
+

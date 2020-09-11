@@ -39,7 +39,7 @@ class SushiContracts {
             this.factory = new web3.eth.Contract(this.abis.factory, "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac");
             this.router = new web3.eth.Contract(this.abis.router, "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F");
             this.bar = new web3.eth.Contract(this.abis.bar, "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272");
-            this.maker = new web3.eth.Contract(this.abis.maker, "0x54844afe358ca98e4d09aae869f25bfe072e1b1a");
+            this.maker = new web3.eth.Contract(this.abis.maker, "0x6684977bBED67e101BB80Fc07fCcfba655c0a64F");
 
             this.baseInfo = new web3.eth.Contract(this.abis.baseInfo, "0xBb7dF27209ea65Ae02Fe02E76cC1C0247765dcFF");
             this.userInfo = new web3.eth.Contract(this.abis.userInfo, "0x39Ec6247dE60d885239aD0bcE1bC9f1553f4EF75");
