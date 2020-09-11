@@ -10,7 +10,6 @@ class ENS {
     }
 
     async reverse(address, fallback) {
-        console.log(address);
         if (!fallback) {
             fallback = (a) => a.substr(0, 14) + "...";
         }
