@@ -142,7 +142,7 @@ class SushiSwap {
             this.base.owner = result[0].owner;                                  // Address of the owner of the masterchef contract
             this.base.startBlock = BigInt(result[0].startBlock);                // Block at which SUSHI distribution started
             this.base.sushi = result[0].sushi;                                  // Address of the sushi token contract
-            this.base.sushiPerBlock = BigInt(result[0].sushiPerBlock);          // Base number of sushi distributed per block
+            this.base.sushiPerBlock = BigInt(result[0].sushiPerBlock);          // Base number of sushi distributed per block (not including dev share)
             this.base.totalAllocPoint = BigInt(result[0].totalAllocPoint);      // Total allocPoints of all pools, this must match adding all the pool allocPoints
 
             this.base.sushiTotalSupply = BigInt(result[0].sushiTotalSupply);    // Total amount of minted SUSHI
@@ -201,9 +201,11 @@ class SushiSwap {
             pool.pending = BigInt(result[1][i].pending);                        // Pending SUSHI
             this.base.pending += pool.pending;
 
-            pool.sushiPerBlock = this.base.sushiPerBlock * this.base.multiplier * pool.allocPoint / this.base.totalAllocPoint;  // SUSHI rewarded to this pool every block
-            pool.sushiPerBlockInETH = pool.sushiPerBlock * BigInt("1000000000000000000") / this.base.sushiRate;                 // SUSHI value rewarded to this pool every block in ETH
-            pool.sushiPerBlockInCurrency = pool.sushiPerBlockInETH * this.base.eth_rate / BigInt("1000000000000000000");        // SUSHI value rewarded to this pool every block in currncy tokens
+            pool.sushiReward = this.base.sushiPerBlock * this.base.multiplier * pool.allocPoint / this.base.totalAllocPoint;  // SUSHI rewarded to this pool every block
+            pool.sushiRewardInETH = pool.sushiReward * BigInt("1000000000000000000") / this.base.sushiRate;                 // SUSHI value rewarded to this pool every block in ETH
+            pool.sushiRewardInCurrency = pool.sushiRewardInETH * this.base.eth_rate / BigInt("1000000000000000000");        // SUSHI value rewarded to this pool every block in currncy tokens
+            pool.devShare = pool.sushiReward / BigInt("10"); // SUSHI rewarded to the dev every block
+            pool.totalSushiPerBlock = pool.devShare + pool.sushiReward;
 
             pool.shareOfUniswapPool = pool.uniTotalSupply ? pool.totalSupply * BigInt("1000000000000000000") / pool.uniTotalSupply : 0n;       // Staked share of all lp tokens. 100% = 1e18.
             pool.totalStakedToken0 = pool.reserve0 * pool.shareOfUniswapPool / BigInt("1000000000000000000");       // Staked lp tokens contain this much of token0.
@@ -219,13 +221,13 @@ class SushiSwap {
             pool.valueUserStakedToken0 = pool.userStakedToken0 * BigInt("1000000000000000000") / pool.token0rate;      // Value of token0 in staked lp tokens in wrapped Ether
             pool.valueUserStakedToken1 = pool.userStakedToken1 * BigInt("1000000000000000000") / pool.token1rate;      // Value of token1 in staked lp tokens in wrapped Ether
 
-            pool.hourlyROI = (pool.valueStakedToken0 + pool.valueStakedToken1) ? pool.sushiPerBlockInETH * BigInt(276000000) / (pool.valueStakedToken0 + pool.valueStakedToken1) : 0n;   // Hourly ROI
-            pool.dailyROI = (pool.valueStakedToken0 + pool.valueStakedToken1) ? pool.sushiPerBlockInETH * BigInt(6613000000) / (pool.valueStakedToken0 + pool.valueStakedToken1) : 0n;   // Daily ROI
+            pool.hourlyROI = (pool.valueStakedToken0 + pool.valueStakedToken1) ? pool.sushiRewardInETH * BigInt(276000000) / (pool.valueStakedToken0 + pool.valueStakedToken1) : 0n;   // Hourly ROI
+            pool.dailyROI = (pool.valueStakedToken0 + pool.valueStakedToken1) ? pool.sushiRewardInETH * BigInt(6613000000) / (pool.valueStakedToken0 + pool.valueStakedToken1) : 0n;   // Daily ROI
             pool.monthlyROI = pool.dailyROI * BigInt(30);   // Monthly ROI
             pool.yearlyROI = pool.dailyROI * BigInt(365);   // Yearly ROI
 
-            pool.hourlyInCurrency = pool.sushiPerBlockInCurrency * pool.shareOfPool * BigInt(276) / BigInt("1000000000000000000");
-            pool.dailyInCurrency = pool.sushiPerBlockInCurrency * pool.shareOfPool * BigInt(6613) / BigInt("1000000000000000000");
+            pool.hourlyInCurrency = pool.sushiRewardInCurrency * pool.shareOfPool * BigInt(276) / BigInt("1000000000000000000");
+            pool.dailyInCurrency = pool.sushiRewardInCurrency * pool.shareOfPool * BigInt(6613) / BigInt("1000000000000000000");
             pool.monthlyInCurrency = pool.dailyInCurrency * BigInt(30);
             pool.yearlyInCurrency = pool.dailyInCurrency * BigInt(365);
 
