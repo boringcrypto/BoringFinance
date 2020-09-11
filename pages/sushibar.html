@@ -17,6 +17,7 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.2.11/dist/web3.min.js"></script>
     <script src="../js/abi-decode.js"></script>
+    <script src="../ens.js?v=1"></script>
     <script src="../sushiswap.js?v=2"></script>
     <style>
         body,
@@ -170,7 +171,7 @@
                                     <tr v-for="serve in servesOrdered.slice(0, 25)">
                                         <td :title="serve.from">
                                             <a :href="'https://etherscan.io/tx/' + serve.txid">
-                                                {{ serve.from.substr(0, 10) }}
+                                                {{ serve.from }}
                                             </a>
                                         </td>
                                         <td>{{ pairNames[serve.pair] }}</td>
@@ -179,7 +180,8 @@
                                 </tbody>
                             </table>
                             <p>
-                                If you serve it, it will go to the bar, but you'll have to share it with everyone...
+                                If you setup a <a href="https://app.ens.domains/">reverse ENS</a>, your name will be
+                                listed here.
                             </p>
                         </div>
                     </div>

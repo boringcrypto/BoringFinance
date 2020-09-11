@@ -100,6 +100,7 @@ class SushiSwap {
         this.pools = [];
         this.makerPairs = [];
         this.contracts = new SushiContracts(web3);
+        this.ens = new ENS(web3);
         this.update(web3, currency);
     }
 
@@ -306,13 +307,11 @@ class SushiSwap {
                 amount: BigInt(0)
             }
             let tx = await this.web3.eth.getTransactionReceipt(serve.txid);
-            serve.from = tx.from;
+            console.log(this.ens);
+            serve.from = await this.ens.reverse(tx.from);
             let logsData = abiDecoder.decodeLogs(tx.logs);
             serve.amount = logsData.filter(l => l.name == "Transfer" && l.address == "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2" && l.events[1].value == "0x8798249c2e607446efb7ad49ec89dd1865ff4272").map(l => BigInt(l.events[2].value)).reduce((a, b) => a + b, 0n);
             serve.pair = logsData.filter(l => l.name == "Burn")[0].address;
-            console.log(logsData);
-            window.logs = logsData;
-            console.log(tx);
             serves.push(serve);
         }
         return serves;
