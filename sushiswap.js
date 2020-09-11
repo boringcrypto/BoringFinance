@@ -81,7 +81,7 @@ class SushiBar {
     }
 
     async allow() {
-        await this.contracts.token.methods.approve(this.contracts.bar._address, 1000000000000000000000000000000000000n).send({ from: this.address, gas: 60000 });
+        await this.contracts.sushi.methods.approve(this.contracts.bar._address, 1000000000000000000000000000000000000n).send({ from: this.address, gas: 60000 });
     }
 
     async enter(amount) {
