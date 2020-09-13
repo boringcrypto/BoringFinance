@@ -94,7 +94,7 @@ class SushiBar {
     }
 }
 
-class SushiSwap {
+export class SushiSwap {
     constructor(web3, currency) {
         this.base = { loaded: false };
         this.pools = [];
