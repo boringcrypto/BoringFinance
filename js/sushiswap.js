@@ -363,8 +363,8 @@ class API {
             pool.totalSushiPerBlock = pool.devShare + pool.sushiReward;
 
             pool.shareOfUniswapPool = pool.uniTotalSupply ? pool.totalSupply * BigInt("1000000000000000000") / pool.uniTotalSupply : 0n;       // Staked share of all lp tokens. 100% = 1e18.
-            pool.totalStakedToken0 = pool.reserve0 * pool.shareOfUniswapPool / BigInt("1000000000000000000");       // Staked lp tokens contain this much of token0.
-            pool.totalStakedToken1 = pool.reserve1 * pool.shareOfUniswapPool / BigInt("1000000000000000000");       // Staked lp tokens contain this much of token1.
+            pool.totalStakedToken0 = pool.reserve0;       // Staked lp tokens contain this much of token0.
+            pool.totalStakedToken1 = pool.reserve1;       // Staked lp tokens contain this much of token1.
             pool.valueStakedToken0 = pool.totalStakedToken0 * BigInt("1000000000000000000") / pool.token0rate;      // Value of token0 in staked lp tokens in wrapped Ether
             pool.valueStakedToken1 = pool.totalStakedToken1 * BigInt("1000000000000000000") / pool.token1rate;      // Value of token1 in staked lp tokens in wrapped Ether
             pool.valueStakedToken0InCurrency = this.ETHtoCurrency(pool.valueStakedToken0);
