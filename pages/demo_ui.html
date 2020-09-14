@@ -16,15 +16,15 @@
         crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.2.11/dist/web3.min.js"></script>
-    <script src="../ens.js?v=1"></script>
-    <script src="../sushiswap.js"></script>
+    <script src="../js/ens.js?v=1"></script>
+    <script src="../js/sushiswap.js"></script>
 </head>
 
 <body>
     <div id="app" class="container">
         <button class="btn btn-primary float-right mt-3" v-if="address == '0x0000000000000000000000000000000000000000'"
             @click="connect">Connect!</button>
-        <h1>SushiSwapJs UI Example</h1>
+        <h1>SushiSwap Pools</h1>
         <div v-if="base.loaded">
             <p>
                 SUSHI Balance: {{ base.sushiBalance.decimal(18, 4) }} - $
@@ -37,7 +37,8 @@
 
             <table class="table">
                 <thead>
-                    <th colspan=2>Pool</th>
+                    <th>Pool</th>
+                    <th class="d-none d-md-table-cell"></th>
                     <th class="text-right">Value</th>
                     <th class="text-right">ROI</th>
                     <th class="text-right">Your stake</th>
@@ -46,18 +47,22 @@
                     <td>
                         <h2>{{ pool.logo }}</h2>
                     </td>
-                    <td>
+                    <td class="d-none d-md-table-cell">
                         {{ pool.name }}<br>
                         {{ pool.token0symbol}}-{{ pool.token1symbol }}
                     </td>
                     <td class="text-right">
                         ${{ pool.valueInCurrency.decimal(12, 2) }}M
                     </td>
-                    <td class="text-right">
+                    <td class="d-none d-md-table-cell text-right">
                         Daily: {{ pool.dailyROI.decimal(4, 2) }}% (${{ pool.dailyInCurrency.decimal(6, 2) }})<br />
                         Monthly: {{ pool.monthlyROI.decimal(4, 2) }}%
                         (${{ pool.monthlyInCurrency.decimal(6, 2) }})<br />
                         Yearly: {{ pool.yearlyROI.decimal(4, 2) }}% (${{ pool.yearlyInCurrency.decimal(6, 2) }})
+                    </td>
+                    <td class="d-table-cell d-md-none text-right">
+                        {{ pool.yearlyROI.decimal(4, 2) }}%<br />
+                        ${{ pool.yearlyInCurrency.decimal(6, 2) }}
                     </td>
                     <td class="text-right">
                         {{ pool.userStakedToken0.decimal(pool.token0decimals, 4) }} {{ pool.token0symbol }}<br />
@@ -95,7 +100,7 @@
                 this.address = "0x0000000000000000000000000000000000000000";
 
                 // Create SushiSwapJs
-                this.sushiswap = new SushiSwap(web3);
+                this.sushiswap = new API(web3);
 
                 this.sushiswap.auto_update(async () => {
                     // Retieve all info for the first wallet address
@@ -103,8 +108,6 @@
                     this.base = this.sushiswap.base;
                     this.pools = this.sushiswap.pools;
                 }, true);
-
-                this.tokenlist = await this.sushiswap.getTokenList();
             },
             methods: {
                 connect: async function () {

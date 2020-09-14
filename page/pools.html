@@ -1,0 +1,50 @@
+<template id="page_template">
+    <div class="mt-3">
+        <div class="row">
+            <div class="col-12 col-md-6 col-lg-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Liquidity Pools</h4>
+                        <p>
+                            Add liquidity to SushiSwap pools and receive a share of the trading fees and farm SUSHI on
+                            reward pools.
+                        </p>
+                        <p>
+                            Coming soon. Until then, please use <a href='https://sushiswap.org'
+                                target='_blank'>SushiSwap UI</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<script>
+    app.page = {
+        props: ['api', 'address'],
+        data: function () {
+            return {
+            }
+        },
+        mounted: async function () {
+            await this.init();
+        },
+        watch: {
+            'api': async function () {
+                await this.init();
+            }
+        },
+        computed: {
+        },
+        methods: {
+            init: async function () {
+                if (this.api) {
+                }
+            },
+            done: function () {
+
+            }
+        }
+    }
+    page_done();
+</script>

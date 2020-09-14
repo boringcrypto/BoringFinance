@@ -1,0 +1,56 @@
+<template id="page_template">
+    <div class="mt-3">
+        <div class="row">
+            <div class="col-12 col-md-6 col-lg-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Assets</h4>
+                        <p>
+                            This page is a work in progress.
+                        </p>
+                        <table class="w-100">
+                            <tr v-for="token in tokens" v-if="token.balance > 0n">
+                                <td>{{ token.symbol }}</td>
+                                <td class="text-right">{{ token.balance.decimal(token.decimals, 2) }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<script>
+    app.page = {
+        props: ['api', 'address'],
+        data: function () {
+            return {
+                tokens: []
+            }
+        },
+        calculated: {
+
+        },
+        mounted: async function () {
+            await this.init();
+        },
+        watch: {
+            'api': async function () {
+                await this.init();
+            }
+        },
+        computed: {
+        },
+        methods: {
+            init: async function () {
+                if (this.api) {
+                    this.api.getTokens(this.address, this.tokens);
+                }
+            },
+            done: function () {
+
+            }
+        }
+    }
+    page_done();
+</script>

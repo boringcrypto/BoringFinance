@@ -1,40 +1,133 @@
 <html>
 
-<body>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/darkly/bootstrap.min.css"
+        integrity="sha384-nNK9n28pDUDDgIiIqZ/MiyO3F4/9vsMtReZK39klb/MtkZI3/LtjSjlmyVPS3KdN" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"
+        integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+        integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
+        integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV"
+        crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css"
+        integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous" />
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue-router/3.4.3/vue-router.min.js"
+        integrity="sha512-mVyZZ423iwLddhRdWCJeQSysHfnDZZPJRlY9HJI6/39e6D8Myz3nQCelJmSMOf8MOreTzWDmh8bYftrBnTau1Q=="
+        crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.2.11/dist/web3.min.js"></script>
-    <script src="sushiswap.js"></script>
-    <script>
-        async function go() {
-            // Connect to wallet
-            web3 = new Web3(window.ethereum);
-            let addresses = await window.ethereum.enable();
-
-            // Create SushiSwapJs
-            let sushiswap = new SushiSwap(web3);
-
-            sushiswap.auto_update(async function () {
-                // Retieve all info for the first wallet address
-                await sushiswap.getInfo(addresses[0]);
-                await sushiswap.getMakerInfo();
-
-                // Display all info nicely in html
-                document.getElementById("base").textContent
-                    = JSON.stringify(sushiswap.base, null, 2);
-
-                document.getElementById("pools").textContent
-                    = JSON.stringify(sushiswap.pools, null, 2);
-
-                document.getElementById("maker").textContent
-                    = JSON.stringify(sushiswap.makerPairs, null, 2);
-            }, true);
+    <script src="js/abi-decode.js"></script>
+    <script src="js/ens.js?v=1"></script>
+    <script src="js/sushiswap.js?v=2"></script>
+    <style>
+        body,
+        html {
+            height: 100%;
         }
-    </script>
 
-    <h1>SushiSwapJs</h1>
-    <pre id="base"></pre>
-    <pre id="pools"></pre>
-    <pre id="maker"></pre>
-    <button onclick="go()">Go!</button>
+        .bg {
+            /* The image used */
+            background-image: url("../img/bar.jpg");
+
+            /* Full height */
+            height: 100%;
+
+            /* Center and scale the image nicely */
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-attachment: fixed;
+        }
+
+        .nav-link {
+            padding: 0.5rem 0.8rem;
+        }
+    </style>
+</head>
+
+<body class="bg">
+    <div id="app">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <router-link class="nav-link" to="/"><i class="fas fa-home"></i></span></router-link>
+            <router-link class="nav-link mr-auto" to="/swap">Swap</i></span></router-link>
+            <router-link class="nav-link mr-auto" to="/pools">Pools</i></span></router-link>
+            <router-link class="nav-link mr-auto" to="/sushibar">Bar</i></span></router-link>
+        </nav>
+        <div class="container-fluid">
+            <div class="text-center mt-3" v-if="!address">
+                <button class="btn btn-lg btn-primary" @click="connect">Connect Metamask</button>
+            </div>
+            <router-view v-if="api" :api="api" :address="address"></router-view>
+        </div>
+        <footer class="text-center py-2" style="visibility: hidden;">
+            <div>Quickly flung together by <a href="https://twitter.com/Boring_Crypto">@Boring_Crypto</a>.
+                <div class="float-right mr-3">&nbsp;<i class="fas fa-cog"></i></div>
+            </div>
+        </footer>
+        <footer class="fixed-bottom text-center py-2" style="background:#7f7f7f; background:rgba(0,0,0,0.5);">
+            <div>Quickly flung together by <a href="https://twitter.com/Boring_Crypto">@Boring_Crypto</a>.
+                <div class="float-right mr-3">&nbsp;<i class="fas fa-cog"></i></div>
+            </div>
+        </footer>
+    </div>
 </body>
+
+
+<script>
+    function createApp() {
+        window.app = new Vue({
+            el: "#app",
+            router: new VueRouter({
+                routes: []
+            }),
+            data: {
+                address: "0x9e6e344f94305d36eA59912b0911fE2c9149Ed3E",
+                api: null,
+                manager: null
+            },
+            mounted: function () {
+                this.manager = new Web3Manager();
+                if (this.manager.web3) {
+                    this.api = new API(this.manager.web3);
+                }
+            },
+            methods: {
+                connect: async function () {
+                    // Connect to wallet
+                    this.address = (await window.ethereum.enable())[0];
+                },
+            }
+        })
+        app.page = {};
+    }
+
+    let loaded_pages = {};
+
+    async function load_page(path, name) {
+        if (!loaded_pages[name]) {
+            window.page_done = function () {
+                app.page.template = $('#page_template').html();
+                $('#page_template').remove();
+                app.$router.addRoutes([{ path: path, component: app.page }]);
+            }
+            let html = await $.ajax('page/' + name + '.html');
+            $('html').append(html);
+            loaded_pages[name] = true;
+        }
+    }
+
+    $(document).ready(async function () {
+        createApp();
+        await load_page('/', 'dashboard');
+        await load_page('/swap', 'swap');
+        await load_page('/pools', 'pools');
+        await load_page('/sushibar', 'sushibar');
+    });
+</script>
 
 </html>

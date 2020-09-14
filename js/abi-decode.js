@@ -151,7 +151,7 @@ class Decoder {
                     }
                 });
 
-                const decodedData = web3.eth.abi.decodeParameters(
+                const decodedData = this.web3.eth.abi.decodeParameters(
                     dataTypes,
                     logData.slice(2)
                 );

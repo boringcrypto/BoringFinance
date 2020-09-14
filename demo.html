@@ -1,0 +1,40 @@
+<html>
+
+<body>
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.2.11/dist/web3.min.js"></script>
+    <script src="sushiswap.js"></script>
+    <script>
+        async function go() {
+            // Connect to wallet
+            web3 = new Web3(window.ethereum);
+            let addresses = await window.ethereum.enable();
+
+            // Create SushiSwapJs
+            let sushiswap = new SushiSwap(web3);
+
+            sushiswap.auto_update(async function () {
+                // Retieve all info for the first wallet address
+                await sushiswap.getInfo(addresses[0]);
+                await sushiswap.getMakerInfo();
+
+                // Display all info nicely in html
+                document.getElementById("base").textContent
+                    = JSON.stringify(sushiswap.base, null, 2);
+
+                document.getElementById("pools").textContent
+                    = JSON.stringify(sushiswap.pools, null, 2);
+
+                document.getElementById("maker").textContent
+                    = JSON.stringify(sushiswap.makerPairs, null, 2);
+            }, true);
+        }
+    </script>
+
+    <h1>SushiSwapJs</h1>
+    <pre id="base"></pre>
+    <pre id="pools"></pre>
+    <pre id="maker"></pre>
+    <button onclick="go()">Go!</button>
+</body>
+
+</html>
