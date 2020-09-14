@@ -1,6 +1,21 @@
 ﻿// Add ability to serialize BigInt as JSON
-BigInt.prototype.toJSON = function () {
-    return this.toString();
+JSON.stringifyBigInt = function (obj) {
+    return JSON.stringify(obj, (key, value) => {
+        if (typeof value === 'bigint') {
+            return value.toString() + 'n';
+        } else {
+            return value;
+        }
+    })
+}
+
+JSON.parseBigInt = function (str) {
+    return JSON.parse(str, (key, value) => {
+        if (typeof value === 'string' && /^\d+n$/.test(value)) {
+            return BigInt(value.slice(0, -1));
+        }
+        return value;
+    })
 }
 
 // Returns a string where the value is divided by 10^divisor and cut off to decimalPlaces decimal places
@@ -80,7 +95,7 @@ Object.defineProperty(Web3.prototype, "ens", {
 
 // Registered contracts
 addContract("sushi", abis.sushi, { "0x1": "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2", "0x3": "0x81db9c598b3ebbdc92426422fc0a1d06e77195ec" });
-addContract("chef", abis.chef, { "0x1": "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2", "0x3": "0xFF281cEF43111A83f09C656734Fa03E6375d432A" });
+addContract("chef", abis.chef, { "0x1": "0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd", "0x3": "0xFF281cEF43111A83f09C656734Fa03E6375d432A" });
 addContract("factory", abis.factory, { "0x1": "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac", "0x3": "0x0887edCe08f06190BA11706f0C4B442d2888d2b3" });
 addContract("router", abis.router, { "0x1": "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F", "0x3": "0x55321ae0a211495A7493A9dE1385EeD9D9027106" });
 addContract("bar", abis.bar, { "0x1": "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272", "0x3": "" });
@@ -90,10 +105,83 @@ addContract("baseInfo", abis.baseInfo, { "0x1": "0xBb7dF27209ea65Ae02Fe02E76cC1C
 addContract("userInfo", abis.userInfo, { "0x1": "0x39Ec6247dE60d885239aD0bcE1bC9f1553f4EF75", "0x3": "0xe8f852908A61e074032382E9B5058F86fe2a0ea7" });
 addContract("makerInfo", abis.makerInfo, { "0x1": "0x11db09195c70897021f13Fac5DF6a3c30b6A4b30", "0x3": "" });
 
+class LogMonitor {
+    constructor(web3, address, topics, process) {
+        let key = address + JSON.stringify(topics);
+
+        this.output = [];
+        this.lastBlock = 10750000;
+        if (typeof (Storage) !== "undefined") {
+            let data = JSON.parseBigInt(localStorage.getItem(key));
+            if (data) {
+                this.lastBlock = data.lastBlock;
+                this.output = data.output;
+            }
+        }
+
+        this.subscription = web3.eth.subscribe('logs', {
+            address: address,
+            topics: topics
+        }, async (error, log) => {
+            if (!error) {
+                await this._processLog(process, log);
+                this._save(key);
+            }
+        });
+
+        this._getLogs(key, web3.eth.getPastLogs({
+            fromBlock: this.lastBlock + 1,
+            address: address,
+            topics: topics
+        }), process);
+    }
+
+    async _processLog(process, log) {
+        let result = await process(log);
+        if (result) {
+            this.output.push(result);
+            this.lastBlock = Math.max(this.lastBlock, log.blockNumber);
+        }
+    }
+
+    async _save(key) {
+        if (typeof (Storage) !== "undefined") {
+            localStorage.setItem(key, JSON.stringifyBigInt({
+                lastBlock: this.lastBlock,
+                output: this.output
+            }));
+        }
+    }
+
+    async _getLogs(key, getter, process) {
+        let raw_logs = await getter;
+
+        for (var i in raw_logs) {
+            await this._processLog(process, raw_logs[i]);
+        }
+
+        this._save(key);
+    }
+
+    close() {
+        this.subscription.unsubscribe(function (error, success) {
+            if (success)
+                console.log('Successfully unsubscribed!');
+        });
+    }
+}
+
 // Get info and interact with the SushiBar and SushiMaker
 class SushiBar {
     constructor(options) {
         this.options = options;
+    }
+
+    close() {
+        if (this.servingMonitor) {
+            this.servingMonitor.close();
+        }
+        delete this.servingMonitor;
     }
 
     get web3() {
@@ -115,31 +203,24 @@ class SushiBar {
         this.sushiStake = this.barSushi * this.xsushi / this.totalXSushi;
     }
 
-    async getServings(serves) {
-        if (!serves) { serves = []; }
-
-        let logs = await this.web3.eth.getPastLogs({
-            fromBlock: '10750000',
-            address: '0x795065dcc9f64b5614c407a6efdc400da6221fb0',
-            topics: ['0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822', '0x0000000000000000000000006684977bbed67e101bb80fc07fccfba655c0a64f', '0x0000000000000000000000008798249c2E607446EfB7Ad49eC89dD1865Ff4272']
-        });
-
-        for (var i in logs) {
-            let log = logs[i];
-
-            let serve = {
-                block: log.blockNumber,
-                txid: log.transactionHash,
-                amount: BigInt(0)
+    getServings() {
+        this.servingMonitor = new LogMonitor(this.web3, '0x795065dcc9f64b5614c407a6efdc400da6221fb0',
+            ['0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822', '0x0000000000000000000000006684977bbed67e101bb80fc07fccfba655c0a64f', '0x0000000000000000000000008798249c2E607446EfB7Ad49eC89dD1865Ff4272'],
+            async (log) => {
+                let serve = {
+                    block: log.blockNumber,
+                    txid: log.transactionHash,
+                    amount: BigInt(0)
+                }
+                let tx = await this.web3.eth.getTransactionReceipt(serve.txid);
+                serve.from = await this.web3.ens.reverse(tx.from);
+                let logsData = this.web3.decode.pair.decodeLogs(tx.logs);
+                serve.amount = logsData.filter(l => l.name == "Transfer" && l.address == "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2" && l.events[1].value == "0x8798249c2e607446efb7ad49ec89dd1865ff4272").map(l => BigInt(l.events[2].value)).reduce((a, b) => a + b, 0n);
+                serve.pair = logsData.filter(l => l.name == "Burn")[0].address;
+                return serve;
             }
-            let tx = await this.web3.eth.getTransactionReceipt(serve.txid);
-            serve.from = await this.web3.ens.reverse(tx.from);
-            let logsData = this.web3.decode.pair.decodeLogs(tx.logs);
-            serve.amount = logsData.filter(l => l.name == "Transfer" && l.address == "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2" && l.events[1].value == "0x8798249c2e607446efb7ad49ec89dd1865ff4272").map(l => BigInt(l.events[2].value)).reduce((a, b) => a + b, 0n);
-            serve.pair = logsData.filter(l => l.name == "Burn")[0].address;
-            serves.push(serve);
-        }
-        return serves;
+        );
+        return this.servingMonitor.output;
     }
 
     async allow() {

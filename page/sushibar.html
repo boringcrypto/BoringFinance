@@ -180,6 +180,11 @@
         mounted: async function () {
             await this.init();
         },
+        beforeDestroy: function () {
+            if (this.bar) {
+                this.bar.close();
+            }
+        },
         watch: {
             'api': async function () {
                 await this.init();
@@ -226,7 +231,7 @@
                         this.pairs = this.api.makerPairs;
                     }, true);
 
-                    await this.bar.getServings(this.serves);
+                    this.serves = this.bar.getServings();
                 }
             },
             done: function () {
