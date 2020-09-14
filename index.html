@@ -59,10 +59,16 @@
             <router-link class="nav-link mr-auto" to="/sushibar">Bar</i></span></router-link>
         </nav>
         <div class="container-fluid">
-            <div class="text-center mt-3" v-if="!address">
+            <div class="text-center mt-3" v-if="manager.provider == 'None'">
+                Sorry, this app currently only works with MetaMask.
+            </div>
+            <div class="text-center mt-3" v-if="!manager.address">
+                <p v-if="manager.provider != 'MetaMask'">
+                    This app has only been tested with MetaMask, it may work, it may not...
+                </p>
                 <button class="btn btn-lg btn-primary" @click="connect">Connect Metamask</button>
             </div>
-            <router-view v-if="api" :api="api" :address="address"></router-view>
+            <router-view v-if="manager.address" :api="api" :address="manager.address"></router-view>
         </div>
         <footer class="text-center py-2" style="visibility: hidden;">
             <div>Quickly flung together by <a href="https://twitter.com/Boring_Crypto">@Boring_Crypto</a>.
@@ -86,9 +92,8 @@
                 routes: []
             }),
             data: {
-                address: "0x9e6e344f94305d36eA59912b0911fE2c9149Ed3E",
                 api: null,
-                manager: null
+                manager: {}
             },
             mounted: function () {
                 this.manager = new Web3Manager();
@@ -98,8 +103,9 @@
             },
             methods: {
                 connect: async function () {
+                    this.manager.connect();
                     // Connect to wallet
-                    this.address = (await window.ethereum.enable())[0];
+                    //this.address = (await window.ethereum.enable())[0];
                 },
             }
         })

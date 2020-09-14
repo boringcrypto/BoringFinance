@@ -243,6 +243,10 @@ class Web3Manager {
         }
     }
 
+    async connect() {
+        this.address = (await window.ethereum.enable())[0];
+    }
+
     chainUpdated() {
 
     }
