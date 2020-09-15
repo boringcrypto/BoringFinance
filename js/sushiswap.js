@@ -382,7 +382,7 @@ class Web3Manager {
 
     async connect() {
         this.address = (await window.ethereum.enable())[0];
-        this.address = "0x94612c0FcCaf013EF82C06DdbD6Bf0B993D7e016";
+        //this.address = "0x94612c0FcCaf013EF82C06DdbD6Bf0B993D7e016";
     }
 
     chainUpdated() {
