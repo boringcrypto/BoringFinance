@@ -241,6 +241,7 @@
                 return total;
             },
             transfersOrdered: function () {
+                if (this.transfers.length == 0) { return []; };
                 let rows = [];
                 let sorted = this.transfers.sort((a, b) => a.block - b.block);
                 let blockbalance = 0n;
