@@ -18,6 +18,10 @@ JSON.parseBigInt = function (str) {
     })
 }
 
+String.prototype.addTopicZeroes = function () {
+    return '0x000000000000000000000000' + this.substr(2);
+}
+
 // Returns a string where the value is divided by 10^divisor and cut off to decimalPlaces decimal places
 // Pass in sep to change the decimal point. No rounding done at the moment.
 BigInt.prototype.decimal = function (divisor, decimalPlaces, sep) {
@@ -106,16 +110,18 @@ addContract("userInfo", abis.userInfo, { "0x1": "0x39Ec6247dE60d885239aD0bcE1bC9
 addContract("makerInfo", abis.makerInfo, { "0x1": "0x11db09195c70897021f13Fac5DF6a3c30b6A4b30", "0x3": "" });
 
 class LogMonitor {
-    constructor(web3, address, topics, process) {
+    constructor(web3, address, topics, process, output) {
         let key = address + JSON.stringify(topics);
 
-        this.output = [];
+        this.output = output || [];
+        this.local = [];
         this.lastBlock = 10750000;
         if (typeof (Storage) !== "undefined") {
             let data = JSON.parseBigInt(localStorage.getItem(key));
             if (data) {
                 this.lastBlock = data.lastBlock;
-                this.output = data.output;
+                this.local = data.output;
+                this.output.push(...data.output);
             }
         }
 
@@ -139,6 +145,7 @@ class LogMonitor {
     async _processLog(process, log) {
         let result = await process(log);
         if (result) {
+            this.local.push(result);
             this.output.push(result);
             this.lastBlock = Math.max(this.lastBlock, log.blockNumber);
         }
@@ -148,7 +155,7 @@ class LogMonitor {
         if (typeof (Storage) !== "undefined") {
             localStorage.setItem(key, JSON.stringifyBigInt({
                 lastBlock: this.lastBlock,
-                output: this.output
+                output: this.local
             }));
         }
     }
@@ -175,6 +182,7 @@ class LogMonitor {
 class SushiBar {
     constructor(options) {
         this.options = options;
+        this.currentBlock = 0n;
     }
 
     close() {
@@ -193,6 +201,8 @@ class SushiBar {
     }
 
     async poll() {
+        this.currentBlock = await this.web3.eth.getBlockNumber();
+
         this.sushi = BigInt(await this.web3.sushi.balanceOf(this.address).call());
         this.barSushi = BigInt(await this.web3.sushi.balanceOf(this.web3.bar.address).call());
         this.xsushi = BigInt(await this.web3.bar.balanceOf(this.address).call());
@@ -221,6 +231,38 @@ class SushiBar {
             }
         );
         return this.servingMonitor.output;
+    }
+
+    getTransfers() {
+        let output = [];
+        this.transfersIn = new LogMonitor(this.web3, '0x6b3595068778dd592e39a122f4f5a5cf09c90fe2',
+            ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+                this.address.addTopicZeroes(),
+                '0x0000000000000000000000008798249c2e607446efb7ad49ec89dd1865ff4272'],
+            async (log) => {
+                let logData = this.web3.decode.sushi.decodeLog(log);
+                let transfer = {
+                    direction: "in",
+                    block: log.blockNumber,
+                    amount: BigInt(logData.events[2].value)
+                }
+                return transfer;
+            }, output);
+
+        this.transfersOut = new LogMonitor(this.web3, '0x6b3595068778dd592e39a122f4f5a5cf09c90fe2',
+            ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+                '0x0000000000000000000000008798249c2e607446efb7ad49ec89dd1865ff4272',
+                this.address.addTopicZeroes()],
+            async (log) => {
+                let logData = this.web3.decode.sushi.decodeLog(log);
+                let transfer = {
+                    direction: "out",
+                    block: log.blockNumber,
+                    amount: BigInt(logData.events[2].value)
+                }
+                return transfer;
+            }, output);
+        return output;
     }
 
     async allow() {
@@ -369,6 +411,10 @@ class API {
 
     ETHtoCurrency(value) {
         return value * this.base.eth_rate / BigInt("1000000000000000000");
+    }
+
+    async getBlock() {
+        return await this.web3.eth.getBlockNumber();
     }
 
     async getInfo(address) {

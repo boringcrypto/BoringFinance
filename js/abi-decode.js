@@ -207,4 +207,8 @@ class Decoder {
             }
         });
     }
+
+    decodeLog(log) {
+        return this.decodeLogs([log])[0];
+    }
 }
