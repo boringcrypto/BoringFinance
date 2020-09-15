@@ -190,6 +190,16 @@ class SushiBar {
             this.servingMonitor.close();
         }
         delete this.servingMonitor;
+
+        if (this.transfersIn) {
+            this.transfersIn.close();
+        }
+        delete this.transfersIn;
+
+        if (this.transfersOut) {
+            this.transfersOut.close();
+        }
+        delete this.transfersOut;
     }
 
     get web3() {
