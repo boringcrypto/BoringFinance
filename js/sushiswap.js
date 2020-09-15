@@ -28,25 +28,32 @@ String.prototype.addTopicZeroes = function () {
 // Pass in sep to change the decimal point. No rounding done at the moment.
 BigInt.prototype.decimal = function (divisor, decimalPlaces, sep) {
 
-  if (divisor == 0) {
-      return this;
-  }
-
-  let powDivisor = new Decimal(10).toPower(divisor.toString())
-  //Scale the number down by divisor
-  let x = new Decimal(this.toString())
-  x = x.dividedBy(powDivisor)
-
-  // If we're non-zero...
-  if (!x.isZero()) {
-    let logOfX = x.absoluteValue().logarithm(10)
-    // and won't display in decimalPlaces...
-    if (logOfX.lessThanOrEqualTo(-decimalPlaces)) {
-      // Just display the value
-      return x.toString();
+    if (divisor == 0) {
+        return this;
     }
-  }
-  return x.toFixed(decimalPlaces).toString();
+
+    let powDivisor = new Decimal(10).toPower(divisor.toString());
+    //Scale the number down by divisor
+    let x = new Decimal(this.toString());
+    x = x.dividedBy(powDivisor);
+    //console.log(x.toString(), x.decimalPlaces(), x.precision(), decimalPlaces, x.decimalPlaces() - x.precision() >= decimalPlaces - 4)
+    if (x.decimalPlaces() - x.precision() > decimalPlaces - 4) {
+        return x.toSignificantDigits(4).toFixed();
+    }
+    else {
+        return x.toFixed(decimalPlaces);
+    }
+
+    // If we're non-zero...
+    if (!x.isZero()) {
+        let logOfX = x.absoluteValue().logarithm(10)
+        // and won't display in decimalPlaces...
+        if (logOfX.lessThanOrEqualTo(-decimalPlaces)) {
+            // Just display the value
+            return x.toString();
+        }
+    }
+    return x.toFixed(decimalPlaces).toString();
 }
 
 // Makes calling contracts easier, by adding the contracts to every instance of Web3.

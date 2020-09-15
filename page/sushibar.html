@@ -55,15 +55,15 @@
                                 <thead>
                                     <th>Direction</th>
                                     <th class="text-right">Amount</th>
-                                    <th class="text-right">Balance</th>
                                 </thead>
                                 <tbody>
                                     <tr v-for="transfer in transfersOrdered.slice(0, 25)">
                                         <td>
                                             {{ transfer.direction }}
                                         </td>
-                                        <td class="text-right">{{ transfer.amount.decimal(18, 2) }} SUSHI</td>
-                                        <td class="text-right">{{ transfer.balance.decimal(18, 2) }} SUSHI</td>
+                                        <td class="text-right">
+                                            {{ (transfer.direction == 'in' ? '' : '-') + transfer.amount.decimal(18, 2) }}
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
