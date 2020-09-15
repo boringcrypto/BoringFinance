@@ -7,16 +7,17 @@
                         <div class="card-body">
                             <h3 class="card-title">In the bar</h3>
                             <p>
-                                SUSHI in the bar: {{ bar.barSushi.decimal(18, 4) }}<br>
-                                Your SUSHI stake: {{ bar.sushiStake.decimal(18, 4) }}<br>
+                                SUSHI in the bar: {{ bar.barSushi.print(18, 4) }}<br>
+                                Your SUSHI stake: {{ bar.sushiStake.print(18, 4) }}<br>
                                 <br>
-                                Your xSUSHI: {{ bar.xsushi.decimal(18, 4) }}
+                                Your xSUSHI: {{ bar.xsushi.print(18, 4) }}
                             </p>
                             <div class="input-group mb-3">
-                                <input type="number" v-model="leaveAmount" placeholder="xSUSHI"><br>
+                                <input class="form-control" type="number" v-model="leaveAmount"
+                                    placeholder="xSUSHI"><br>
                                 <div class="input-group-append">
                                     <span class="input-group-text" style="cursor: pointer;"
-                                        @click="leaveAmount = Number(bar.xsushi / 1000000000000n) / 1000000">Max</span>
+                                        @click="leaveAmount = bar.xsushi.toDec(18)">Max</span>
                                 </div>
                             </div>
 
@@ -30,10 +31,10 @@
                         <div class="card-body">
                             <h3 class="card-title">Outside</h3>
                             <p>
-                                Sushi: {{ bar.sushi.decimal(18, 4) }}<br>
+                                Sushi: {{ bar.sushi.print(18, 4) }}<br>
                             </p>
                             <div class="input-group mb-3">
-                                <input type="number" v-model="enterAmount" placeholder="SUSHI"><br>
+                                <input class="form-control" type="number" v-model="enterAmount" placeholder="SUSHI"><br>
                                 <div class="input-group-append">
                                     <span class="input-group-text" style="cursor: pointer;"
                                         @click="enterAmount = Number(bar.sushi / 1000000000000n) / 1000000">Max</span>
@@ -62,35 +63,15 @@
                                             {{ transfer.direction }}
                                         </td>
                                         <td class="text-right">
-                                            {{ (transfer.direction == 'in' ? '' : '-') + transfer.amount.decimal(18, 2) }}
+                                            {{ (transfer.direction == 'in' ? '' : '-') + transfer.amount.print(18, 2) }}
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
                             <p>
-                                Your total gain: {{ (bar.sushiStake - balance).decimal(18, 2) }} SUSHI<br />
-                                Time weighted average balance staked: {{ TWAbalance.decimal(18, 2) }} SUSHI<br />
-                                Your APR: {{ yearlyROI.decimal(16, 2) }}%
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-md-6 col-lg-4 mb-3">
-                    <div class="card">
-                        <div class="card-body">
-                            <h3 class="card-title">What is this?</h3>
-                            <p>
-                                Everytime someone trades on SushiSwap, 0.05% will go to the Kitchen. Anyone can be
-                                kind and serve it up. This will turn it into yummy SUSHI delivering it to everyone
-                                in the bar. So everyone will have a little more SUSHI.<br>
-                                <br>
-                                When your stake enters the SushiBar, you get xSUSHI for your SUSHI. You will keep the
-                                same
-                                amount of xSUSHI. Everytime someone serves up delicious SUSHI, your xSUSHI will be worth
-                                a little more SUSHI.<br>
-                                <br>
-                                If you leave the bar now, you'll get around {{ bar.sushiStake.decimal(18, 4) }}
-                                SUSHI.<br>
+                                Your total gain: {{ (bar.sushiStake - balance).print(18, 2) }} SUSHI<br />
+                                Time weighted average balance staked: {{ TWAbalance.print(18, 2) }} SUSHI<br />
+                                Your APR: {{ yearlyROI.print(16, 2) }}%
                             </p>
                         </div>
                     </div>
@@ -103,9 +84,9 @@
                             <h3 class="card-title">What's cooking in the Kitchen?</h3>
                             <p>
                                 Here's what's currently waiting in the Kitchen. It's not quite yours until someone
-                                serves it up. There's a total of ${{ totalKitchen.decimal(6, 2) }} waiting to be served.
+                                serves it up. There's a total of ${{ totalKitchen.print(6, 2) }} waiting to be served.
                                 Your
-                                share of that is ${{ totalUserShare.decimal(6, 2) }} if it was all served now.
+                                share of that is ${{ totalUserShare.print(6, 2) }} if it was all served now.
                             </p>
                             <table class="w-100 mb-3">
                                 <thead>
@@ -117,10 +98,10 @@
                                     <tr v-for="pair, i in pairs" v-if="i != 2">
                                         <td class="pr-3">{{ pairNames[pair.pair] }}</td>
                                         <td class="text-right">
-                                            ${{ pair.totalValueInCurrency.decimal(6, 2) }}
+                                            ${{ pair.totalValueInCurrency.print(6, 2) }}
                                         </td>
                                         <td class="text-right">
-                                            ${{ userShare(pair).decimal(6, 2) }}
+                                            ${{ userShare(pair).print(6, 2) }}
                                         </td>
                                         <td class="text-right">
                                             <button class="btn btn-sm btn-primary ml-3"
@@ -157,7 +138,7 @@
                                             </a>
                                         </td>
                                         <td>{{ pairNames[serve.pair] }}</td>
-                                        <td class="text-right">{{ serve.amount.decimal(18, 2) }}</td>
+                                        <td class="text-right">{{ serve.amount.print(18, 2) }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -168,6 +149,27 @@
                         </div>
                     </div>
                 </div>
+                <div class="col-12 col-md-6 col-lg-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">What is this?</h3>
+                            <p>
+                                Everytime someone trades on SushiSwap, 0.05% will go to the Kitchen. Anyone can be
+                                kind and serve it up. This will turn it into yummy SUSHI delivering it to everyone
+                                in the bar. So everyone will have a little more SUSHI.<br>
+                                <br>
+                                When your stake enters the SushiBar, you get xSUSHI for your SUSHI. You will keep the
+                                same
+                                amount of xSUSHI. Everytime someone serves up delicious SUSHI, your xSUSHI will be worth
+                                a little more SUSHI.<br>
+                                <br>
+                                If you leave the bar now, you'll get around {{ bar.sushiStake.print(18, 4) }}
+                                SUSHI.<br>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -273,10 +275,10 @@
                 return this.serves.sort((a, b) => b.block - a.block);
             },
             enterWei: function () {
-                return BigInt(Number(this.enterAmount) * 1000000) * 1000000000000n
+                return BigInt(new Decimal(this.enterAmount).times(Decimal.pow(10, 18)).toFixed());
             },
             leaveWei: function () {
-                return BigInt(Number(this.leaveAmount) * 1000000) * 1000000000000n
+                return BigInt(new Decimal(this.leaveAmount).times(Decimal.pow(10, 18)).toFixed());
             }
         },
         methods: {

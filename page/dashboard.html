@@ -11,7 +11,7 @@
                         <table class="w-100">
                             <tr v-for="token in tokens" v-if="token.balance > 0n">
                                 <td>{{ token.symbol }}</td>
-                                <td class="text-right">{{ token.balance.decimal(token.decimals, 2) }}</td>
+                                <td class="text-right">{{ token.balance.print(token.decimals, 2) }}</td>
                             </tr>
                         </table>
                     </div>

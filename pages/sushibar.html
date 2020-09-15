@@ -57,10 +57,10 @@
                         <div class="card-body">
                             <h3 class="card-title">In the bar</h3>
                             <p>
-                                SUSHI in the bar: {{ bar.barSushi.decimal(18, 4) }}<br>
-                                Your SUSHI stake: {{ bar.sushiStake.decimal(18, 4) }}<br>
+                                SUSHI in the bar: {{ bar.barSushi.print(18, 4) }}<br>
+                                Your SUSHI stake: {{ bar.sushiStake.print(18, 4) }}<br>
                                 <br>
-                                Your xSUSHI: {{ bar.xsushi.decimal(18, 4) }}
+                                Your xSUSHI: {{ bar.xsushi.print(18, 4) }}
                             </p>
                             <div class="input-group mb-3">
                                 <input type="number" v-model="leaveAmount" placeholder="xSUSHI"><br>
@@ -80,7 +80,7 @@
                         <div class="card-body">
                             <h3 class="card-title">Outside</h3>
                             <p>
-                                Sushi: {{ bar.sushi.decimal(18, 4) }}<br>
+                                Sushi: {{ bar.sushi.print(18, 4) }}<br>
                             </p>
                             <div class="input-group mb-3">
                                 <input type="number" v-model="enterAmount" placeholder="SUSHI"><br>
@@ -111,7 +111,7 @@
                                 amount of xSUSHI. Everytime someone serves up delicious SUSHI, your xSUSHI will be worth
                                 a little more SUSHI.<br>
                                 <br>
-                                If you leave the bar now, you'll get around {{ bar.sushiStake.decimal(18, 4) }}
+                                If you leave the bar now, you'll get around {{ bar.sushiStake.print(18, 4) }}
                                 SUSHI.<br>
                             </p>
                         </div>
@@ -125,9 +125,9 @@
                             <h3 class="card-title">What's cooking in the Kitchen?</h3>
                             <p>
                                 Here's what's currently waiting in the Kitchen. It's not quite yours until someone
-                                serves it up. There's a total of ${{ totalKitchen.decimal(6, 2) }} waiting to be served.
+                                serves it up. There's a total of ${{ totalKitchen.print(6, 2) }} waiting to be served.
                                 Your
-                                share of that is ${{ totalUserShare.decimal(6, 2) }} if it was all served now.
+                                share of that is ${{ totalUserShare.print(6, 2) }} if it was all served now.
                             </p>
                             <table class="w-100 mb-3">
                                 <thead>
@@ -139,10 +139,10 @@
                                     <tr v-for="pair, i in pairs" v-if="i != 2">
                                         <td class="pr-3">{{ pairNames[pair.pair] }}</td>
                                         <td class="text-right">
-                                            ${{ pair.totalValueInCurrency.decimal(6, 2) }}
+                                            ${{ pair.totalValueInCurrency.print(6, 2) }}
                                         </td>
                                         <td class="text-right">
-                                            ${{ userShare(pair).decimal(6, 2) }}
+                                            ${{ userShare(pair).print(6, 2) }}
                                         </td>
                                         <td class="text-right">
                                             <button class="btn btn-sm btn-primary ml-3"
@@ -179,7 +179,7 @@
                                             </a>
                                         </td>
                                         <td>{{ pairNames[serve.pair] }}</td>
-                                        <td class="text-right">{{ serve.amount.decimal(18, 2) }}</td>
+                                        <td class="text-right">{{ serve.amount.print(18, 2) }}</td>
                                     </tr>
                                 </tbody>
                             </table>

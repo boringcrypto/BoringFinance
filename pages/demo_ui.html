@@ -29,12 +29,12 @@
         <h1>SushiSwap Pools</h1>
         <div v-if="base.loaded">
             <p>
-                SUSHI Balance: {{ base.sushiBalance.decimal(18, 4) }} - $
-                {{ base.sushiBalanceInCurrency.decimal(6, 2) }}<br />
-                SUSHI Pending: {{ base.pending.decimal(18, 4) }} - $ {{ base.pendingInCurrency.decimal(6, 2) }}<br />
+                SUSHI Balance: {{ base.sushiBalance.print(18, 4) }} - $
+                {{ base.sushiBalanceInCurrency.print(6, 2) }}<br />
+                SUSHI Pending: {{ base.pending.print(18, 4) }} - $ {{ base.pendingInCurrency.print(6, 2) }}<br />
                 <br />
-                Total value <b>staked in SushiSwap</b>: ${{ totalValue.decimal(12, 2) }}M<br />
-                SUSHI Price: ${{ base.sushiValueInCurrency.decimal(6, 2) }}
+                Total value <b>staked in SushiSwap</b>: ${{ totalValue.print(12, 2) }}M<br />
+                SUSHI Price: ${{ base.sushiValueInCurrency.print(6, 2) }}
             </p>
 
             <table class="table">
@@ -54,22 +54,22 @@
                         {{ pool.token0symbol}}-{{ pool.token1symbol }}
                     </td>
                     <td class="text-right">
-                        ${{ pool.valueInCurrency.decimal(12, 2) }}M
+                        ${{ pool.valueInCurrency.print(12, 2) }}M
                     </td>
                     <td class="d-none d-md-table-cell text-right">
-                        Daily: {{ pool.dailyROI.decimal(4, 2) }}% (${{ pool.dailyInCurrency.decimal(6, 2) }})<br />
-                        Monthly: {{ pool.monthlyROI.decimal(4, 2) }}%
-                        (${{ pool.monthlyInCurrency.decimal(6, 2) }})<br />
-                        Yearly: {{ pool.yearlyROI.decimal(4, 2) }}% (${{ pool.yearlyInCurrency.decimal(6, 2) }})
+                        Daily: {{ pool.dailyROI.print(4, 2) }}% (${{ pool.dailyInCurrency.print(6, 2) }})<br />
+                        Monthly: {{ pool.monthlyROI.print(4, 2) }}%
+                        (${{ pool.monthlyInCurrency.print(6, 2) }})<br />
+                        Yearly: {{ pool.yearlyROI.print(4, 2) }}% (${{ pool.yearlyInCurrency.print(6, 2) }})
                     </td>
                     <td class="d-table-cell d-md-none text-right">
-                        {{ pool.yearlyROI.decimal(4, 2) }}%<br />
-                        ${{ pool.yearlyInCurrency.decimal(6, 2) }}
+                        {{ pool.yearlyROI.print(4, 2) }}%<br />
+                        ${{ pool.yearlyInCurrency.print(6, 2) }}
                     </td>
                     <td class="text-right">
-                        {{ pool.userStakedToken0.decimal(pool.token0decimals, 4) }} {{ pool.token0symbol }}<br />
-                        {{ pool.userStakedToken1.decimal(pool.token1decimals, 4) }} {{ pool.token1symbol }}<br />
-                        {{ pool.pending.decimal(18, 4) }} SUSHI
+                        {{ pool.userStakedToken0.print(pool.token0decimals, 4) }} {{ pool.token0symbol }}<br />
+                        {{ pool.userStakedToken1.print(pool.token1decimals, 4) }} {{ pool.token1symbol }}<br />
+                        {{ pool.pending.print(18, 4) }} SUSHI
                     </td>
                 </tr>
             </table>

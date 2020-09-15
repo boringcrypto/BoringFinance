@@ -26,12 +26,7 @@ String.prototype.addTopicZeroes = function () {
 
 // Returns a string where the value is divided by 10^divisor and cut off to decimalPlaces decimal places
 // Pass in sep to change the decimal point. No rounding done at the moment.
-BigInt.prototype.decimal = function (divisor, decimalPlaces, sep) {
-
-    if (divisor == 0) {
-        return this;
-    }
-
+BigInt.prototype.print = function (divisor, decimalPlaces) {
     let powDivisor = new Decimal(10).toPower(divisor.toString());
     //Scale the number down by divisor
     let x = new Decimal(this.toString());
@@ -43,17 +38,10 @@ BigInt.prototype.decimal = function (divisor, decimalPlaces, sep) {
     else {
         return x.toFixed(decimalPlaces);
     }
+}
 
-    // If we're non-zero...
-    if (!x.isZero()) {
-        let logOfX = x.absoluteValue().logarithm(10)
-        // and won't display in decimalPlaces...
-        if (logOfX.lessThanOrEqualTo(-decimalPlaces)) {
-            // Just display the value
-            return x.toString();
-        }
-    }
-    return x.toFixed(decimalPlaces).toString();
+BigInt.prototype.toDec = function (divisor) {
+    return new Decimal(this.toString()).dividedBy(new Decimal(10).toPower(divisor.toString()));
 }
 
 // Makes calling contracts easier, by adding the contracts to every instance of Web3.
