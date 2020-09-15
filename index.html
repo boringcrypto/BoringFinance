@@ -53,10 +53,14 @@
 <body class="bg">
     <div id="app">
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <router-link class="nav-link" to="/"><i class="fas fa-home"></i></span></router-link>
-            <router-link class="nav-link mr-auto" to="/swap">Swap</i></span></router-link>
-            <router-link class="nav-link mr-auto" to="/pools">Pools</i></span></router-link>
-            <router-link class="nav-link mr-auto" to="/sushibar">Bar</i></span></router-link>
+            <router-link class="nav-link" to="/"><i class="fas fa-home"></i></router-link>
+            <router-link class="nav-link" to="/swap">Swap</router-link>
+            <router-link class="nav-link" to="/pools">Pools</router-link>
+            <router-link class="nav-link mr-auto" to="/sushibar">Bar</router-link>
+            <div class="nav-link">
+                <span v-if="!manager.address">Accounts</span>
+                <span v-else="">{{ manager.address.substr(0, 10) }}</span>
+                </span></div>
         </nav>
         <div class="container-fluid">
             <div class="text-center mt-3" v-if="manager.provider == 'None'">

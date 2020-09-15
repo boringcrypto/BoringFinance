@@ -29,7 +29,11 @@ BigInt.prototype.decimal = function (divisor, decimalPlaces, sep) {
         return this;
     }
     let quotient = this / (10n ** BigInt(divisor));
-    let remainder = (this % (10n ** BigInt(divisor))).toString();
+    let remainder = this % (10n ** BigInt(divisor));
+    if (remainder < 0n) {
+        remainder = 0n - remainder;
+    }
+    remainder = remainder.toString();
     remainder = '0'.repeat(Number(divisor) - remainder.length) + remainder;
     return quotient + (sep || ".") + remainder.substr(0, Number(decimalPlaces));
 }
@@ -378,6 +382,7 @@ class Web3Manager {
 
     async connect() {
         this.address = (await window.ethereum.enable())[0];
+        this.address = "0x94612c0FcCaf013EF82C06DdbD6Bf0B993D7e016";
     }
 
     chainUpdated() {
