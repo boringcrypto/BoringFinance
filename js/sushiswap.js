@@ -1,4 +1,6 @@
-﻿// Add ability to serialize BigInt as JSON
+﻿Decimal.config({ precision: 36 })
+
+// Add ability to serialize BigInt as JSON
 JSON.stringifyBigInt = function (obj) {
     return JSON.stringify(obj, (key, value) => {
         if (typeof value === 'bigint') {
@@ -25,17 +27,26 @@ String.prototype.addTopicZeroes = function () {
 // Returns a string where the value is divided by 10^divisor and cut off to decimalPlaces decimal places
 // Pass in sep to change the decimal point. No rounding done at the moment.
 BigInt.prototype.decimal = function (divisor, decimalPlaces, sep) {
-    if (divisor == 0) {
-        return this;
+
+  if (divisor == 0) {
+      return this;
+  }
+
+  let powDivisor = new Decimal(10).toPower(divisor.toString())
+  //Scale the number down by divisor
+  let x = new Decimal(this.toString())
+  x = x.dividedBy(powDivisor)
+
+  // If we're non-zero...
+  if (!x.isZero()) {
+    let logOfX = x.absoluteValue().logarithm(10)
+    // and won't display in decimalPlaces...
+    if (logOfX.lessThanOrEqualTo(-decimalPlaces)) {
+      // Just display the value
+      return x.toString();
     }
-    let quotient = this / (10n ** BigInt(divisor));
-    let remainder = this % (10n ** BigInt(divisor));
-    if (remainder < 0n) {
-        remainder = 0n - remainder;
-    }
-    remainder = remainder.toString();
-    remainder = '0'.repeat(Number(divisor) - remainder.length) + remainder;
-    return quotient + (sep || ".") + remainder.substr(0, Number(decimalPlaces));
+  }
+  return x.toFixed(decimalPlaces).toString();
 }
 
 // Makes calling contracts easier, by adding the contracts to every instance of Web3.
