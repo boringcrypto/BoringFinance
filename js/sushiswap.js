@@ -361,6 +361,7 @@ class Tokens {
 class Web3Manager {
     constructor(web3) {
         this.web3 = web3;
+        this.addresses = [];
 
         this.address = null;
         this.currency = null;
@@ -381,8 +382,15 @@ class Web3Manager {
     }
 
     async connect() {
-        this.address = (await window.ethereum.enable())[0];
-        //this.address = "0x94612c0FcCaf013EF82C06DdbD6Bf0B993D7e016";
+        let addresses = await window.ethereum.request({ method: 'eth_accounts' });
+        if (addresses && addresses.length) {
+            this.address = addresses[0];
+            for (let i in addresses) {
+                if (this.addresses.indexOf(addresses[i].toLowerCase()) == -1) {
+                    this.addresses.push(addresses[i].toLowerCase());
+                }
+            }
+        }
     }
 
     chainUpdated() {

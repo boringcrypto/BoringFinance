@@ -57,10 +57,17 @@
             <router-link class="nav-link" to="/swap">Swap</router-link>
             <router-link class="nav-link" to="/pools">Pools</router-link>
             <router-link class="nav-link mr-auto" to="/sushibar">Bar</router-link>
-            <div class="nav-link">
-                <span v-if="!manager.address">Accounts</span>
-                <span v-else="">{{ manager.address.substr(0, 10) }}</span>
-                </span></div>
+            <div class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
+                    aria-haspopup="true" aria-expanded="false">
+                    <span v-if="!manager.address">Accounts</span>
+                    <span v-else="">{{ manager.address.substr(0, 10) }}</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+                    <a v-for="address in manager.addresses" class="dropdown-item"
+                        href="#">{{ address.substr(0, 10) }}</a>
+                </div>
+            </div>
         </nav>
         <div class="container-fluid">
             <div class="text-center mt-3" v-if="manager.provider == 'None'">

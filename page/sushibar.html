@@ -255,7 +255,6 @@
                     if (i > 0) {
                         blockbalance += BigInt(rows[i].block - rows[i - 1].block) * rows[i - 1].balance;
                     }
-                    console.log(rows);
                 }
                 blockbalance += BigInt(this.bar.currentBlock - rows[i].block) * rows[i].balance;
 
