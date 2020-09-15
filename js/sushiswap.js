@@ -1,4 +1,6 @@
 ﻿Decimal.config({ precision: 36 })
+Decimal.config({ toExpNeg: -1000 })
+Decimal.config({ toExpPos: 1000 })
 
 // Add ability to serialize BigInt as JSON
 JSON.stringifyBigInt = function (obj) {
@@ -42,6 +44,10 @@ BigInt.prototype.print = function (divisor, decimalPlaces) {
 
 BigInt.prototype.toDec = function (divisor) {
     return new Decimal(this.toString()).dividedBy(new Decimal(10).toPower(divisor.toString()));
+}
+
+Decimal.prototype.toInt = function (decimals) {
+    return BigInt(this.times(new Decimal("10").pow(decimals)).todp(0));
 }
 
 // Makes calling contracts easier, by adding the contracts to every instance of Web3.
@@ -122,8 +128,10 @@ addContract("makerInfo", abis.makerInfo, { "0x1": "0x11db09195c70897021f13Fac5DF
 class LogMonitor {
     constructor(web3, address, topics, process, output) {
         let key = address + JSON.stringify(topics);
+        console.log('Logger created for ', address, topics);
 
         this.output = output || [];
+        this.seen = {};
         this.local = [];
         this.lastBlock = 10750000;
         if (typeof (Storage) !== "undefined") {
@@ -153,12 +161,16 @@ class LogMonitor {
     }
 
     async _processLog(process, log) {
-        let result = await process(log);
-        if (result) {
-            this.local.push(result);
-            this.output.push(result);
-            this.lastBlock = Math.max(this.lastBlock, log.blockNumber);
+        if (!this.seen[log.blockNumber + "-" + log.logIndex]) {
+            console.log('Log received ', log);
+            let result = await process(log);
+            if (result) {
+                this.local.push(result);
+                this.output.push(result);
+                this.lastBlock = Math.max(this.lastBlock, log.blockNumber);
+            }
         }
+        this.seen[log.blockNumber + "-" + log.logIndex] = true;
     }
 
     async _save(key) {
@@ -414,14 +426,17 @@ class API {
         this.pools = [];
         this.makerPairs = [];
         this.update(web3, currency);
-    }
+        this.block = 0n;
+        this.hash = "";
+        this.header = {};
 
-    auto_update(callback, insta_call) {
-        // Call the callback directly once on subscribe.
-        if (insta_call) {
-            callback();
-        }
-        this.subscription = this.web3.eth.subscribe('newBlockHeaders', callback);
+        this.subscription = this.web3.eth.subscribe('newBlockHeaders', (error, result) => {
+            if (error) { return };
+
+            this.block = BigInt(result.number);
+            this.hash = result.hash;
+            this.header = result.header;
+        });
     }
 
     update(web3, currency) {
@@ -559,6 +574,7 @@ class API {
     }
 
     async getMakerInfo() {
+        console.log("Currency:", this.currency);
         var result = await this.web3.makerInfo.getPairs(this.currency).call({ gas: 5000000 });
         this.base.eth_rate = BigInt(result[0]);
 

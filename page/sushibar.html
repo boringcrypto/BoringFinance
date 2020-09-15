@@ -7,10 +7,10 @@
                         <div class="card-body">
                             <h3 class="card-title">In the bar</h3>
                             <p>
-                                SUSHI in the bar: {{ bar.barSushi.print(18, 4) }}<br>
-                                Your SUSHI stake: {{ bar.sushiStake.print(18, 4) }}<br>
+                                SUSHI in the bar: {{ bar.barSushi.print(18, 0) }}<br>
+                                Your SUSHI stake: {{ bar.sushiStake.print(18, 0) }}<br>
                                 <br>
-                                Your xSUSHI: {{ bar.xsushi.print(18, 4) }}
+                                Your xSUSHI: {{ bar.xsushi.print(18, 0) }}
                             </p>
                             <div class="input-group mb-3">
                                 <input class="form-control" type="number" v-model="leaveAmount"
@@ -21,8 +21,8 @@
                                 </div>
                             </div>
 
-                            <button class="btn btn-primary" @click="bar.leave(leaveWei)">Leave the bar</button>
-                            </p>
+                            <button class="btn btn-primary float-right" @click="bar.leave(leaveWei)">Leave the
+                                bar</button>
                         </div>
                     </div>
                 </div>
@@ -31,20 +31,19 @@
                         <div class="card-body">
                             <h3 class="card-title">Outside</h3>
                             <p>
-                                Sushi: {{ bar.sushi.print(18, 4) }}<br>
+                                Sushi: {{ bar.sushi.print(18, 0) }}<br>
                             </p>
                             <div class="input-group mb-3">
                                 <input class="form-control" type="number" v-model="enterAmount" placeholder="SUSHI"><br>
                                 <div class="input-group-append">
                                     <span class="input-group-text" style="cursor: pointer;"
-                                        @click="enterAmount = Number(bar.sushi / 1000000000000n) / 1000000">Max</span>
+                                        @click="enterAmount = bar.sushi.toDec(18)">Max</span>
                                 </div>
                             </div>
-                            <button v-if="!bar.allowance || bar.allowance < enterAmount" class="btn btn-primary"
-                                @click="bar.allow()">Allow</button>
-                            <button v-else="" class="btn btn-primary" @click="bar.enter(enterWei)">Enter the
+                            <button v-if="!bar.allowance || bar.allowance < enterAmount"
+                                class="btn btn-primary float-right" @click="bar.allow()">Allow</button>
+                            <button v-else="" class="btn btn-primary float-right" @click="bar.enter(enterWei)">Enter the
                                 bar</button>
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -176,7 +175,7 @@
 </template>
 <script>
     app.page = {
-        props: ['api', 'address'],
+        props: ['api', 'address', 'block'],
         data: function () {
             return {
                 bar: null,
@@ -221,6 +220,10 @@
         watch: {
             'api': async function () {
                 await this.init();
+            },
+            'block': async function () {
+                console.log(this.block);
+                await this.update();
             }
         },
         computed: {
@@ -275,30 +278,29 @@
                 return this.serves.sort((a, b) => b.block - a.block);
             },
             enterWei: function () {
-                return BigInt(new Decimal(this.enterAmount).times(Decimal.pow(10, 18)).toFixed());
+                return new Decimal(this.enterAmount).toInt(18);
             },
             leaveWei: function () {
-                return BigInt(new Decimal(this.leaveAmount).times(Decimal.pow(10, 18)).toFixed());
+                return new Decimal(this.leaveAmount).toInt(18);
             }
         },
         methods: {
             init: async function () {
                 if (this.api && !this.bar) {
                     this.bar = await this.api.getBar(this.address);
-                    this.api.auto_update(async () => {
-                        await this.bar.poll();
-
-                        await this.api.getMakerInfo();
-                        this.ethRate = this.api.ethRate;
-                        this.pairs = this.api.makerPairs;
-                    }, true);
 
                     this.transfers = this.bar.getTransfers();
                     this.serves = this.bar.getServings();
+
+                    await this.update();
                 }
             },
-            done: function () {
+            update: async function () {
+                await this.bar.poll();
 
+                await this.api.getMakerInfo();
+                this.ethRate = this.api.ethRate;
+                this.pairs = this.api.makerPairs;
             },
             userShare: function (pair) {
                 return (pair.totalValueInCurrency * this.bar.poolShare / BigInt("1000000000000000000"));
