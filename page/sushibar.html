@@ -67,7 +67,7 @@
                                     </tr>
                                 </tbody>
                             </table>
-                            <p>
+                            <p class="mb-0">
                                 Your total gain: {{ (bar.sushiStake - balance).print(18, 2) }} SUSHI<br />
                                 Time weighted average balance staked: {{ TWAbalance.print(18, 2) }} SUSHI<br />
                                 Your APR: {{ yearlyROI.print(16, 2) }}%
@@ -110,7 +110,7 @@
                                     </tr>
                                 </tbody>
                             </table>
-                            <p>
+                            <p class="mb-0">
                                 If you serve it, it will go to the bar, but you'll have to share it with everyone...
                             </p>
                         </div>
@@ -141,7 +141,7 @@
                                     </tr>
                                 </tbody>
                             </table>
-                            <p>
+                            <p class="mb-0">
                                 If you setup a <a href="https://app.ens.domains/">reverse ENS</a>, your name will be
                                 listed here.
                             </p>
@@ -152,7 +152,7 @@
                     <div class="card">
                         <div class="card-body">
                             <h3 class="card-title">What is this?</h3>
-                            <p>
+                            <p class="mb-0">
                                 Everytime someone trades on SushiSwap, 0.05% will go to the Kitchen. Anyone can be
                                 kind and serve it up. This will turn it into yummy SUSHI delivering it to everyone
                                 in the bar. So everyone will have a little more SUSHI.<br>
@@ -163,7 +163,7 @@
                                 a little more SUSHI.<br>
                                 <br>
                                 If you leave the bar now, you'll get around {{ bar.sushiStake.print(18, 4) }}
-                                SUSHI.<br>
+                                SUSHI.
                             </p>
                         </div>
                     </div>
@@ -223,6 +223,9 @@
             },
             'block': async function () {
                 console.log(this.block);
+                await this.update();
+            },
+            'address': async function () {
                 await this.update();
             }
         },
@@ -287,7 +290,7 @@
         methods: {
             init: async function () {
                 if (this.api && !this.bar) {
-                    this.bar = await this.api.getBar(this.address);
+                    this.bar = await this.api.getBar(this.api);
 
                     this.transfers = this.bar.getTransfers();
                     this.serves = this.bar.getServings();

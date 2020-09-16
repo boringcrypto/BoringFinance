@@ -112,14 +112,12 @@
             mounted: function () {
                 this.manager = new Web3Manager();
                 if (this.manager.web3) {
-                    this.api = new API(this.manager.web3);
+                    this.api = new API(this.manager);
                 }
             },
             methods: {
                 connect: async function () {
                     this.manager.connect();
-                    // Connect to wallet
-                    //this.address = (await window.ethereum.enable())[0];
                 },
             }
         })

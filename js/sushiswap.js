@@ -385,6 +385,7 @@ class Web3Manager {
         this.currency = null;
         this.provider = "Unknown";
         this.connected = false;
+        let self = this;
 
         if (window.ethereum) {
             this.web3 = new Web3(window.ethereum);
@@ -392,6 +393,8 @@ class Web3Manager {
                 this.provider = 'MetaMask';
                 this.connected = window.ethereum.isConnected();
                 window.ethereum.autoRefreshOnNetworkChange = false;
+                ethereum.on('accountsChanged', (a) => this.handleAccountsChanged(self, a));
+                console.log("MetaMask detected.")
             }
         }
         else {
@@ -402,17 +405,27 @@ class Web3Manager {
     async connect() {
         let addresses = await window.ethereum.request({ method: 'eth_accounts' });
         if (addresses && addresses.length) {
-            this.address = addresses[0];
-            for (let i in addresses) {
-                if (this.addresses.indexOf(addresses[i].toLowerCase()) == -1) {
-                    this.addresses.push(addresses[i].toLowerCase());
-                }
-            }
+            this.handleAccountsChanged(this, addresses);
+        }
+        else {
+            console.log("No address was retrieved. Fallback to .enable()");
+            let addresses = await window.ethereum.enable();
+            this.handleAccountsChanged(this, addresses);
         }
     }
 
-    chainUpdated() {
-
+    handleAccountsChanged(self, addresses) {
+        console.log("Self", self);
+        console.log("Accounts: ", addresses);
+        if (addresses && addresses.length) {
+            this.address = addresses[0];
+            for (let i in addresses) {
+                console.log(self.addresses);
+                if (self.addresses.indexOf(addresses[i].toLowerCase()) == -1) {
+                    self.addresses.push(addresses[i].toLowerCase());
+                }
+            }
+        }
     }
 }
 
@@ -421,11 +434,12 @@ class SushiPools {
 }
 
 class API {
-    constructor(web3, currency) {
+    constructor(manager, currency) {
         this.base = { loaded: false };
         this.pools = [];
         this.makerPairs = [];
-        this.update(web3, currency);
+        this.manager = manager;
+        this.update(manager.web3, currency);
         this.block = 0n;
         this.hash = "";
         this.header = {};
@@ -607,8 +621,8 @@ class API {
         }
     }
 
-    async getBar(address) {
-        let bar = new SushiBar({ web3: this.web3, address: address });
+    async getBar() {
+        let bar = new SushiBar(this.manager);
         await bar.poll();
         return bar;
     }
