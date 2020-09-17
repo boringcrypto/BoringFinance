@@ -148,8 +148,7 @@ class LogMonitor {
             topics: topics
         }, async (error, log) => {
             if (!error) {
-                await this._processLog(process, log);
-                this._save(key);
+                await this._updateLog(key, process, log);
             }
         });
 
@@ -158,6 +157,11 @@ class LogMonitor {
             address: address,
             topics: topics
         }), process);
+    }
+
+    async _updateLog(key, process, log) {
+      this._processLog(process, log);
+      this._save(key);
     }
 
     async _processLog(process, log) {
