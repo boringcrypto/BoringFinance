@@ -86,6 +86,7 @@
                                 serves it up. There's a total of ${{ totalKitchen.print(6, 2) }} waiting to be served.
                                 Your
                                 share of that is ${{ totalUserShare.print(6, 2) }} if it was all served now.
+                                {{ time }}
                             </p>
                             <table class="w-100 mb-3">
                                 <thead>
@@ -119,6 +120,8 @@
                 <div class="col-12 col-lg-6 mb-3">
                     <div class="card">
                         <div class="card-body">
+                            <span class="float-right" style="cursor: pointer;" @click="bar.servingMonitor.refresh()"><i
+                                    class="fas fa-sync"></i></span>
                             <h3 class="card-title">Who's serving?</h3>
                             <p>
                                 Thanks to these generous chefs we've enjoyed some great sushi!
@@ -168,14 +171,13 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 </template>
 <script>
     app.page = {
-        props: ['api', 'address', 'block'],
+        props: ['api', 'address', 'block', 'time'],
         data: function () {
             return {
                 bar: null,
@@ -226,6 +228,9 @@
                 await this.update();
             },
             'address': async function () {
+                this.transfers = this.bar.getTransfers();
+                this.serves = this.bar.getServings();
+
                 await this.update();
             }
         },

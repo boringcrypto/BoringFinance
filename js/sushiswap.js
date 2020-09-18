@@ -50,6 +50,21 @@ Decimal.prototype.toInt = function (decimals) {
     return BigInt(this.times(new Decimal("10").pow(decimals)).todp(0));
 }
 
+rpcToObj = function (rpc_obj, obj) {
+    if (!obj) {
+        obj = {};
+    }
+    for (let i in rpc_obj) {
+        if (isNaN(i)) {
+            // Not always correct, but overall useful
+            obj[i] = isNaN(rpc_obj[i]) || i.indexOf("name") != -1 || i.indexOf("symbol") != -1
+                ? rpc_obj[i]
+                : BigInt(rpc_obj[i]);
+        }
+    }
+    return obj;
+}
+
 // Makes calling contracts easier, by adding the contracts to every instance of Web3.
 // Changing the network is automatically dealt with.
 // New way of using: web3.contract_name.method_name(parameters).call() or .send()
@@ -92,6 +107,10 @@ abis = {
     makerInfo: [{ "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }], "name": "OwnershipTransferred", "type": "event" }, { "inputs": [{ "internalType": "address", "name": "pair", "type": "address" }], "name": "addPair", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "token", "type": "address" }], "name": "getETHRate", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "currency", "type": "address" }], "name": "getPairs", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }, { "components": [{ "internalType": "address", "name": "pair", "type": "address" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }, { "internalType": "uint256", "name": "totalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "reserve0", "type": "uint256" }, { "internalType": "uint256", "name": "reserve1", "type": "uint256" }, { "internalType": "uint256", "name": "token0rate", "type": "uint256" }, { "internalType": "uint256", "name": "token1rate", "type": "uint256" }, { "internalType": "address", "name": "token0", "type": "address" }, { "internalType": "address", "name": "token1", "type": "address" }], "internalType": "struct PairInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "remove", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "sushiMaker_", "type": "address" }, { "internalType": "address", "name": "factory_", "type": "address" }, { "internalType": "address", "name": "sushi_", "type": "address" }, { "internalType": "address", "name": "WETH_", "type": "address" }], "name": "setContracts", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }],
 }
 
+Web3.prototype.contract = function (abi_name, address) {
+    return new this.eth.Contract(abis[abi_name], address);
+}
+
 // Add a decode method to all web3 instances
 // To get the ABI decoder, use web3.decode.abi_name
 Object.defineProperty(Web3.prototype, "decode", {
@@ -125,45 +144,84 @@ addContract("baseInfo", abis.baseInfo, { "0x1": "0xBb7dF27209ea65Ae02Fe02E76cC1C
 addContract("userInfo", abis.userInfo, { "0x1": "0x39Ec6247dE60d885239aD0bcE1bC9f1553f4EF75", "0x3": "0xe8f852908A61e074032382E9B5058F86fe2a0ea7" });
 addContract("makerInfo", abis.makerInfo, { "0x1": "0x11db09195c70897021f13Fac5DF6a3c30b6A4b30", "0x3": "" });
 
+window.DB = {
+    get: function (key, callback) {
+        if (typeof (Storage) !== "undefined") {
+            let data = JSON.parseBigInt(localStorage.getItem(key));
+            if (data) {
+                callback(data);
+                return true;
+            }
+        }
+        return false;
+    },
+    set: function (key, data) {
+        if (typeof (Storage) !== "undefined") {
+            localStorage.setItem(key, JSON.stringifyBigInt(data));
+            return true;
+        }
+        return false;
+    },
+    del: function (key) {
+        if (typeof (Storage) !== "undefined") {
+            localStorage.removeItem(key);
+            return true;
+        }
+        return false;
+    }
+}
+
 class LogMonitor {
     constructor(web3, address, topics, process, output) {
-        let key = address + JSON.stringify(topics);
+        this.web3 = web3;
+        this.address = address;
+        this.topics = topics;
+        this.process = process;
+        this.key = address + JSON.stringify(topics);
+
         console.log('Logger created for ', address, topics);
 
         this.output = output || [];
         this.seen = {};
         this.local = [];
         this.lastBlock = 10750000;
-        if (typeof (Storage) !== "undefined") {
-            let data = JSON.parseBigInt(localStorage.getItem(key));
-            if (data) {
-                this.lastBlock = data.lastBlock;
-                this.local = data.output;
-                this.output.push(...data.output);
-            }
-        }
-
-        this.subscription = web3.eth.subscribe('logs', {
-            address: address,
-            topics: topics
-        }, async (error, log) => {
-            if (!error) {
-                await this._processLog(process, log);
-                this._save(key);
-            }
-        });
-
-        this._getLogs(key, web3.eth.getPastLogs({
-            fromBlock: this.lastBlock + 1,
-            address: address,
-            topics: topics
-        }), process);
+        DB.get(this.key, (data) => {
+            this.lastBlock = data.lastBlock;
+            this.local = data.output;
+            this.output.push(...data.output);
+        })
+        this._getPastLogsAndSubscribe()
     }
 
-    async _processLog(process, log) {
+    async _getPastLogsAndSubscribe() {
+        let raw_logs = await this.web3.eth.getPastLogs({
+            fromBlock: this.lastBlock + 1,
+            address: this.address,
+            topics: this.topics
+        });
+
+        for (var i in raw_logs) {
+            await this._processLog(raw_logs[i]);
+        }
+
+        this._save();
+
+        this.subscription = this.web3.eth.subscribe('logs', {
+            address: this.address,
+            topics: this.topics
+        }, async (error, log) => {
+            if (!error) {
+                await this._processLog(log);
+                this._save();
+            }
+        });
+    }
+
+    async _processLog(log) {
+        console.log(log.blockNumber + "-" + log.logIndex, this.seen[log.blockNumber + "-" + log.logIndex]);
         if (!this.seen[log.blockNumber + "-" + log.logIndex]) {
             console.log('Log received ', log);
-            let result = await process(log);
+            let result = await this.process(log);
             if (result) {
                 this.local.push(result);
                 this.output.push(result);
@@ -173,29 +231,38 @@ class LogMonitor {
         this.seen[log.blockNumber + "-" + log.logIndex] = true;
     }
 
-    async _save(key) {
-        if (typeof (Storage) !== "undefined") {
-            localStorage.setItem(key, JSON.stringifyBigInt({
-                lastBlock: this.lastBlock,
-                output: this.local
-            }));
-        }
+    async _save() {
+        DB.set(this.key, {
+            lastBlock: this.lastBlock,
+            output: this.local
+        });
     }
 
-    async _getLogs(key, getter, process) {
-        let raw_logs = await getter;
+    refresh() {
+        if (this.subscription) {
+            DB.del(this.key);
+            this.output.length = 0;
+            this.seen = {};
+            this.local = [];
+            this.lastBlock = 10750000;
 
-        for (var i in raw_logs) {
-            await this._processLog(process, raw_logs[i]);
+            this.subscription.unsubscribe((error, success) => {
+                if (success) {
+                    console.log('Successfully unsubscribed!');
+                    this.subscription = null;
+                    this._getPastLogsAndSubscribe();
+                }
+            });
         }
-
-        this._save(key);
     }
 
     close() {
-        this.subscription.unsubscribe(function (error, success) {
-            if (success)
+        // TODO: Wait until there is a subscription?
+        this.subscription.unsubscribe((error, success) => {
+            if (success) {
                 console.log('Successfully unsubscribed!');
+                this.subscription = null;
+            }
         });
     }
 }
@@ -233,9 +300,12 @@ class SushiBar {
     }
 
     async poll() {
-        this.currentBlock = await this.web3.eth.getBlockNumber();
+        var batch = new this.web3.eth.BatchRequest();
+        batch.add(this.web3.eth.getBlockNumber.request((e, r) => this.currentBlock = r));
+        batch.add(this.web3.sushi.balanceOf(this.address).call.request((e, r) => this.sushi = BigInt(r)));
+        await batch.execute();
+        console.log(this.sushi)
 
-        this.sushi = BigInt(await this.web3.sushi.balanceOf(this.address).call());
         this.barSushi = BigInt(await this.web3.sushi.balanceOf(this.web3.bar.address).call());
         this.xsushi = BigInt(await this.web3.bar.balanceOf(this.address).call());
         this.totalXSushi = BigInt(await this.web3.bar.totalSupply().call());
@@ -246,6 +316,10 @@ class SushiBar {
     }
 
     getServings() {
+        if (this.servingMonitor) {
+            this.servingMonitor.close();
+            this.servingMonitor = null;
+        }
         this.servingMonitor = new LogMonitor(this.web3, '0x795065dcc9f64b5614c407a6efdc400da6221fb0',
             ['0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822', '0x0000000000000000000000006684977bbed67e101bb80fc07fccfba655c0a64f', '0x0000000000000000000000008798249c2E607446EfB7Ad49eC89dD1865Ff4272'],
             async (log) => {
@@ -267,6 +341,15 @@ class SushiBar {
 
     getTransfers() {
         let output = [];
+        if (this.transfersIn) {
+            this.transfersIn.close();
+            this.transfersOut = null;
+        }
+        if (this.transfersOut) {
+            this.transfersOut.close();
+            this.transfersOut = null;
+        }
+
         this.transfersIn = new LogMonitor(this.web3, '0x6b3595068778dd592e39a122f4f5a5cf09c90fe2',
             ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
                 this.address.addTopicZeroes(),
@@ -459,10 +542,12 @@ class API {
         let chainId = web3.givenProvider.chainId;
         if (chainId == "0x1") {
             this.currency = currency || "0xdac17f958d2ee523a2206206994597c13d831ec7";
+            console.log("Set currency for Mainnet:", this.currency);
             this.sushi_pool = 12;
         }
         else if (chainId == "0x3") {
             this.currency = currency || "0x292c703A980fbFce4708864Ae6E8C40584DAF323";
+            console.log("Set currency for Ropsten:", this.currency);
             this.sushi_pool = 1;
         }
     }

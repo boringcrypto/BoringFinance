@@ -53,24 +53,36 @@
 </head>
 
 <body class="bg">
-    <div id="app">
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <router-link class="nav-link" to="/"><i class="fas fa-home"></i></router-link>
-            <router-link class="nav-link" to="/swap">Swap</router-link>
-            <router-link class="nav-link" to="/pools">Pools</router-link>
-            <router-link class="nav-link mr-auto" to="/sushibar">Bar</router-link>
-            <div class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
-                    aria-haspopup="true" aria-expanded="false">
-                    <span v-if="!manager.address">Accounts</span>
-                    <span v-else="">{{ manager.address.substr(0, 10) }}</span>
-                </a>
-                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-                    <a v-for="address in manager.addresses" class="dropdown-item"
-                        href="#">{{ address.substr(0, 10) }}</a>
+    <div id="app" class="d-none">
+        <div class="sticky-top">
+            <nav class="navbar navbar-dark bg-dark">
+                <router-link class="nav-link" to="/"><i class="fas fa-home"></i></router-link>
+                <router-link class="nav-link" to="/pools">Pools</router-link>
+                <router-link class="nav-link mr-auto" to="/sushibar">Bar</router-link>
+                <div class="text-right d-none d-sm-block mr-2">
+                    {{ ethBalance.print(18, 2) }} ETH
                 </div>
-            </div>
-        </nav>
+                <div class="nav-item dropdown p-0">
+                    <a class="nav-link dropdown-toggle p-0" href="#" id="navbarDropdown" role="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span v-if="!manager.address">Accounts</span>
+                        <span v-else="">{{ manager.address.substr(0, 10) }}</span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+                        <a v-for="address in manager.addresses" class="dropdown-item" @click="manager.address=address"
+                            href="#">{{ address.substr(0, 10) }}</a>
+                    </div>
+                    <div class="text-right d-sm-none">
+                        {{ ethBalance.print(18, 2) }} ETH
+                    </div>
+                </div>
+            </nav>
+            <nav class="navbar navbar-light bg-light py-1">
+                <div v-if="ethRate" class="navbar-text my-auto p-0">ETH ${{ ethRate.print(6, 2) }}</div>
+                <div v-if="btcRate" class="navbar-text my-auto p-0">BTC ${{ btcRate.print(6, 2) }}</div>
+                <div v-if="sushiRate" class="navbar-text my-auto p-0">SUSHI ${{ sushiRate.print(6, 2) }}</div>
+            </nav>
+        </div>
         <div class="container-fluid">
             <div class="text-center mt-3" v-if="manager.provider == 'None'">
                 Sorry, this app currently only works with MetaMask.
@@ -82,7 +94,7 @@
                 <button class="btn btn-lg btn-primary" @click="connect">Connect Metamask</button>
             </div>
             <router-view v-if="manager.address" :api="api" :address="manager.address" :block="api.block"
-                :header="api.header"></router-view>
+                :header="api.header" :time="time"></router-view>
         </div>
         <footer class="text-center py-2" style="visibility: hidden;">
             <div>Quickly flung together by <a href="https://twitter.com/Boring_Crypto">@Boring_Crypto</a>.
@@ -106,22 +118,58 @@
                 routes: []
             }),
             data: {
+                time: 0,
                 api: null,
-                manager: {}
+                manager: {},
+                ethBalance: 0n,
+                ethRate: 0n,
+                btcRate: 0n,
+                sushiRate: 0n
             },
             mounted: function () {
+                this.time = Date.now();
+                setInterval(() => this.time = Date.now(), 1000);
+
                 this.manager = new Web3Manager();
                 if (this.manager.web3) {
                     this.api = new API(this.manager);
+                }
+            },
+            watch: {
+                "manager.address": function () {
+                    this.update();
+                },
+                "api.block": function () {
+                    this.update();
                 }
             },
             methods: {
                 connect: async function () {
                     this.manager.connect();
                 },
+                update: async function () {
+                    if (this.manager && this.manager.web3) {
+                        let pair = this.manager.web3.contract("pair", "0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852");
+                        let reserves = rpcToObj(await pair.methods.getReserves().call());
+                        this.ethRate = reserves._reserve1 * 1000000000000000000n / reserves._reserve0;
+
+                        pair = this.manager.web3.contract("pair", "0xbb2b8038a1640196fbe3e38816f3e67cba72d940");
+                        reserves = rpcToObj(await pair.methods.getReserves().call());
+                        this.btcRate = (reserves._reserve1 * 100000000n / reserves._reserve0) * this.ethRate / 1000000000000000000n;
+
+                        pair = this.manager.web3.contract("pair", "0x795065dcc9f64b5614c407a6efdc400da6221fb0");
+                        reserves = rpcToObj(await pair.methods.getReserves().call());
+                        this.sushiRate = (reserves._reserve1 * 1000000000000000000n / reserves._reserve0) * this.ethRate / 1000000000000000000n;
+
+                        if (this.manager.address) {
+                            this.ethBalance = BigInt(await this.manager.web3.eth.getBalance(this.manager.address))
+                        }
+                    }
+                }
             }
         })
         app.page = {};
+        $("#app").removeClass("d-none");
     }
 
     let loaded_pages = {};
