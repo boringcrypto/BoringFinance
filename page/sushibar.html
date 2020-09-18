@@ -1,0 +1,317 @@
+<template id="page_template">
+    <div class="mt-3">
+        <div v-if="bar" style="min-height: 100%;">
+            <div class="row">
+                <div class="col-12 col-md-6 col-lg-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">In the bar</h3>
+                            <p>
+                                SUSHI in the bar: {{ bar.barSushi.print(18, 0) }}<br>
+                                Your SUSHI stake: {{ bar.sushiStake.print(18, 0) }}<br>
+                                <br>
+                                Your xSUSHI: {{ bar.xsushi.print(18, 0) }}
+                            </p>
+                            <div class="input-group mb-3">
+                                <input class="form-control" type="number" v-model="leaveAmount"
+                                    placeholder="xSUSHI"><br>
+                                <div class="input-group-append">
+                                    <span class="input-group-text" style="cursor: pointer;"
+                                        @click="leaveAmount = bar.xsushi.toDec(18)">Max</span>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary float-right" @click="bar.leave(leaveWei)">Leave the
+                                bar</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">Outside</h3>
+                            <p>
+                                Sushi: {{ bar.sushi.print(18, 0) }}<br>
+                            </p>
+                            <div class="input-group mb-3">
+                                <input class="form-control" type="number" v-model="enterAmount" placeholder="SUSHI"><br>
+                                <div class="input-group-append">
+                                    <span class="input-group-text" style="cursor: pointer;"
+                                        @click="enterAmount = bar.sushi.toDec(18)">Max</span>
+                                </div>
+                            </div>
+                            <button v-if="!bar.allowance || bar.allowance < enterAmount"
+                                class="btn btn-primary float-right" @click="bar.allow()">Allow</button>
+                            <button v-else="" class="btn btn-primary float-right" @click="bar.enter(enterWei)">Enter the
+                                bar</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">Your Transfers</h3>
+                            <table class="w-100 mb-3">
+                                <thead>
+                                    <th>Direction</th>
+                                    <th class="text-right">Amount</th>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="transfer in transfersOrdered.slice(0, 25)">
+                                        <td>
+                                            {{ transfer.direction }}
+                                        </td>
+                                        <td class="text-right">
+                                            {{ (transfer.direction == 'in' ? '' : '-') + transfer.amount.print(18, 2) }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p class="mb-0">
+                                Your total gain: {{ (bar.sushiStake - balance).print(18, 2) }} SUSHI<br />
+                                Time weighted average balance staked: {{ TWAbalance.print(18, 2) }} SUSHI<br />
+                                Your APR: {{ yearlyROI.print(16, 2) }}%
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 col-lg-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">What's cooking in the Kitchen?</h3>
+                            <p>
+                                Here's what's currently waiting in the Kitchen. It's not quite yours until someone
+                                serves it up. There's a total of ${{ totalKitchen.print(6, 2) }} waiting to be served.
+                                Your
+                                share of that is ${{ totalUserShare.print(6, 2) }} if it was all served now.
+                            </p>
+                            <table class="w-100 mb-3">
+                                <thead>
+                                    <th>Pool</th>
+                                    <th class="text-right">Value</th>
+                                    <th class="text-right">Your share</th>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="pair, i in pairs" v-if="i != 2">
+                                        <td class="pr-3">{{ pairNames[pair.pair] }}</td>
+                                        <td class="text-right">
+                                            ${{ pair.totalValueInCurrency.print(6, 2) }}
+                                        </td>
+                                        <td class="text-right">
+                                            ${{ userShare(pair).print(6, 2) }}
+                                        </td>
+                                        <td class="text-right">
+                                            <button class="btn btn-sm btn-primary ml-3"
+                                                @click="convert(pair.token0, pair.token1)">Serve it
+                                                up!</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p class="mb-0">
+                                If you serve it, it will go to the bar, but you'll have to share it with everyone...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">Who's serving?</h3>
+                            <p>
+                                Thanks to these generous chefs we've enjoyed some great sushi!
+                            </p>
+                            <table class="w-100 mb-3">
+                                <thead>
+                                    <th>From</th>
+                                    <th>Pool</th>
+                                    <th class="text-right">Amount</th>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="serve in servesOrdered.slice(0, 25)">
+                                        <td :title="serve.from">
+                                            <a :href="'https://etherscan.io/tx/' + serve.txid">
+                                                {{ serve.from }}
+                                            </a>
+                                        </td>
+                                        <td>{{ pairNames[serve.pair] }}</td>
+                                        <td class="text-right">{{ serve.amount.print(18, 2) }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p class="mb-0">
+                                If you setup a <a href="https://app.ens.domains/">reverse ENS</a>, your name will be
+                                listed here.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">What is this?</h3>
+                            <p class="mb-0">
+                                Everytime someone trades on SushiSwap, 0.05% will go to the Kitchen. Anyone can be
+                                kind and serve it up. This will turn it into yummy SUSHI delivering it to everyone
+                                in the bar. So everyone will have a little more SUSHI.<br>
+                                <br>
+                                When your stake enters the SushiBar, you get xSUSHI for your SUSHI. You will keep the
+                                same
+                                amount of xSUSHI. Everytime someone serves up delicious SUSHI, your xSUSHI will be worth
+                                a little more SUSHI.<br>
+                                <br>
+                                If you leave the bar now, you'll get around {{ bar.sushiStake.print(18, 4) }}
+                                SUSHI.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</template>
+<script>
+    app.page = {
+        props: ['api', 'address', 'block'],
+        data: function () {
+            return {
+                bar: null,
+                ethRate: 0,
+                pairs: [],
+                serves: [],
+                transfers: [],
+                TWAbalance: 0n,
+                yearlyROI: 0n,
+                enterAmount: 0,
+                leaveAmount: 0,
+                pairNames: {
+                    "0x795065dCc9f64b5614C407a6EFDC400DA6221FB0": "SUSHI/ETH",
+                    "0x397FF1542f962076d0BFE58eA045FfA2d347ACa0": "USDC/ETH",
+                    "0xCb2286d9471cc185281c4f763d34A962ED212962": "AMPL/ETH",
+                    "0x117d4288B3635021a3D612FE05a3Cbf5C717fEf2": "SRM/ETH",
+                    "0xA75F7c2F025f470355515482BdE9EFA8153536A8": "BAND/ETH",
+                    "0x58Dc5a51fE44589BEb22E8CE67720B5BC5378009": "CRV/ETH",
+                    "0x95b54C8Da12BB23F7A5F6E26C38D04aCC6F81820": "YAMv2/ETH",
+                    "0xCb2286d9471cc185281c4f763d34A962ED212962": "AMPL/ETH",
+                    "0xC40D16476380e4037e6b1A2594cAF6a6cc8Da967": "LINK/ETH",
+                    "0x001b6450083E531A5a7Bf310BD2c1Af4247E23D4": "UMA/ETH",
+                    "0xA1d7b2d891e3A1f9ef4bBC5be20630C2FEB1c470": "SNX/ETH",
+                    "0x5E63360E891BD60C69445970256C260b0A6A54c6": "LEND/ETH",
+                    "0xF1F85b2C54a2bD284B1cf4141D64fD171Bd85539": "sUSD/ETH",
+                    "0x06da0fd433C1A5d7a4faa01111c044910A184553": "USDT/ETH",
+                    "0x088ee5007C98a9677165D78dD2109AE4a3D04d0C": "YFI/ETH",
+                    "0xC3D03e4F041Fd4cD388c549Ee2A29a9E5075882f": "DAI/ETH",
+                    "0x611CDe65deA90918c0078ac0400A72B0D25B9bb1": "REN/ETH",
+                    "0x31503dcb60119A812feE820bb7042752019F2355": "COMP/ETH"
+                }
+            }
+        },
+        mounted: async function () {
+            await this.init();
+        },
+        beforeDestroy: function () {
+            if (this.bar) {
+                this.bar.close();
+            }
+        },
+        watch: {
+            'api': async function () {
+                await this.init();
+            },
+            'block': async function () {
+                console.log(this.block);
+                await this.update();
+            },
+            'address': async function () {
+                await this.update();
+            }
+        },
+        computed: {
+            totalKitchen: function () {
+                var total = 0n;
+                for (var i = 0; i < this.pairs.length; i++) {
+                    if (i != 2) {
+                        total += this.pairs[i].totalValueInCurrency;
+                    }
+                }
+                return total;
+            },
+            totalUserShare: function () {
+                var total = 0n;
+                for (var i = 0; i < this.pairs.length; i++) {
+                    if (i != 2) {
+                        total += this.userShare(this.pairs[i]);
+                    }
+                }
+                return total;
+            },
+            transfersOrdered: function () {
+                if (this.transfers.length == 0) { return []; };
+                let rows = [];
+                let sorted = this.transfers.sort((a, b) => a.block - b.block);
+                let blockbalance = 0n;
+                for (var i in sorted) {
+                    rows.push({
+                        block: sorted[i].block,
+                        direction: sorted[i].direction,
+                        amount: sorted[i].amount,
+                        balance: (i == 0 ? 0n : rows[i - 1].balance) + (sorted[i].direction == 'in' ? sorted[i].amount : -sorted[i].amount)
+                    })
+                    if (i > 0) {
+                        blockbalance += BigInt(rows[i].block - rows[i - 1].block) * rows[i - 1].balance;
+                    }
+                }
+                blockbalance += BigInt(this.bar.currentBlock - rows[i].block) * rows[i].balance;
+
+                let totalBlocks = BigInt(this.bar.currentBlock - rows[0].block);
+                this.TWAbalance = blockbalance / totalBlocks;
+                this.dailyReturn = (this.bar.sushiStake - this.balance) / totalBlocks * 6440n;
+                this.dailyROI = this.dailyReturn * 1000000000000000000n / this.TWAbalance;
+                this.yearlyROI = this.dailyROI * 365n;
+
+                return rows.reverse();
+            },
+            balance: function () {
+                return this.transfers.reduce((a, t) => t.direction == 'in' ? a + t.amount : a - t.amount, 0n);
+            },
+            servesOrdered: function () {
+                return this.serves.sort((a, b) => b.block - a.block);
+            },
+            enterWei: function () {
+                return new Decimal(this.enterAmount).toInt(18);
+            },
+            leaveWei: function () {
+                return new Decimal(this.leaveAmount).toInt(18);
+            }
+        },
+        methods: {
+            init: async function () {
+                if (this.api && !this.bar) {
+                    this.bar = await this.api.getBar(this.api);
+
+                    this.transfers = this.bar.getTransfers();
+                    this.serves = this.bar.getServings();
+
+                    await this.update();
+                }
+            },
+            update: async function () {
+                await this.bar.poll();
+
+                await this.api.getMakerInfo();
+                this.ethRate = this.api.ethRate;
+                this.pairs = this.api.makerPairs;
+            },
+            userShare: function (pair) {
+                return (pair.totalValueInCurrency * this.bar.poolShare / BigInt("1000000000000000000"));
+            },
+            convert: async function (token0, token1) {
+                await this.bar.convert(this.address, token0, token1);
+            }
+        }
+    }
+    page_done();
+</script>

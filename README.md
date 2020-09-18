@@ -9,6 +9,8 @@ SushiSwapJs is a simple javascript library that uses a few helper smart contract
 - Does *NOT* rely on price feeds, such as CoinGecko. Instead uses Uniswap pools to find all needed exchange rates.
 
 ## Usage
+Add both sushiswap.js and ens.js to your project.
+
 Create the SushiSwap instance:
 
     let sushiswap = new SushiSwap(web3);
@@ -35,6 +37,6 @@ To keep the data up to date, use auto_update:
 
 To check all info that is available, check this live demo:
 
-Live data DEMO: https://bartjman.github.io/SushiSwapJs/
+Live data DEMO: https://app.boring.finance/SushiSwapJs/
 
-Live UI DEMO (WIP): https://bartjman.github.io/SushiSwapJs/pages/demo_ui.html
+Live UI DEMO (WIP): https://app.boring.finance/SushiSwapJs/home.html

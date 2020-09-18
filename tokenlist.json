@@ -1681,13 +1681,6 @@
     },
     {
         "chainId": 1,
-        "address": "0xc6f4465a6a521124c8e3096b62575c157999d361",
-        "name": "FinNexus",
-        "symbol": "FNX",
-        "decimals": 18
-    },
-    {
-        "chainId": 1,
         "address": "0x8727c112c712c4a03371ac87a74dd6ab104af768",
         "name": "Jetcoin",
         "symbol": "JET",
@@ -3505,13 +3498,6 @@
         "name": "Hydro Protocol",
         "symbol": "HOT",
         "decimals": 18
-    },
-    {
-        "chainId": 1,
-        "address": "0xd29fa4b8cc936a68bb560b19eed969ebfdbaa565",
-        "name": "AceWins",
-        "symbol": "ACW",
-        "decimals": 10
     },
     {
         "chainId": 1,
