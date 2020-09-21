@@ -1,6 +1,14 @@
 [
     {
         "chainId": 1,
+        "address": "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272",
+        "name": "SushiBar",
+        "symbol": "xSUSHI",
+        "decimals": 18,
+        "infoHandler": "SushiBar"
+    },
+    {
+        "chainId": 1,
         "address": "0xfffffffff15abf397da76f1dcc1a1604f45126db",
         "name": "Falconswap",
         "symbol": "FSW",
@@ -3000,7 +3008,8 @@
         "address": "0x4cc19356f2d37338b9802aa8e8fc58b0373296e7",
         "name": "SelfKey",
         "symbol": "KEY",
-        "decimals": 18
+        "decimals": 18,
+        "hide_value": true
     },
     {
         "chainId": 1,

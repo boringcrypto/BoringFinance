@@ -5,15 +5,14 @@
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">Assets</h4>
+                        <table class="w-100">
+                            <tr v-for="asset in assets" v-if="asset.balance > 0n" :is="asset.handler.componentName"
+                                :asset="asset" :app="app">
+                            </tr>
+                        </table>
                         <p>
                             This page is a work in progress.
                         </p>
-                        <table class="w-100">
-                            <tr v-for="token in tokens" v-if="token.balance > 0n">
-                                <td>{{ token.symbol }}</td>
-                                <td class="text-right">{{ token.balance.print(token.decimals, 2) }}</td>
-                            </tr>
-                        </table>
                     </div>
                 </div>
             </div>
@@ -22,10 +21,10 @@
 </template>
 <script>
     app.page = {
-        props: ['api', 'address'],
+        props: ['api', 'address', 'app'],
         data: function () {
             return {
-                tokens: []
+                assets: []
             }
         },
         calculated: {
@@ -39,6 +38,7 @@
                 await this.init();
             },
             'address': async function () {
+                this.assets = [];
                 await this.init();
             },
         },
@@ -47,7 +47,7 @@
         methods: {
             init: async function () {
                 if (this.api) {
-                    this.api.getTokens(this.address, this.tokens);
+                    this.api.getAssets(this.address, this.assets);
                 }
             }
         }

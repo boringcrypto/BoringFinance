@@ -94,14 +94,14 @@
                 <button class="btn btn-lg btn-primary" @click="connect">Connect Metamask</button>
             </div>
             <router-view v-if="manager.address" :api="api" :address="manager.address" :block="api.block"
-                :header="api.header" :time="time"></router-view>
+                :header="api.header" :time="time" :app="self"></router-view>
         </div>
         <footer class="text-center py-2" style="visibility: hidden;">
             <div>Quickly flung together by <a href="https://twitter.com/Boring_Crypto">@Boring_Crypto</a>.
                 <div class="float-right mr-3">&nbsp;<i class="fas fa-cog"></i></div>
             </div>
         </footer>
-        <footer class="fixed-bottom text-center py-2" style="background:#7f7f7f; background:rgba(0,0,0,0.5);">
+        <footer class="fixed-bottom text-center py-2" style="background:#7f7f7f; background:rgba(0,0,0,0.8);">
             <div>Quickly flung together by <a href="https://twitter.com/Boring_Crypto">@Boring_Crypto</a>.
                 <div class="float-right mr-3">&nbsp;<i class="fas fa-cog"></i></div>
             </div>
@@ -118,6 +118,7 @@
                 routes: []
             }),
             data: {
+                self: null,
                 time: 0,
                 api: null,
                 manager: {},
@@ -127,6 +128,7 @@
                 sushiRate: 0n
             },
             mounted: function () {
+                this.self = this;
                 this.time = Date.now();
                 setInterval(() => this.time = Date.now(), 1000);
 
@@ -187,12 +189,20 @@
         }
     }
 
+    async function load_handler(name) {
+        let html = await $.ajax('handlers/' + name + '.html');
+        $('html').append(html);
+    }
+
     $(document).ready(async function () {
         createApp();
         await load_page('/', 'dashboard');
         await load_page('/swap', 'swap');
         await load_page('/pools', 'pools');
         await load_page('/sushibar', 'sushibar');
+
+        await load_handler('erc20-handler');
+        await load_handler('univ2-handler');
     });
 </script>
 
