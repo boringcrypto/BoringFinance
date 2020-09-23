@@ -115,7 +115,9 @@ abis = {
     }, { "inputs": [{ "internalType": "uint256", "name": "amountIn", "type": "uint256" }, { "internalType": "uint256", "name": "amountOutMin", "type": "uint256" }, { "internalType": "address[]", "name": "path", "type": "address[]" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "deadline", "type": "uint256" }], "name": "swapExactTokensForETH", "outputs": [{ "internalType": "uint256[]", "name": "amounts", "type": "uint256[]" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "amountIn", "type": "uint256" }, { "internalType": "uint256", "name": "amountOutMin", "type": "uint256" }, { "internalType": "address[]", "name": "path", "type": "address[]" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "deadline", "type": "uint256" }], "name": "swapExactTokensForETHSupportingFeeOnTransferTokens", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "amountIn", "type": "uint256" }, { "internalType": "uint256", "name": "amountOutMin", "type": "uint256" }, { "internalType": "address[]", "name": "path", "type": "address[]" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "deadline", "type": "uint256" }], "name": "swapExactTokensForTokens", "outputs": [{ "internalType": "uint256[]", "name": "amounts", "type": "uint256[]" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "amountIn", "type": "uint256" }, { "internalType": "uint256", "name": "amountOutMin", "type": "uint256" }, { "internalType": "address[]", "name": "path", "type": "address[]" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "deadline", "type": "uint256" }], "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "amountOut", "type": "uint256" }, { "internalType": "uint256", "name": "amountInMax", "type": "uint256" }, { "internalType": "address[]", "name": "path", "type": "address[]" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "deadline", "type": "uint256" }], "name": "swapTokensForExactETH", "outputs": [{ "internalType": "uint256[]", "name": "amounts", "type": "uint256[]" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "amountOut", "type": "uint256" }, { "internalType": "uint256", "name": "amountInMax", "type": "uint256" }, { "internalType": "address[]", "name": "path", "type": "address[]" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "deadline", "type": "uint256" }], "name": "swapTokensForExactTokens", "outputs": [{ "internalType": "uint256[]", "name": "amounts", "type": "uint256[]" }], "stateMutability": "nonpayable", "type": "function" }, { "stateMutability": "payable", "type": "receive" }],
     bar: [{ "inputs": [{ "internalType": "contract IERC20", "name": "_sushi", "type": "address" }], "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "owner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "spender", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "Approval", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "Transfer", "type": "event" }, { "inputs": [{ "internalType": "address", "name": "owner", "type": "address" }, { "internalType": "address", "name": "spender", "type": "address" }], "name": "allowance", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "approve", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "account", "type": "address" }], "name": "balanceOf", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "decimals", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "subtractedValue", "type": "uint256" }], "name": "decreaseAllowance", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "_amount", "type": "uint256" }], "name": "enter", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "addedValue", "type": "uint256" }], "name": "increaseAllowance", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "_share", "type": "uint256" }], "name": "leave", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "name", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "sushi", "outputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "symbol", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "totalSupply", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "recipient", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "sender", "type": "address" }, { "internalType": "address", "name": "recipient", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }],
     maker: [{ "inputs": [{ "internalType": "contract IUniswapV2Factory", "name": "_factory", "type": "address" }, { "internalType": "address", "name": "_bar", "type": "address" }, { "internalType": "address", "name": "_sushi", "type": "address" }, { "internalType": "address", "name": "_weth", "type": "address" }], "stateMutability": "nonpayable", "type": "constructor" }, { "inputs": [], "name": "bar", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "token0", "type": "address" }, { "internalType": "address", "name": "token1", "type": "address" }], "name": "convert", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "factory", "outputs": [{ "internalType": "contract IUniswapV2Factory", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "sushi", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "weth", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }],
+    timelock: [{ "inputs": [{ "internalType": "address", "name": "admin_", "type": "address" }, { "internalType": "uint256", "name": "delay_", "type": "uint256" }], "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "bytes32", "name": "txHash", "type": "bytes32" }, { "indexed": true, "internalType": "address", "name": "target", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" }, { "indexed": false, "internalType": "string", "name": "signature", "type": "string" }, { "indexed": false, "internalType": "bytes", "name": "data", "type": "bytes" }, { "indexed": false, "internalType": "uint256", "name": "eta", "type": "uint256" }], "name": "CancelTransaction", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "bytes32", "name": "txHash", "type": "bytes32" }, { "indexed": true, "internalType": "address", "name": "target", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" }, { "indexed": false, "internalType": "string", "name": "signature", "type": "string" }, { "indexed": false, "internalType": "bytes", "name": "data", "type": "bytes" }, { "indexed": false, "internalType": "uint256", "name": "eta", "type": "uint256" }], "name": "ExecuteTransaction", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "newAdmin", "type": "address" }], "name": "NewAdmin", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "newDelay", "type": "uint256" }], "name": "NewDelay", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "newPendingAdmin", "type": "address" }], "name": "NewPendingAdmin", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "bytes32", "name": "txHash", "type": "bytes32" }, { "indexed": true, "internalType": "address", "name": "target", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" }, { "indexed": false, "internalType": "string", "name": "signature", "type": "string" }, { "indexed": false, "internalType": "bytes", "name": "data", "type": "bytes" }, { "indexed": false, "internalType": "uint256", "name": "eta", "type": "uint256" }], "name": "QueueTransaction", "type": "event" }, { "inputs": [], "name": "GRACE_PERIOD", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "MAXIMUM_DELAY", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "MINIMUM_DELAY", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "acceptAdmin", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "admin", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "admin_initialized", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "target", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }, { "internalType": "string", "name": "signature", "type": "string" }, { "internalType": "bytes", "name": "data", "type": "bytes" }, { "internalType": "uint256", "name": "eta", "type": "uint256" }], "name": "cancelTransaction", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "delay", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "target", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }, { "internalType": "string", "name": "signature", "type": "string" }, { "internalType": "bytes", "name": "data", "type": "bytes" }, { "internalType": "uint256", "name": "eta", "type": "uint256" }], "name": "executeTransaction", "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }], "stateMutability": "payable", "type": "function" }, { "inputs": [], "name": "pendingAdmin", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "target", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }, { "internalType": "string", "name": "signature", "type": "string" }, { "internalType": "bytes", "name": "data", "type": "bytes" }, { "internalType": "uint256", "name": "eta", "type": "uint256" }], "name": "queueTransaction", "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }], "name": "queuedTransactions", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "delay_", "type": "uint256" }], "name": "setDelay", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "pendingAdmin_", "type": "address" }], "name": "setPendingAdmin", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "stateMutability": "payable", "type": "receive" }],
 
+    poolnames: [{ "inputs": [], "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }], "name": "OwnershipTransferred", "type": "event" }, { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "logos", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "names", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "pid", "type": "uint256" }, { "internalType": "string", "name": "logo", "type": "string" }, { "internalType": "string", "name": "name", "type": "string" }], "name": "setPoolInfo", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }],
     tokenInfo: [{ "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }], "name": "OwnershipTransferred", "type": "event" }, { "inputs": [{ "internalType": "address", "name": "token", "type": "address" }], "name": "add", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "id", "type": "uint256" }, { "internalType": "address", "name": "token", "type": "address" }], "name": "change", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "address[]", "name": "extra", "type": "address[]" }], "name": "getBalances", "outputs": [{ "components": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }], "internalType": "struct BoringCryptoTokenScanner.Balance[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address[]", "name": "extra", "type": "address[]" }], "name": "getInfo", "outputs": [{ "components": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "uint256", "name": "decimals", "type": "uint256" }, { "internalType": "string", "name": "name", "type": "string" }, { "internalType": "string", "name": "symbol", "type": "string" }], "internalType": "struct BoringCryptoTokenScanner.TokenInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "address[]", "name": "extra", "type": "address[]" }], "name": "getSpecificBalances", "outputs": [{ "components": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }], "internalType": "struct BoringCryptoTokenScanner.Balance[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address[]", "name": "extra", "type": "address[]" }], "name": "getSpecificInfo", "outputs": [{ "components": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "uint256", "name": "decimals", "type": "uint256" }, { "internalType": "string", "name": "name", "type": "string" }, { "internalType": "string", "name": "symbol", "type": "string" }], "internalType": "struct BoringCryptoTokenScanner.TokenInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "remove", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "tokenCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "tokens", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }],
     baseInfo: [{ "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }], "name": "OwnershipTransferred", "type": "event" }, { "inputs": [], "name": "getInfo", "outputs": [{ "components": [{ "internalType": "uint256", "name": "BONUS_MULTIPLIER", "type": "uint256" }, { "internalType": "uint256", "name": "bonusEndBlock", "type": "uint256" }, { "internalType": "address", "name": "devaddr", "type": "address" }, { "internalType": "address", "name": "migrator", "type": "address" }, { "internalType": "address", "name": "owner", "type": "address" }, { "internalType": "uint256", "name": "startBlock", "type": "uint256" }, { "internalType": "address", "name": "sushi", "type": "address" }, { "internalType": "uint256", "name": "sushiPerBlock", "type": "uint256" }, { "internalType": "uint256", "name": "totalAllocPoint", "type": "uint256" }, { "internalType": "uint256", "name": "sushiTotalSupply", "type": "uint256" }, { "internalType": "address", "name": "sushiOwner", "type": "address" }], "internalType": "struct BaseInfo", "name": "", "type": "tuple" }, { "components": [{ "internalType": "string", "name": "logo", "type": "string" }, { "internalType": "string", "name": "name", "type": "string" }, { "internalType": "contract IUniswapPair", "name": "lpToken", "type": "address" }, { "internalType": "uint256", "name": "allocPoint", "type": "uint256" }, { "internalType": "uint256", "name": "lastRewardBlock", "type": "uint256" }, { "internalType": "uint256", "name": "accSushiPerShare", "type": "uint256" }, { "internalType": "contract IERC20", "name": "token0", "type": "address" }, { "internalType": "contract IERC20", "name": "token1", "type": "address" }, { "internalType": "string", "name": "token0name", "type": "string" }, { "internalType": "string", "name": "token1name", "type": "string" }, { "internalType": "string", "name": "token0symbol", "type": "string" }, { "internalType": "string", "name": "token1symbol", "type": "string" }, { "internalType": "uint256", "name": "token0decimals", "type": "uint256" }, { "internalType": "uint256", "name": "token1decimals", "type": "uint256" }], "internalType": "struct PoolInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "names_", "type": "address" }, { "internalType": "address", "name": "masterChef_", "type": "address" }], "name": "setContracts", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }],
     userInfo: [{ "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }], "name": "OwnershipTransferred", "type": "event" }, { "inputs": [{ "internalType": "address", "name": "token", "type": "address" }], "name": "getETHRate", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getMyInfoInUSDT", "outputs": [{ "components": [{ "internalType": "uint256", "name": "block", "type": "uint256" }, { "internalType": "uint256", "name": "timestamp", "type": "uint256" }, { "internalType": "uint256", "name": "eth_rate", "type": "uint256" }, { "internalType": "uint256", "name": "sushiBalance", "type": "uint256" }, { "internalType": "address", "name": "delegates", "type": "address" }, { "internalType": "uint256", "name": "currentVotes", "type": "uint256" }, { "internalType": "uint256", "name": "nonces", "type": "uint256" }], "internalType": "struct UserInfo", "name": "", "type": "tuple" }, { "components": [{ "internalType": "uint256", "name": "lastRewardBlock", "type": "uint256" }, { "internalType": "uint256", "name": "accSushiPerShare", "type": "uint256" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }, { "internalType": "uint256", "name": "totalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "uniBalance", "type": "uint256" }, { "internalType": "uint256", "name": "uniTotalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "uniAllowance", "type": "uint256" }, { "internalType": "uint256", "name": "reserve0", "type": "uint256" }, { "internalType": "uint256", "name": "reserve1", "type": "uint256" }, { "internalType": "uint256", "name": "token0rate", "type": "uint256" }, { "internalType": "uint256", "name": "token1rate", "type": "uint256" }, { "internalType": "uint256", "name": "rewardDebt", "type": "uint256" }, { "internalType": "uint256", "name": "pending", "type": "uint256" }], "internalType": "struct UserPoolInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "address", "name": "currency", "type": "address" }], "name": "getUserInfo", "outputs": [{ "components": [{ "internalType": "uint256", "name": "block", "type": "uint256" }, { "internalType": "uint256", "name": "timestamp", "type": "uint256" }, { "internalType": "uint256", "name": "eth_rate", "type": "uint256" }, { "internalType": "uint256", "name": "sushiBalance", "type": "uint256" }, { "internalType": "address", "name": "delegates", "type": "address" }, { "internalType": "uint256", "name": "currentVotes", "type": "uint256" }, { "internalType": "uint256", "name": "nonces", "type": "uint256" }], "internalType": "struct UserInfo", "name": "", "type": "tuple" }, { "components": [{ "internalType": "uint256", "name": "lastRewardBlock", "type": "uint256" }, { "internalType": "uint256", "name": "accSushiPerShare", "type": "uint256" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }, { "internalType": "uint256", "name": "totalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "uniBalance", "type": "uint256" }, { "internalType": "uint256", "name": "uniTotalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "uniAllowance", "type": "uint256" }, { "internalType": "uint256", "name": "reserve0", "type": "uint256" }, { "internalType": "uint256", "name": "reserve1", "type": "uint256" }, { "internalType": "uint256", "name": "token0rate", "type": "uint256" }, { "internalType": "uint256", "name": "token1rate", "type": "uint256" }, { "internalType": "uint256", "name": "rewardDebt", "type": "uint256" }, { "internalType": "uint256", "name": "pending", "type": "uint256" }], "internalType": "struct UserPoolInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "uniFactory_", "type": "address" }, { "internalType": "address", "name": "masterChef_", "type": "address" }, { "internalType": "address", "name": "sushi_", "type": "address" }, { "internalType": "address", "name": "WETH_", "type": "address" }], "name": "setContracts", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }],
@@ -155,7 +157,10 @@ addContract("factory", abis.factory, { "0x1": "0xC0AEe478e3658e2610c5F7A4A2E1777
 addContract("router", abis.router, { "0x1": "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F", "0x3": "0x55321ae0a211495A7493A9dE1385EeD9D9027106" });
 addContract("bar", abis.bar, { "0x1": "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272", "0x3": "" });
 addContract("maker", abis.maker, { "0x1": "0x6684977bBED67e101BB80Fc07fCcfba655c0a64F", "0x3": "" });
+addContract("timelock", abis.timelock, { "0x1": "0x9a8541ddf3a932a9a922b607e9cf7301f1d47bd1" })
+
 addContract("tokenInfo", abis.tokenInfo, { "0x1": "0x0254804A96beE6D5136F283998268Ed8ba8930B7", "0x3": "" });
+addContract("poolnames", abis.poolnames, { "0x1": "0xb373a5def62A907696C0bBd22Dc512e2Fc8cfC7E" });
 addContract("baseInfo", abis.baseInfo, { "0x1": "0xBb7dF27209ea65Ae02Fe02E76cC1C0247765dcFF", "0x3": "0x39Bb002c6400f7F1679090fdAc722BC08e2a8C1e" });
 addContract("userInfo", abis.userInfo, { "0x1": "0x39Ec6247dE60d885239aD0bcE1bC9f1553f4EF75", "0x3": "0xe8f852908A61e074032382E9B5058F86fe2a0ea7" });
 addContract("makerInfo", abis.makerInfo, { "0x1": "0x11db09195c70897021f13Fac5DF6a3c30b6A4b30", "0x3": "" });
@@ -235,7 +240,6 @@ class LogMonitor {
     }
 
     async _processLog(log) {
-        console.log(log.blockNumber + "-" + log.logIndex, this.seen[log.blockNumber + "-" + log.logIndex]);
         if (!this.seen[log.blockNumber + "-" + log.logIndex]) {
             console.log('Log received ', log);
             let result = await this.process(log);
@@ -284,11 +288,43 @@ class LogMonitor {
     }
 }
 
-// Get info and interact with the SushiBar and SushiMaker
-class SushiBar {
+class Web3Component {
     constructor(options) {
         this.options = options;
-        this.currentBlock = 0n;
+        this.makerPairs = [];
+    }
+
+    get web3() {
+        return this.options.web3;
+    }
+
+    get address() {
+        return this.options.address;
+    }
+
+    get currency() {
+        return this.options.currency;
+    }
+}
+
+// Get info and interact with the SushiBar and SushiMaker
+class SushiBar extends Web3Component {
+    constructor(options) {
+        super(options);
+
+        this.makerPairs = [];
+        this.eth_rate = 0n;
+        this.sushi = 0n;
+        this.barSushi = 0n;
+        this.xsushi = 0n;
+        this.totalXSushi = 0n;
+        this.allowance = 0n;
+        this.poolShare = 0n;
+        this.sushiStake = 0n;
+    }
+
+    ETHtoCurrency(value) {
+        return value * this.eth_rate / BigInt("1000000000000000000");
     }
 
     close() {
@@ -308,19 +344,13 @@ class SushiBar {
         delete this.transfersOut;
     }
 
-    get web3() {
-        return this.options.web3;
-    }
-
-    get address() {
-        return this.options.address;
-    }
-
     async poll() {
-        var batch = new this.web3.eth.BatchRequest();
-        batch.add(this.web3.eth.getBlockNumber.request((e, r) => this.currentBlock = r));
-        batch.add(this.web3.sushi.balanceOf(this.address).call.request((e, r) => this.sushi = BigInt(r)));
-        await batch.execute();
+        console.log("Poll");
+        /*var batch = new this.web3.eth.BatchRequest();
+        batch.add(this.web3.sushi.balanceOf(this.address).call.request((e, r) => { this.sushi = BigInt(r) }));
+        console.log(batch.execute());*/
+        this.sushi = BigInt(await this.web3.sushi.balanceOf(this.address).call());
+        console.log(this.sushi);
 
         this.barSushi = BigInt(await this.web3.sushi.balanceOf(this.web3.bar.address).call());
         this.xsushi = BigInt(await this.web3.bar.balanceOf(this.address).call());
@@ -329,6 +359,40 @@ class SushiBar {
 
         this.poolShare = this.xsushi * BigInt("1000000000000000000") / this.totalXSushi;
         this.sushiStake = this.barSushi * this.xsushi / this.totalXSushi;
+    }
+
+    async getMakerInfo() {
+        console.log("Currency:", this.currency);
+        var result = await this.web3.makerInfo.getPairs(this.currency).call({ gas: 5000000 });
+        this.eth_rate = BigInt(result[0]);
+
+        for (var i in result[1]) {
+            let pair = {};
+            pair.pair = result[1][i].pair;
+            pair.balance = BigInt(result[1][i].balance);
+            pair.totalSupply = BigInt(result[1][i].totalSupply);
+            pair.reserve0 = BigInt(result[1][i].reserve0);
+            pair.reserve1 = BigInt(result[1][i].reserve1);
+            pair.token0rate = BigInt(result[1][i].token0rate);
+            pair.token1rate = BigInt(result[1][i].token1rate);
+            pair.token0 = result[1][i].token0;
+            pair.token1 = result[1][i].token1;
+
+            pair.shareOfPool = pair.totalSupply ? pair.balance * BigInt("1000000000000000000") / pair.totalSupply : 0n;
+            pair.totalToken0 = pair.reserve0 * pair.shareOfPool / BigInt("1000000000000000000");
+            pair.totalToken1 = pair.reserve1 * pair.shareOfPool / BigInt("1000000000000000000");
+            pair.valueToken0 = pair.totalToken0 * BigInt("1000000000000000000") / pair.token0rate;
+            pair.valueToken1 = pair.totalToken1 * BigInt("1000000000000000000") / pair.token1rate;
+            pair.valueToken0InCurrency = this.ETHtoCurrency(pair.valueToken0);
+            pair.valueToken1InCurrency = this.ETHtoCurrency(pair.valueToken1);
+            pair.totalValueInCurrency = pair.valueToken0InCurrency + pair.valueToken1InCurrency;
+
+            if (i >= this.makerPairs.length) {
+                this.makerPairs.push(pair);
+            } else {
+                this.makerPairs[i] = pair;
+            }
+        }
     }
 
     getServings() {
@@ -410,6 +474,35 @@ class SushiBar {
 
     async convert(from, token0, token1) {
         await this.web3.maker.convert(token0, token1).send({ from: from });
+    }
+}
+
+class TimeLock extends Web3Component {
+    constructor(options) {
+        super(options);
+    }
+
+    getTransactions() {
+        let output = [];
+        this.queued = new LogMonitor(this.web3, '0x9a8541ddf3a932a9a922b607e9cf7301f1d47bd1',
+            ['0x76e2796dc3a81d57b0e8504b647febcbeeb5f4af818e164f11eef8131a6a763f'],
+            async (log) => {
+                let logData = this.web3.decode.timelock.decodeLog(log);
+                if (logData.events[1].value == "0xc2edad668740f1aa35e4d8f227fb8e17dca888cd") {
+                    let fullData = this.web3.utils.keccak256(logData.events[3].value).substr(0, 10) +
+                        logData.events[4].value.substr(2);
+                    let command = this.web3.decode.chef.decodeMethod(fullData);
+                    console.log(logData.events[3].value);
+                    console.log(command);
+                    return {
+                        signature: logData.events[3].value,
+                        name: command.name,
+                        params: command.params
+                    }
+                }
+                return {};
+            }, output);
+        return this.queued.output;
     }
 }
 
@@ -517,20 +610,18 @@ class UniV2Handler {
     }
 }
 
-class Assets {
-    constructor(web3, assets) {
+class Assets extends Web3Component {
+    constructor(options, assets) {
+        super(options);
         if (!assets) {
             assets = []
         }
-        this.web3 = web3;
         this.handlers = [];
         this._handlerMap = {};
         this.allAssets = [];
         this._allAssetsMap = {};
         this.assets = assets;
         this._assetmap = {};
-
-        window.assets = this;
     }
 
     add(asset, handler) {
@@ -550,7 +641,7 @@ class Assets {
         return this._assetmap[address.toLowerCase()];
     }
 
-    async init(address) {
+    async init() {
         this._handlerMap["ERC20Handler"] = new ERC20Handler(this);
         this.handlers.push(this._handlerMap["ERC20Handler"]);
         this._handlerMap["UniV2Handler"] = new UniV2Handler(this);
@@ -565,8 +656,8 @@ class Assets {
         });
 
         for (let i in this.handlers) {
-            await this.handlers[i].init(address, this.assets);
-            await this.handlers[i].find(address, this.allAssets.filter(a => this.handlers[i] == this._handlerMap[a.handler]));
+            await this.handlers[i].init(this.address, this.assets);
+            await this.handlers[i].find(this.address, this.allAssets.filter(a => this.handlers[i] == this._handlerMap[a.handler]));
         };
 
         for (let i in this.handlers) {
@@ -574,7 +665,7 @@ class Assets {
         };
 
         for (let i in this.handlers) {
-            await this.handlers[i].poll(address, this.assets.filter(a => a.handler == this.handlers[i]));
+            await this.handlers[i].poll(this.address, this.assets.filter(a => a.handler == this.handlers[i]));
         };
 
         console.log(this.assets)
@@ -582,118 +673,29 @@ class Assets {
         return this;
     }
 
-    async poll(address) {
+    async poll() {
         for (let i in this.handlers) {
             let assets = this.assets.filter(a => a.handler = this.handlers[i]);
-            await this.handlers[i].poll(address, assets);
+            await this.handlers[i].poll(this.address, assets);
         };
 
         return this;
     }
 }
 
-class Web3Manager {
-    constructor(web3) {
-        this.web3 = web3;
-        this.addresses = ["0xdbb3d4bf8c9b81f2115bc2c74fa66aa1a9e652d1"];
+class SushiPools extends Web3Component {
+    constructor(options) {
+        super(options);
 
-        this.address = null;
-        this.currency = null;
-        this.provider = "Unknown";
-        this.connected = false;
-        let self = this;
-
-        if (window.ethereum) {
-            this.web3 = new Web3(window.ethereum);
-            if (window.ethereum.isMetaMask) {
-                this.provider = 'MetaMask';
-                this.connected = window.ethereum.isConnected();
-                window.ethereum.autoRefreshOnNetworkChange = false;
-                ethereum.on('accountsChanged', (a) => this.handleAccountsChanged(self, a));
-                console.log("MetaMask detected.")
-            }
-        }
-        else {
-            this.provider = "None";
-        }
-    }
-
-    async connect() {
-        let addresses = await window.ethereum.request({ method: 'eth_accounts' });
-        if (addresses && addresses.length) {
-            this.handleAccountsChanged(this, addresses);
-        }
-        else {
-            console.log("No address was retrieved. Fallback to .enable()");
-            let addresses = await window.ethereum.enable();
-            this.handleAccountsChanged(this, addresses);
-        }
-    }
-
-    handleAccountsChanged(self, addresses) {
-        console.log("Self", self);
-        console.log("Accounts: ", addresses);
-        if (addresses && addresses.length) {
-            this.address = addresses[0];
-            for (let i in addresses) {
-                console.log(self.addresses);
-                if (self.addresses.indexOf(addresses[i].toLowerCase()) == -1) {
-                    self.addresses.push(addresses[i].toLowerCase());
-                }
-            }
-        }
-    }
-}
-
-class SushiPools {
-
-}
-
-class API {
-    constructor(manager, currency) {
         this.base = { loaded: false };
         this.pools = [];
-        this.makerPairs = [];
-        this.manager = manager;
-        this.update(manager.web3, currency);
-        this.block = 0n;
-        this.hash = "";
-        this.header = {};
-
-        this.subscription = this.web3.eth.subscribe('newBlockHeaders', (error, result) => {
-            if (error) { return };
-
-            this.block = BigInt(result.number);
-            this.hash = result.hash;
-            this.header = result.header;
-        });
-    }
-
-    update(web3, currency) {
-        this.web3 = web3;
-
-        let chainId = web3.givenProvider.chainId;
-        if (chainId == "0x1") {
-            this.currency = currency || "0xdac17f958d2ee523a2206206994597c13d831ec7";
-            console.log("Set currency for Mainnet:", this.currency);
-            this.sushi_pool = 12;
-        }
-        else if (chainId == "0x3") {
-            this.currency = currency || "0x292c703A980fbFce4708864Ae6E8C40584DAF323";
-            console.log("Set currency for Ropsten:", this.currency);
-            this.sushi_pool = 1;
-        }
     }
 
     ETHtoCurrency(value) {
         return value * this.base.eth_rate / BigInt("1000000000000000000");
     }
 
-    async getBlock() {
-        return await this.web3.eth.getBlockNumber();
-    }
-
-    async getInfo(address) {
+    async getInfo(currency) {
         if (!this.base.loaded) {
             var result = await this.web3.baseInfo.getInfo().call({ gas: 5000000 });
             this.base = {};
@@ -732,7 +734,7 @@ class API {
             }
         }
 
-        var result = await this.web3.userInfo.getUserInfo(address, this.currency).call({ gas: 5000000 });
+        var result = await this.web3.userInfo.getUserInfo(this.address, currency).call({ gas: 5000000 });
         this.base.block = BigInt(result[0].block);                              // The block for which this info it valid
         this.base.timestamp = BigInt(result[0].timestamp);                      // The timestamp of that block?
         this.base.eth_rate = BigInt(result[0].eth_rate);                        // The 'price' of 1 wrapped Ether expressed in currency token
@@ -805,63 +807,7 @@ class API {
         return this;
     }
 
-    async getMakerInfo() {
-        console.log("Currency:", this.currency);
-        var result = await this.web3.makerInfo.getPairs(this.currency).call({ gas: 5000000 });
-        this.base.eth_rate = BigInt(result[0]);
-
-        for (var i in result[1]) {
-            let pair = {};
-            pair.pair = result[1][i].pair;
-            pair.balance = BigInt(result[1][i].balance);
-            pair.totalSupply = BigInt(result[1][i].totalSupply);
-            pair.reserve0 = BigInt(result[1][i].reserve0);
-            pair.reserve1 = BigInt(result[1][i].reserve1);
-            pair.token0rate = BigInt(result[1][i].token0rate);
-            pair.token1rate = BigInt(result[1][i].token1rate);
-            pair.token0 = result[1][i].token0;
-            pair.token1 = result[1][i].token1;
-
-            pair.shareOfPool = pair.totalSupply ? pair.balance * BigInt("1000000000000000000") / pair.totalSupply : 0n;
-            pair.totalToken0 = pair.reserve0 * pair.shareOfPool / BigInt("1000000000000000000");
-            pair.totalToken1 = pair.reserve1 * pair.shareOfPool / BigInt("1000000000000000000");
-            pair.valueToken0 = pair.totalToken0 * BigInt("1000000000000000000") / pair.token0rate;
-            pair.valueToken1 = pair.totalToken1 * BigInt("1000000000000000000") / pair.token1rate;
-            pair.valueToken0InCurrency = this.ETHtoCurrency(pair.valueToken0);
-            pair.valueToken1InCurrency = this.ETHtoCurrency(pair.valueToken1);
-            pair.totalValueInCurrency = pair.valueToken0InCurrency + pair.valueToken1InCurrency;
-
-            if (i >= this.makerPairs.length) {
-                this.makerPairs.push(pair);
-            } else {
-                this.makerPairs[i] = pair;
-            }
-        }
-    }
-
-    async getBar() {
-        let bar = new SushiBar(this.manager);
-        await bar.poll();
-        return bar;
-    }
-
-    async getAssets(address, assets) {
-        await new Assets(this.web3, assets).init(address);
-    }
-
     async harvest(from, pool_id) {
         await this.web3.chef.withdraw(pool_id, 0).send({ from: from });
-    }
-
-    async stake(amount) {
-    }
-
-    async remove(token0, token1, amount) {
-    }
-
-    close() {
-        if (this.subscription) {
-            this.subscription.unsubscribe();
-        }
     }
 }

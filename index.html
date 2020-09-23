@@ -24,8 +24,9 @@
         crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.2.11/dist/web3.min.js"></script>
     <script src="js/abi-decode.js"></script>
-    <script src="js/ens.js?v=1"></script>
-    <script src="js/sushiswap.js?v=2"></script>
+    <script src="js/ens.js"></script>
+    <script src="js/sushiswap.js"></script>
+    <script src="js/web3manager.js"></script>
     <style>
         body,
         html {
@@ -93,8 +94,8 @@
                 </p>
                 <button class="btn btn-lg btn-primary" @click="connect">Connect Metamask</button>
             </div>
-            <router-view v-if="manager.address" :api="api" :address="manager.address" :block="api.block"
-                :header="api.header" :time="time" :app="self"></router-view>
+            <router-view v-if="manager && manager.address" :address="manager.address" :block="manager.block"
+                :header="manager.header" :time="time" :app="self" :manager="manager"></router-view>
         </div>
         <footer class="text-center py-2" style="visibility: hidden;">
             <div>Quickly flung together by <a href="https://twitter.com/Boring_Crypto">@Boring_Crypto</a>.
@@ -120,7 +121,6 @@
             data: {
                 self: null,
                 time: 0,
-                api: null,
                 manager: {},
                 ethBalance: 0n,
                 ethRate: 0n,
@@ -133,15 +133,12 @@
                 setInterval(() => this.time = Date.now(), 1000);
 
                 this.manager = new Web3Manager();
-                if (this.manager.web3) {
-                    this.api = new API(this.manager);
-                }
             },
             watch: {
                 "manager.address": function () {
                     this.update();
                 },
-                "api.block": function () {
+                "manager.block": function () {
                     this.update();
                 }
             },
@@ -200,6 +197,7 @@
         await load_page('/swap', 'swap');
         await load_page('/pools', 'pools');
         await load_page('/sushibar', 'sushibar');
+        await load_page('/timelock', 'timelock');
 
         await load_handler('erc20-handler');
         await load_handler('univ2-handler');

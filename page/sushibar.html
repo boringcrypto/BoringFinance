@@ -31,7 +31,7 @@
                         <div class="card-body">
                             <h3 class="card-title">Outside</h3>
                             <p>
-                                Sushi: {{ bar.sushi.print(18, 0) }}<br>
+                                Your SUSHI: {{ bar.sushi.print(18, 0) }}<br>
                             </p>
                             <div class="input-group mb-3">
                                 <input class="form-control" type="number" v-model="enterAmount" placeholder="SUSHI"><br>
@@ -86,7 +86,6 @@
                                 serves it up. There's a total of ${{ totalKitchen.print(6, 2) }} waiting to be served.
                                 Your
                                 share of that is ${{ totalUserShare.print(6, 2) }} if it was all served now.
-                                {{ time }}
                             </p>
                             <table class="w-100 mb-3">
                                 <thead>
@@ -177,11 +176,10 @@
 </template>
 <script>
     app.page = {
-        props: ['api', 'address', 'block', 'time'],
+        props: ['manager', 'address', 'block', 'time'],
         data: function () {
             return {
                 bar: null,
-                ethRate: 0,
                 pairs: [],
                 serves: [],
                 transfers: [],
@@ -221,9 +219,6 @@
             }
         },
         watch: {
-            'api': async function () {
-                await this.init();
-            },
             'block': async function () {
                 console.log(this.block);
                 await this.update();
@@ -269,10 +264,12 @@
                     if (i > 0) {
                         blockbalance += BigInt(rows[i].block - rows[i - 1].block) * rows[i - 1].balance;
                     }
+                    console.log(rows)
                 }
-                blockbalance += BigInt(this.bar.currentBlock - rows[i].block) * rows[i].balance;
+                console.log(this.block)
+                blockbalance += BigInt(this.block - rows[i].block) * rows[i].balance;
 
-                let totalBlocks = BigInt(this.bar.currentBlock - rows[0].block);
+                let totalBlocks = BigInt(this.block - rows[0].block);
                 this.TWAbalance = blockbalance / totalBlocks;
                 this.dailyReturn = (this.bar.sushiStake - this.balance) / totalBlocks * 6440n;
                 this.dailyROI = this.dailyReturn * 1000000000000000000n / this.TWAbalance;
@@ -295,8 +292,8 @@
         },
         methods: {
             init: async function () {
-                if (this.api && !this.bar) {
-                    this.bar = await this.api.getBar(this.api);
+                if (this.manager && !this.bar) {
+                    this.bar = new SushiBar(this.manager);
 
                     this.transfers = this.bar.getTransfers();
                     this.serves = this.bar.getServings();
@@ -307,9 +304,8 @@
             update: async function () {
                 await this.bar.poll();
 
-                await this.api.getMakerInfo();
-                this.ethRate = this.api.ethRate;
-                this.pairs = this.api.makerPairs;
+                await this.bar.getMakerInfo();
+                this.pairs = this.bar.makerPairs;
             },
             userShare: function (pair) {
                 return (pair.totalValueInCurrency * this.bar.poolShare / BigInt("1000000000000000000"));

@@ -7,7 +7,7 @@
                         <h4 class="card-title">Assets</h4>
                         <table class="w-100">
                             <tr v-for="asset in assets" v-if="asset.balance > 0n" :is="asset.handler.componentName"
-                                :asset="asset" :app="app">
+                                :asset="asset" :app="app" :key="asset.address">
                             </tr>
                         </table>
                         <p>
@@ -21,34 +21,24 @@
 </template>
 <script>
     app.page = {
-        props: ['api', 'address', 'app'],
+        props: ['manager', 'address', 'app'],
         data: function () {
             return {
                 assets: []
             }
         },
-        calculated: {
-
-        },
         mounted: async function () {
             await this.init();
         },
         watch: {
-            'api': async function () {
-                await this.init();
-            },
             'address': async function () {
                 this.assets = [];
                 await this.init();
             },
         },
-        computed: {
-        },
         methods: {
             init: async function () {
-                if (this.api) {
-                    this.api.getAssets(this.address, this.assets);
-                }
+                new Assets(this.manager, this.assets).init();
             }
         }
     }

@@ -83,6 +83,7 @@ class Decoder {
     }
 
     decodeMethod(data) {
+        var BN = this.web3.utils.BN;
         const methodID = data.slice(2, 10);
         const abiItem = this.state.methodIDs[methodID];
         if (abiItem) {
