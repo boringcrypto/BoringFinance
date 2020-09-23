@@ -6,26 +6,23 @@
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">Timelock</h4>
-                        <table>
-                            <tr v-for="transaction in transactions">
-                                <td class="p-2">{{ transaction.signature }}</td>
-                                <td class="p-2">
-                                    <table class="w-100">
-                                        <tr v-for="param in transaction.params">
-                                            <td>
-                                                {{ param.name }}
-                                            </td>
-                                            <td>
-                                                {{ param.value }}
-                                            </td>
-                                            <td>
-                                                {{ param.type }}
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                        </table>
+
+                        <div v-for="transaction in txs">
+                            <p>
+                                {{ transaction.description }}<br />
+                                <small>Block {{ transaction.block }}</small>
+                            </p>
+                            <table class="table table-bordered table-sm">
+                                <tr v-for="param in transaction.params">
+                                    <td class="w-25">
+                                        <small>{{ param.name }}</small>
+                                    </td>
+                                    <td>
+                                        <small>{{ param.value }}</small>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -49,6 +46,9 @@
             }
         },
         computed: {
+            txs: function () {
+                return this.transactions.sort((a, b) => b.block - a.block);
+            }
         },
         methods: {
             init: async function () {

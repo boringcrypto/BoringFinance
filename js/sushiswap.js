@@ -488,19 +488,37 @@ class TimeLock extends Web3Component {
             ['0x76e2796dc3a81d57b0e8504b647febcbeeb5f4af818e164f11eef8131a6a763f'],
             async (log) => {
                 let logData = this.web3.decode.timelock.decodeLog(log);
+                let row = {
+                    block: log.blockNumber,
+                    description: "",
+                    log: logData
+                }
+                console.log(log);
                 if (logData.events[1].value == "0xc2edad668740f1aa35e4d8f227fb8e17dca888cd") {
                     let fullData = this.web3.utils.keccak256(logData.events[3].value).substr(0, 10) +
                         logData.events[4].value.substr(2);
                     let command = this.web3.decode.chef.decodeMethod(fullData);
-                    console.log(logData.events[3].value);
-                    console.log(command);
-                    return {
-                        signature: logData.events[3].value,
-                        name: command.name,
-                        params: command.params
+                    row.command = command;
+                    row.txid = logData.events[0].value;
+                    row.signature = logData.events[3].value;
+                    row.name = command.name;
+                    row.params = command.params;
+
+                    let p = {}
+                    command.params.forEach(param => p[param.name] = param.value);
+                    if (typeof (p._pid) == "string") {
+                        p.poolname = await this.web3.poolnames.names(p._pid).call();
+                    }
+
+                    if (row.signature == "set(uint256,uint256,bool)") {
+                        row.description = `Set pool allocation for ${p.poolname} (${p._pid}) to ${p._allocPoint}.`;
+                    } else if (row.signature == "add(uint256,address,bool)") {
+                        row.description = `Add pool ${p._lpToken} with allocation of ${p._allocPoint}.`;
+                    } else if (row.signature == "setMigrator(address)") {
+                        row.description = `Change migrator to ${p._migrator}.`
                     }
                 }
-                return {};
+                return row;
             }, output);
         return this.queued.output;
     }
