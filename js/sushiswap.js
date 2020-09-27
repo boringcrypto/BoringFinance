@@ -194,12 +194,12 @@ window.DB = {
 }
 
 class LogMonitor {
-    constructor(web3, address, topics, process, output) {
+    constructor(web3, address, topics, process, output, version) {
         this.web3 = web3;
         this.address = address;
         this.topics = topics;
         this.process = process;
-        this.key = address + JSON.stringify(topics);
+        this.key = address + JSON.stringify(topics) + version;
 
         console.log('Logger created for ', address, topics);
 
@@ -530,7 +530,7 @@ class TimeLock extends Web3Component {
                     }
                 }
                 return row;
-            }, output);
+            }, output, 2);
         return this.queued.output;
     }
 }
