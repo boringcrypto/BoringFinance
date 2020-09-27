@@ -7,10 +7,11 @@
                     <div class="card-body">
                         <h4 class="card-title">Timelock</h4>
 
-                        <div v-for="transaction in txs">
+                        <div v-for="transaction in txs" v-if="transaction.queued">
                             <p>
                                 {{ transaction.description }}<br />
-                                <small>Block {{ transaction.block }}</small>
+                                <small>Block {{ transaction.block }} - Unlocks at
+                                    {{ new Date(transaction.log.events[5].value * 1000).toLocaleString() }}</small>
                             </p>
                             <table class="table table-bordered table-sm">
                                 <tr v-for="param in transaction.params">
@@ -66,6 +67,9 @@
                 if (this.manager) {
                     let timelock = new TimeLock(this.manager);
                     this.transactions = timelock.getTransactions();
+
+                    console.log("0x" + this.manager.web3.chef.add(200, "0x518d6CE2D7A689A591Bf46433443C31615b206C5", true).encodeABI().slice(10));
+                    //console.log("0x" + this.manager.web3.chef.set(29, 49348, true).encodeABI().slice(10));
                 }
             },
             done: function () {

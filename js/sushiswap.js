@@ -486,28 +486,40 @@ class TimeLock extends Web3Component {
         this.queued = new LogMonitor(this.web3, '0x9a8541ddf3a932a9a922b607e9cf7301f1d47bd1',
             ['0x76e2796dc3a81d57b0e8504b647febcbeeb5f4af818e164f11eef8131a6a763f'],
             async (log) => {
+                console.log(log);
                 let logData = this.web3.decode.timelock.decodeLog(log);
+                console.log(logData);
                 let row = {
                     block: log.blockNumber,
                     description: "",
                     log: logData
                 }
-                console.log(log);
                 if (logData.events[1].value == "0xc2edad668740f1aa35e4d8f227fb8e17dca888cd") {
+                    row.txid = logData.events[0].value;
+
                     let fullData = this.web3.utils.keccak256(logData.events[3].value).substr(0, 10) +
                         logData.events[4].value.substr(2);
-                    let command = this.web3.decode.chef.decodeMethod(fullData);
-                    row.command = command;
-                    row.txid = logData.events[0].value;
-                    row.signature = logData.events[3].value;
-                    row.name = command.name;
-                    row.params = command.params;
-
+                    console.log(fullData);
                     let p = {}
-                    command.params.forEach(param => p[param.name] = param.value);
-                    if (typeof (p._pid) == "string") {
-                        p.poolname = await this.web3.poolnames.names(p._pid).call();
+                    try {
+                        let command = this.web3.decode.chef.decodeMethod(fullData);
+                        row.command = command;
+                        row.signature = logData.events[3].value;
+                        row.name = command.name;
+                        row.params = command.params;
+
+                        command.params.forEach(param => p[param.name] = param.value);
                     }
+                    catch (e) {
+                        console.log("error", e);
+                        row.name = "Cannot decode";
+                        row.description = "Cannot decode";
+                    }
+                    row.queued = await this.web3.timelock.queuedTransactions(row.txid).call();
+
+                    /*if (typeof (p._pid) == "string") {
+                        p.poolname = await this.web3.poolnames.names(p._pid).call();
+                    }*/
 
                     if (row.signature == "set(uint256,uint256,bool)") {
                         row.description = `Set pool allocation for ${p.poolname} (${p._pid}) to ${p._allocPoint}.`;
