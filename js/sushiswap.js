@@ -486,9 +486,7 @@ class TimeLock extends Web3Component {
         this.queued = new LogMonitor(this.web3, '0x9a8541ddf3a932a9a922b607e9cf7301f1d47bd1',
             ['0x76e2796dc3a81d57b0e8504b647febcbeeb5f4af818e164f11eef8131a6a763f'],
             async (log) => {
-                console.log(log);
                 let logData = this.web3.decode.timelock.decodeLog(log);
-                console.log(logData);
                 let row = {
                     block: log.blockNumber,
                     description: "",
@@ -499,7 +497,6 @@ class TimeLock extends Web3Component {
 
                     let fullData = this.web3.utils.keccak256(logData.events[3].value).substr(0, 10) +
                         logData.events[4].value.substr(2);
-                    console.log(fullData);
                     let p = {}
                     try {
                         let command = this.web3.decode.chef.decodeMethod(fullData);
@@ -524,7 +521,17 @@ class TimeLock extends Web3Component {
                     if (row.signature == "set(uint256,uint256,bool)") {
                         row.description = `Set pool allocation for ${p.poolname} (${p._pid}) to ${p._allocPoint}.`;
                     } else if (row.signature == "add(uint256,address,bool)") {
-                        row.description = `Add pool ${p._lpToken} with allocation of ${p._allocPoint}.`;
+                        try {
+                            let pair_info = await this.web3.dashboard.getPairsFull(this.address, [p._lpToken]).call();
+                            console.log(pair_info);
+                            let token_info = await this.web3.dashboard.getTokenInfo([pair_info[0].token0, pair_info[0].token1]).call();
+                            console.log(token_info);
+                            row.description = `Add pool ${token_info[0].symbol}/${token_info[1].symbol} with allocation of ${p._allocPoint}.`;
+                        }
+                        catch {
+                            row.description = `Add pool ${p._lpToken} with allocation of ${p._allocPoint}.`;
+                        }
+
                     } else if (row.signature == "setMigrator(address)") {
                         row.description = `Change migrator to ${p._migrator}.`
                     }

@@ -11,9 +11,10 @@
                             <p>
                                 {{ transaction.description }}<br />
                                 <small>Block {{ transaction.block }} - Unlocks at
-                                    {{ new Date(transaction.log.events[5].value * 1000).toLocaleString() }}</small>
+                                    {{ new Date(transaction.log.events[5].value * 1000).toLocaleString() }}</small><br />
+                                <span v-if="explanations[transaction.txid]">{{ explanations[transaction.txid] }}</span>
                             </p>
-                            <table class="table table-bordered table-sm">
+                            <table class=" table table-bordered table-sm">
                                 <tr v-for="param in transaction.params">
                                     <td class="w-25">
                                         <small>{{ param.name }}</small>
@@ -46,7 +47,12 @@
         props: ['manager', 'address'],
         data: function () {
             return {
-                transactions: []
+                transactions: [],
+                explanations: {
+                    "0xddd2412079361ed63af56b2d6c2b81e91c98db371dc17dfbd11b7d1d98b7d328": "To lock up 2/3rd of the SUSHI minted it is sent to a DUMMY pool that has the pool reward allocation set to be exactly 2/3rd of the total. These tokens will be available to be harvested by the main multisig, so they can later be distributed correctly.",
+                    "0xab31c3859127c475d5d5f60c4f4b608e9a3726230a5d63c22fc1b4c6c25e0919": "To lock up 2/3rd of the SUSHI minted it is sent to this DUMMY pool. The tokens of this pool are held by the main multi-sig. Because of ordering, this pool will be created AFTER the renBTC-WBTC pool.",
+                    "0xd019c4811bbec7e7c14403d2d330d02a0c24c45607f975b90086e9d953b8aa58": "This is the last of the 'Menu of the Week' pools to be created. The others may become available earlier, see below."
+                }
             }
         },
         mounted: async function () {
