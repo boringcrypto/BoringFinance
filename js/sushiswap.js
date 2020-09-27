@@ -241,7 +241,7 @@ class LogMonitor {
 
     async _processLog(log) {
         if (!this.seen[log.blockNumber + "-" + log.logIndex]) {
-            console.log('Log received ', log);
+            //console.log('Log received ', log);
             let result = await this.process(log);
             if (result) {
                 this.local.push(result);
@@ -514,22 +514,20 @@ class TimeLock extends Web3Component {
                     }
                     row.queued = await this.web3.timelock.queuedTransactions(row.txid).call();
 
-                    /*if (typeof (p._pid) == "string") {
+                    if (typeof (p._pid) == "string") {
                         p.poolname = await this.web3.poolnames.names(p._pid).call();
-                    }*/
+                    }
 
                     if (row.signature == "set(uint256,uint256,bool)") {
-                        row.description = `Set pool allocation for ${p.poolname} (${p._pid}) to ${p._allocPoint}.`;
+                        row.description = `Set pool allocation for ${p.poolname} (${p._pid}) to ${p._allocPoint / 1000}`;
                     } else if (row.signature == "add(uint256,address,bool)") {
                         try {
                             let pair_info = await this.web3.dashboard.getPairsFull(this.address, [p._lpToken]).call();
-                            console.log(pair_info);
                             let token_info = await this.web3.dashboard.getTokenInfo([pair_info[0].token0, pair_info[0].token1]).call();
-                            console.log(token_info);
-                            row.description = `Add pool ${token_info[0].symbol}/${token_info[1].symbol} with allocation of ${p._allocPoint}.`;
+                            row.description = `Add pool ${token_info[0].symbol}/${token_info[1].symbol} with allocation of ${p._allocPoint / 1000}`;
                         }
                         catch {
-                            row.description = `Add pool ${p._lpToken} with allocation of ${p._allocPoint}.`;
+                            row.description = `Add pool ${p._lpToken} with allocation of ${p._allocPoint / 1000}`;
                         }
 
                     } else if (row.signature == "setMigrator(address)") {
@@ -537,7 +535,7 @@ class TimeLock extends Web3Component {
                     }
                 }
                 return row;
-            }, output, 2);
+            }, output, 4);
         return this.queued.output;
     }
 }

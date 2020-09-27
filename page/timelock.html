@@ -6,35 +6,46 @@
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">Timelock</h4>
+                        <p>
+                            Once the time passes these commands CAN be executed. The exact time is will be executed will
+                            depend also on the availability of the team. 3 out of 5 teammembers have to be available.
+                        </p>
 
                         <div v-for="transaction in txs" v-if="transaction.queued">
+                            <a class="btn btn-primary float-right" data-toggle="collapse"
+                                :href="'#txinfo-' + transaction.txid" role="button" aria-expanded="false"
+                                aria-controls="collapseExample">
+                                More
+                            </a>
                             <p>
-                                {{ transaction.description }}<br />
-                                <small>Block {{ transaction.block }} - Unlocks at
-                                    {{ new Date(transaction.log.events[5].value * 1000).toLocaleString() }}</small><br />
-                                <span v-if="explanations[transaction.txid]">{{ explanations[transaction.txid] }}</span>
+                            <h5>{{ transaction.description }}</h5>
+                            <small>Block {{ transaction.block }} - Unlocks at
+                                {{ new Date(transaction.log.events[5].value * 1000).toLocaleString() }}</small><br />
+                            <span v-if="explanations[transaction.txid]">{{ explanations[transaction.txid] }}</span>
                             </p>
-                            <table class=" table table-bordered table-sm">
-                                <tr v-for="param in transaction.params">
-                                    <td class="w-25">
-                                        <small>{{ param.name }}</small>
-                                    </td>
-                                    <td>
-                                        <small>{{ param.value }}</small>
-                                    </td>
-                                </tr>
-                            </table>
+                            <div class="collapse" :id="'txinfo-' + transaction.txid">
+                                <table class=" table table-bordered table-sm">
+                                    <tr v-for="param in transaction.params">
+                                        <td class="w-25">
+                                            <small>{{ param.name }}</small>
+                                        </td>
+                                        <td>
+                                            <small>{{ param.value }}</small>
+                                        </td>
+                                    </tr>
+                                </table>
 
-                            <table class="table table-bordered table-sm">
-                                <tr v-for="event in transaction.log.events">
-                                    <td class="w-25">
-                                        <small>{{ event.name }}</small>
-                                    </td>
-                                    <td>
-                                        <small>{{ event.value }}</small>
-                                    </td>
-                                </tr>
-                            </table>
+                                <table class="table table-bordered table-sm">
+                                    <tr v-for="event in transaction.log.events">
+                                        <td class="w-25">
+                                            <small>{{ event.name }}</small>
+                                        </td>
+                                        <td>
+                                            <small>{{ event.value }}</small>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
