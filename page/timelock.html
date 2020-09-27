@@ -22,6 +22,17 @@
                                     </td>
                                 </tr>
                             </table>
+
+                            <table class="table table-bordered table-sm">
+                                <tr v-for="event in transaction.log.events">
+                                    <td class="w-25">
+                                        <small>{{ event.name }}</small>
+                                    </td>
+                                    <td>
+                                        <small>{{ event.value }}</small>
+                                    </td>
+                                </tr>
+                            </table>
                         </div>
                     </div>
                 </div>

@@ -291,7 +291,6 @@ class LogMonitor {
 class Web3Component {
     constructor(options) {
         this.options = options;
-        this.makerPairs = [];
     }
 
     get web3() {
