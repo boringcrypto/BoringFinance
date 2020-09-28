@@ -28,7 +28,7 @@ class Web3Manager {
             ethereum.on('connect', (info) => this.onConnected(self, info));
             ethereum.on('disconnect', (error) => this.onDisconnected(self, error));
             ethereum.on('accountsChanged', (a) => this.handleAccountsChanged(self, a));
-            ethereum.on('chainChanged', () => window.location.reload());
+            //ethereum.on('chainChanged', () => window.location.reload());
             this.connected = window.ethereum.isConnected();
             window.ethereum.autoRefreshOnNetworkChange = false;
 
