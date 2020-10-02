@@ -73,7 +73,7 @@
 </template>
 <script>
     app.page = {
-        props: ['api', 'address', 'block'],
+        props: ['manager', 'address', 'block'],
         data: function () {
             return {
                 base: {},
@@ -103,15 +103,18 @@
         },
         methods: {
             init: async function () {
-                if (this.api) {
+                if (this.manager) {
                     await this.update();
                 }
             },
             update: async function () {
-                // Retieve all info for the first wallet address
-                await this.api.getInfo(this.address)
-                this.base = this.api.base;
-                this.pools = this.api.pools;
+                if (!this.sushiPools) {
+                    this.sushiPools = new SushiPools(this.manager);
+                }
+
+                await this.sushiPools.getInfo(this.address)
+                this.base = this.sushiPools.base;
+                this.pools = this.sushiPools.pools;
             }
         }
     }

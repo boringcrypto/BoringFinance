@@ -532,10 +532,12 @@ class TimeLock extends Web3Component {
 
                     } else if (row.signature == "setMigrator(address)") {
                         row.description = `Change migrator to ${p._migrator}.`
+                    } else if (row.signature == "migrate(uint256)") {
+                        row.description = `Migrate pool ${p._pid}.`
                     }
                 }
                 return row;
-            }, output, 4);
+            }, output, 5);
         return this.queued.output;
     }
 }
@@ -731,7 +733,7 @@ class SushiPools extends Web3Component {
 
     async getInfo(currency) {
         if (!this.base.loaded) {
-            var result = await this.web3.baseInfo.getInfo().call({ gas: 5000000 });
+            var result = await this.web3.baseInfo.getInfo().call();
             this.base = {};
             this.base.BONUS_MULTIPLIER = BigInt(result[0].BONUS_MULTIPLIER);    // Multiplier during the bonus period
             this.base.bonusEndBlock = BigInt(result[0].bonusEndBlock);          // Last block of the bonus period
@@ -768,7 +770,7 @@ class SushiPools extends Web3Component {
             }
         }
 
-        var result = await this.web3.userInfo.getUserInfo(this.address, currency).call({ gas: 5000000 });
+        var result = await this.web3.userInfo.getUserInfo(this.address, currency).call();
         this.base.block = BigInt(result[0].block);                              // The block for which this info it valid
         this.base.timestamp = BigInt(result[0].timestamp);                      // The timestamp of that block?
         this.base.eth_rate = BigInt(result[0].eth_rate);                        // The 'price' of 1 wrapped Ether expressed in currency token
@@ -779,7 +781,7 @@ class SushiPools extends Web3Component {
         this.base.pending = BigInt(0);                                          // Total pending SUSHI
         this.base.multiplier = this.base.block < this.base.bonusEndBlock ? this.base.BONUS_MULTIPLIER : BigInt(1);  // Current base multiplier
 
-        this.base.sushiRate = BigInt(result[1][this.sushi_pool].token0rate);                 // The amount of SUSHIs in 1 wrapped Ether, times 1e18. This is taken from the ETH/SUSHI pool
+        this.base.sushiRate = BigInt(result[1][12].token0rate);                 // The amount of SUSHIs in 1 wrapped Ether, times 1e18. This is taken from the ETH/SUSHI pool
         this.base.sushiValueInETH = BigInt("1000000000000000000") * BigInt("1000000000000000000") / this.base.sushiRate
         this.base.sushiValueInCurrency = this.ETHtoCurrency(this.base.sushiValueInETH);
 

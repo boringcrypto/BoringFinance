@@ -62,7 +62,10 @@
                 explanations: {
                     "0xddd2412079361ed63af56b2d6c2b81e91c98db371dc17dfbd11b7d1d98b7d328": "To lock up 2/3rd of the SUSHI minted it is sent to a DUMMY pool that has the pool reward allocation set to be exactly 2/3rd of the total. These tokens will be available to be harvested by the main multisig, so they can later be distributed correctly.",
                     "0xab31c3859127c475d5d5f60c4f4b608e9a3726230a5d63c22fc1b4c6c25e0919": "To lock up 2/3rd of the SUSHI minted it is sent to this DUMMY pool. The tokens of this pool are held by the main multi-sig. Because of ordering, this pool will be created AFTER the renBTC-WBTC pool.",
-                    "0xd019c4811bbec7e7c14403d2d330d02a0c24c45607f975b90086e9d953b8aa58": "This is the last of the 'Menu of the Week' pools to be created. The others may become available earlier, see below."
+                    "0xd019c4811bbec7e7c14403d2d330d02a0c24c45607f975b90086e9d953b8aa58": "This is the last of the 'Menu of the Week' pools to be created. The others may become available earlier, see below.",
+                    "0x56b64ddca0da5c95d812e15b31baf2014eb019ebd322d8f85f0b542b52112067": "This pool isn't a real pool. It's a dummy pool to help get the 138k UNI locked into the MasterChef contract out. Rewards are obviously set to 0.",
+                    "0x45e551e2d681a8adead1019ba8b9e006ecb3e2eddad1bd33a3e04c8a1c28266d": "This updates the migrator to the UniMigrator, whose only purpose is to transfer the UNI out of the MasterChef contract.",
+                    "0x14bebf246af39906c2ba7016c03912d2c4ad020bd2216f2b0c34321375388eb7": "This executes the migration on the dummy pool for UNI to unlock the UNI and take it out of the MasterChef contract."
                 }
             }
         },
@@ -85,8 +88,9 @@
                     let timelock = new TimeLock(this.manager);
                     this.transactions = timelock.getTransactions();
 
-                    console.log("0x" + this.manager.web3.chef.add(200, "0x518d6CE2D7A689A591Bf46433443C31615b206C5", true).encodeABI().slice(10));
-                    //console.log("0x" + this.manager.web3.chef.set(29, 49348, true).encodeABI().slice(10));
+                    /*console.log("0x" + this.manager.web3.chef.add(0, "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984", false).encodeABI().slice(10));
+                    console.log("0x" + this.manager.web3.chef.setMigrator("0xb0BF8BcCDb1617084Ebc220CB1dDBaA183f5C858").encodeABI().slice(10));
+                    console.log("0x" + this.manager.web3.chef.migrate(30).encodeABI().slice(10));*/
                 }
             },
             done: function () {
