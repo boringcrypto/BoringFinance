@@ -1,0 +1,76 @@
+<template id="render_template">
+    <tr>
+        <td>xSUSHI</td>
+        <td class="text-right">
+            <span v-if="asset.sushiStake">
+                {{ asset.balance.print(18, 2) }}<br>
+                <small>{{ asset.sushiStake.print(18, 2) }} SUSHI</small>
+            </span>
+        </td>
+        <td class="text-right">
+            <span v-if="asset.rate && app.ethRate && !asset.hide_value">
+                ${{ (asset.balance * app.ethRate / asset.rate).print(6, 2) }}
+            </span>
+        </td>
+        <td class="text-right">
+            <div class="btn-group" role="group" aria-label="Action">
+                <button type="button" class="btn btn-sm btn-primary ml-3">Swap</button>
+                <button class="btn btn-primary dropdown dropdown-toggle" type="button" id="dropdownMenuButton"
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
+                        <a class="dropdown-item" href="#">Send</a>
+                    </div>
+                </button>
+            </div>
+        </td>
+    </tr>
+</template>
+<script>
+    addComponent('xsushi-view', {
+        props: ['asset', 'app'],
+        data: function () {
+            return {
+            }
+        }
+    })
+
+    class XSushiHandler {
+        constructor(assets) {
+            this.assets = assets;
+            this.componentName = "xsushi-view";
+            this.xsushi = null;
+        }
+
+        async init() { };
+
+        async find(address, allAssets) {
+            let result = this.assets.assets.filter(a => a.address == "0x8798249c2e607446efb7ad49ec89dd1865ff4272");
+            if (result.length) {
+                this.xsushi = result[0];
+                this.xsushi.hide = true;
+                this.assets.add({
+                    address: this.xsushi.address,
+                    balance: this.xsushi.balance,
+                    sushiStake: 0n,
+                    view: 'xsushi-view',
+                    handler: this
+                })
+            }
+        }
+
+        async info(assets) {
+        }
+
+        async poll(address, assets) {
+            console.log(this.xsushi);
+            if (this.xsushi) {
+                assets[0].balance = this.xsushi.balance;
+                this.barSushi = BigInt(await this.assets.web3.sushi.balanceOf(this.assets.web3.bar.address).call());
+                this.totalXSushi = BigInt(await this.assets.web3.bar.totalSupply().call());
+
+                assets[0].sushiStake = this.barSushi * BigInt(this.xsushi.balance) / this.totalXSushi;
+                console.log(this);
+            }
+        }
+    }
+</script>

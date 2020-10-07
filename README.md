@@ -1,42 +1,31 @@
-# SushiSwapJs
-Use SushiSwap from js with ease.
+# Boring.Finance
+Boring.Finance is a decentralized DeFi dashboard and management platform with the following features:
 
-SushiSwapJs is a simple javascript library that uses a few helper smart contracts to make working with SushiSwap easier and much much faster.
+- It's fully decentralized, so it does not use a central server to store or serve any data except the static files. You can run it from anywhere.
+- It uses Web3 and solidity helper contracts to get all data needed.
+- Does *NOT* rely on price feeds, such as CoinGecko. Instead uses Sushiswap or Uniswap pools to find all needed exchange rates.
 
-- Get all info of all pools (including user data) in a single js call (2 web3 calls behind the scenes)
-- Regularly requery to create a live dashboard (one single web3 call to update behind the scenes)
-- Can return values in any token (default: USDT)
-- Does *NOT* rely on price feeds, such as CoinGecko. Instead uses Uniswap pools to find all needed exchange rates.
+## How to setup development
+There is no build step as the files are used and served as is. Simply serving the root directory and all files as http website will work. You can use any text editor and web server, but here's how to do it with Visual Studio Code:
 
-## Usage
-Add both sushiswap.js and ens.js to your project.
+Download and install [Visual Studio Code](https://code.visualstudio.com/).
 
-Create the SushiSwap instance:
+[Clone](https://docs.github.com/en/free-pro-team@latest/github/creating-cloning-and-archiving-repositories/cloning-a-repository) the git repository:
 
-    let sushiswap = new SushiSwap(web3);
+    git clone https://github.com/bartjman/BoringFinance.git
 
-Retrieve all info:
+Open the root directory of the project in Visual Studio Code
 
-    sushiswap.getInfo(address);
+<img src="img/vscode-open-folder.png" alt="Open Folder in Visual Studio Code" width="200"/>
 
-This will populate **base** and **pools** on the sushiswap object. To get a user's pending SUSHI:
+Install the [Live Server Extension](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer)
 
-    sushiswap.base.pending
+<img src="img/vscode-live-server.png" alt="Add Live Server Extension" width="300"/>
 
-To get the monthly ROI on the Compound Truffle pool (nr. 4):
+Right-click on index.html and select 'Open with Live Server'
 
-    sushiswap.pools[4].monthlyROI
+<img src="img/vscode-start-live-server.png" alt="Start Live Server" width="400"/>
 
-To keep the data up to date, use auto_update:
+This will open Boring.Finance in your browser and automatically efresh on changes.
 
-    sushiswap.auto_update(() => {
-        sushiswap.getInfo(address)
 
-        // Your code to update the UI
-    })
-
-To check all info that is available, check this live demo:
-
-Live data DEMO: https://app.boring.finance/SushiSwapJs/
-
-Live UI DEMO (WIP): https://app.boring.finance/SushiSwapJs/home.html

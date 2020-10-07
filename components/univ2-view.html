@@ -1,0 +1,95 @@
+<template id="render_template">
+    <tr>
+        <td>{{ asset.symbol }}</td>
+        <td class="text-right">
+            <span v-if="typeof(asset.decimals) == 'bigint'">
+                {{ asset.balance.print(asset.decimals, 2) }}
+            </span>
+        </td>
+        <td class="text-right">
+            <span v-if="asset.rate && app.ethRate && !asset.hide_value">
+                ${{ (asset.balance * app.ethRate / asset.rate).print(6, 2) }}
+            </span>
+        </td>
+        <td class="text-right">
+            <div class="btn-group" role="group" aria-label="Action">
+                <button type="button" class="btn btn-sm btn-primary ml-3">Swap</button>
+                <button class="btn btn-primary dropdown dropdown-toggle" type="button" id="dropdownMenuButton"
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
+                        <a class="dropdown-item" href="#">Send</a>
+                    </div>
+                </button>
+            </div>
+        </td>
+    </tr>
+</template>
+<script>
+    addComponent('univ2-view', {
+        props: ['asset', 'app'],
+        data: function () {
+            return {
+            }
+        }
+    })
+
+    class UniV2Handler {
+        constructor(assets) {
+            this.assets = assets;
+        }
+
+        async init() {
+            // Get factory info from UniSwap V2 LP and SushiSwap SLP
+            this.factories = (await this.assets.web3.dashboard.getFactoryInfo([
+                "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac", // SushiSwap
+                "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f", // Uniswap V2
+            ]).call()).map(f => rpcToObj(f));
+            this.factories[0].name = "Uniswap V2 LP";
+            this.factories[1].name = "SushiSwap SLP";
+            this.factories[0].prefix = "UniV2 ";
+            this.factories[1].prefix = "SLP ";
+        }
+
+        async find(address, allAssets) {
+            for (let i in this.factories) {
+                let factory = this.factories[i];
+                let stepsize = 3333n;
+                for (let b = 0n; b <= factory.allPairsLength / stepsize; b++) {
+                    let pairs = await this.assets.web3.dashboard.findPairs(address, factory.factory, b * stepsize, bigIntMin(factory.allPairsLength, (b + 1n) * stepsize)).call();
+                    console.log(b * stepsize, bigIntMin(factory.allPairsLength, (b + 1n) * stepsize), pairs);
+                    for (let i in pairs) {
+                        this.assets.add({ address: pairs[i].token0 });
+                        this.assets.add({ address: pairs[i].token1 });
+                        this.assets.add({
+                            name: null,
+                            symbol: null,
+                            address: pairs[i].token,
+                            token0: pairs[i].token0.toLowerCase(),
+                            token1: pairs[i].token1.toLowerCase(),
+                            decimals: 18,
+                            factory: factory,
+                            view: 'univ2-view',
+                            handler: this
+                        });
+                    }
+                }
+            }
+        }
+
+        async info(assets) {
+            for (let i in assets) {
+                let asset = assets[i];
+                asset.name = this.assets.get(asset.token0).name + "-" + this.assets.get(asset.token1).name + " " + asset.factory.name;
+                asset.symbol = asset.factory.prefix + this.assets.get(asset.token0).symbol + "-" + this.assets.get(asset.token1).symbol;
+            }
+        }
+
+        async poll(address, assets) {
+            let balances = await this.assets.web3.dashboard.getPairsFull(
+                address, assets.map(t => t.address)).call();
+            for (var i in balances) {
+                objAssign(this.assets.get(balances[i].token), rpcToObj(balances[i]));
+            }
+        }
+    }
+</script>

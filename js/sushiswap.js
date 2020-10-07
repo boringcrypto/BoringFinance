@@ -354,7 +354,6 @@ class SushiBar extends Web3Component {
     }
 
     async getMakerInfo() {
-        console.log("Currency:", this.currency);
         if (!this.currency) {
             return;
         }
@@ -543,109 +542,6 @@ class TimeLock extends Web3Component {
     }
 }
 
-class ERC20Handler {
-    constructor(assets) {
-        this.assets = assets;
-        this.componentName = "erc20-handler";
-    }
-
-    async init() { };
-
-    async find(address, allAssets) {
-        let balances = await this.assets.web3.dashboard.findBalances(address, allAssets.map(t => t.address)).call();
-        for (var i in balances) {
-            if (BigInt(balances[i].balance) > 0n) {
-                this.assets.add({
-                    address: balances[i].token,
-                    balance: BigInt(balances[i].balance)
-                }, "ERC20Handler")
-            }
-        }
-    }
-
-    async info(assets) {
-        assets = assets.filter(a => !a.name || !a.symbol || (typeof (a.decimals) != "bigint"));
-        let infos = await this.assets.web3.dashboard.getTokenInfo(assets.map(t => t.address)).call();
-        for (var i in infos) {
-            objAssign(this.assets.get(infos[i].token), rpcToObj(infos[i]));
-        }
-    }
-
-    async poll(address, assets) {
-        let balances = await this.assets.web3.dashboard.getBalances(
-            address, assets.map(t => t.address),
-            "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",   // Uniswap (for now), should add to tokenlist.
-            "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"    // Use WETH as currency for rate
-        ).call();
-        for (var i in balances) {
-            let asset = this.assets.get(balances[i].token);
-            objAssign(asset, rpcToObj(balances[i]));
-            if (asset.address == "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2") {
-                asset.rate = 1000000000000000000n;
-            }
-        }
-    }
-}
-
-class UniV2Handler {
-    constructor(assets) {
-        this.assets = assets;
-        this.componentName = "univ2-handler";
-    }
-
-    async init() {
-        // Get factory info from UniSwap V2 LP and SushiSwap SLP
-        this.factories = (await this.assets.web3.dashboard.getFactoryInfo([
-            "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f", // Uniswap V2
-            "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac", // SushiSwap
-        ]).call()).map(f => rpcToObj(f));
-        this.factories[0].name = "Uniswap V2 LP";
-        this.factories[1].name = "SushiSwap SLP";
-        this.factories[0].prefix = "UniV2 ";
-        this.factories[1].prefix = "SLP ";
-    }
-
-    async find(address, allAssets) {
-        for (let i in this.factories) {
-            let factory = this.factories[i];
-            let stepsize = 3333n;
-            for (let b = 0n; b <= factory.allPairsLength / stepsize; b++) {
-                let pairs = await this.assets.web3.dashboard.findPairs(address, factory.factory, b * stepsize, bigIntMin(factory.allPairsLength, (b + 1n) * stepsize)).call();
-                console.log(b * stepsize, bigIntMin(factory.allPairsLength, (b + 1n) * stepsize), pairs);
-                for (let i in pairs) {
-                    this.assets.add({ address: pairs[i].token0 }, "ERC20Handler");
-                    this.assets.add({ address: pairs[i].token1 }, "ERC20Handler");
-                    this.assets.add({
-                        name: null,
-                        symbol: null,
-                        address: pairs[i].token,
-                        token0: pairs[i].token0.toLowerCase(),
-                        token1: pairs[i].token1.toLowerCase(),
-                        decimals: 18,
-                        factory: factory
-                    }, "UniV2Handler");
-                }
-            }
-        }
-    }
-
-    async info(assets) {
-        for (let i in assets) {
-            let asset = assets[i];
-            asset.name = this.assets.get(asset.token0).name + "-" + this.assets.get(asset.token1).name + " " + asset.factory.name;
-            asset.symbol = asset.factory.prefix + this.assets.get(asset.token0).symbol + "-" + this.assets.get(asset.token1).symbol;
-        }
-    }
-
-    async poll(address, assets) {
-        let balances = await this.assets.web3.dashboard.getPairsFull(
-            address, assets.map(t => t.address)).call();
-        for (var i in balances) {
-            objAssign(this.assets.get(balances[i].token), rpcToObj(balances[i]));
-        }
-    }
-}
-
 class Assets extends Web3Component {
     constructor(options, assets) {
         super(options);
@@ -660,17 +556,18 @@ class Assets extends Web3Component {
         this._assetmap = {};
     }
 
-    add(asset, handler) {
+    addHandler(handlerClass) {
+        let handler = new handlerClass(this);
+        this._handlerMap[handlerClass.name] = handler;
+        this.handlers.push(handler);
+    }
+
+    add(asset) {
         asset.address = asset.address.toLowerCase();
-        if (this._allAssetsMap[asset.address]) {
-            objAssign(asset, this._allAssetsMap[asset.address]);
-        }
         asset.balance = asset.balance || 0n;
-        asset.handler = this._handlerMap[handler];
-        if (!this._assetmap[asset.address]) {
-            this.assets.push(asset);
-            this._assetmap[asset.address] = asset;
-        }
+        asset.view = asset.view || "erc20-view";
+        this.assets.push(asset);
+        this._assetmap[asset.address] = asset;
     }
 
     get(address) {
@@ -678,22 +575,21 @@ class Assets extends Web3Component {
     }
 
     async init() {
-        this._handlerMap["ERC20Handler"] = new ERC20Handler(this);
-        this.handlers.push(this._handlerMap["ERC20Handler"]);
-        this._handlerMap["UniV2Handler"] = new UniV2Handler(this);
-        this.handlers.push(this._handlerMap["UniV2Handler"]);
+        this.addHandler(ERC20Handler);
+        this.addHandler(XSushiHandler);
+        //this.addHandler(UniV2Handler);
 
         // Get tokens from list
         this.allAssets = (await $.ajax('tokenlist.json')).map(a => {
-            a.handler = a.handler || "ERC20Handler";
             a = rpcToObj(a);
+            a.handler = a.handler || "ERC20Handler";
             this._allAssetsMap[a.address] = a;
             return a;
         });
 
         for (let i in this.handlers) {
             await this.handlers[i].init(this.address, this.assets);
-            await this.handlers[i].find(this.address, this.allAssets.filter(a => this.handlers[i] == this._handlerMap[a.handler]));
+            await this.handlers[i].find(this.address, this.allAssets);
         };
 
         for (let i in this.handlers) {

@@ -87,10 +87,6 @@
                 if (this.manager) {
                     let timelock = new TimeLock(this.manager);
                     this.transactions = timelock.getTransactions();
-
-                    /*console.log("0x" + this.manager.web3.chef.add(0, "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984", false).encodeABI().slice(10));
-                    console.log("0x" + this.manager.web3.chef.setMigrator("0xb0BF8BcCDb1617084Ebc220CB1dDBaA183f5C858").encodeABI().slice(10));
-                    console.log("0x" + this.manager.web3.chef.migrate(30).encodeABI().slice(10));*/
                 }
             },
             done: function () {

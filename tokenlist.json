@@ -5,7 +5,7 @@
         "name": "SushiBar",
         "symbol": "xSUSHI",
         "decimals": 18,
-        "infoHandler": "SushiBar"
+        "handler": "xSushi"
     },
     {
         "chainId": 1,
