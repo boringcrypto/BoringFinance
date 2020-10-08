@@ -26,6 +26,6 @@ Right-click on index.html and select 'Open with Live Server'
 
 <img src="img/vscode-start-live-server.png" alt="Start Live Server" width="400"/>
 
-This will open Boring.Finance in your browser and automatically efresh on changes.
+This will open Boring.Finance in your browser and automatically refresh on changes.
 
 

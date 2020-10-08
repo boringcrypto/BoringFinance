@@ -1,0 +1,89 @@
+<template id="component_template">
+    <div>
+        <h4>🍣 SushiSwap Liquidity</h4>
+        <table class="table w-100 mb-0">
+            <thead>
+                <th>Assets</th>
+                <th>Balance</th>
+                <th>Value</th>
+            </thead>
+            <tr v-for="asset in assets" v-if="asset.balance > 0n && !asset.hide">
+                <td>{{ asset.symbol }}</td>
+                <td class="text-right">
+                    <span v-if="asset.totalSupply">
+                        {{ (asset.balance * asset.reserve0 / asset.totalSupply).print(asset.token0.decimals, 2) }}
+                    </span>
+                </td>
+                <td class="text-right">
+                    <span v-if="asset.rate && app.ethRate && !asset.hide_value">
+                        ${{ (asset.balance * app.ethRate / asset.rate).print(6, 2) }}
+                    </span>
+                </td>
+                <td class="text-right">
+                    <div class="btn-group" role="group" aria-label="Action">
+                        <button type="button" class="btn btn-sm btn-primary ml-3">Swap</button>
+                        <button class="btn btn-primary dropdown dropdown-toggle" type="button" id="dropdownMenuButton"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
+                                <a class="dropdown-item" href="#">Send</a>
+                            </div>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+
+        </table>
+    </div>
+</template>
+<script>
+    addComponent('slp', {
+        props: ["assets", "app"]
+    });
+
+    class SLPHandler {
+        constructor(assets) {
+            this.assets = assets;
+        }
+
+        async init() {
+            this.factory = rpcToObj((await this.assets.web3.dashboard.getFactoryInfo(["0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac"]).call())[0]);
+        }
+
+        async find(address, allAssets) {
+            let stepsize = 3333n;
+            for (let b = 0n; b <= this.factory.allPairsLength / stepsize; b++) {
+                console.log(this.factory);
+                let pairs = await this.assets.web3.dashboard.findPairs(address, this.factory.factory, b * stepsize, bigIntMin(this.factory.allPairsLength, (b + 1n) * stepsize)).call();
+                for (let i in pairs) {
+                    this.assets.add({
+                        name: null,
+                        symbol: null,
+                        address: pairs[i].token,
+                        token0asset: this.assets.add({ address: pairs[i].token0 }),
+                        token1asset: this.assets.add({ address: pairs[i].token1 }),
+                        decimals: 18,
+                        factory: this.factory,
+                        view: 'slp',
+                        handler: this
+                    });
+                }
+            }
+        }
+
+        async info(assets) {
+            for (let i in assets) {
+                let asset = assets[i];
+                asset.name = asset.token0asset.name + "-" + asset.token1asset.name + " SushiSwap SLP";
+                asset.symbol = asset.token0asset.symbol + "-" + asset.token1asset.symbol;
+            }
+        }
+
+        async poll(address, assets) {
+            let balances = await this.assets.web3.dashboard.getPairsFull(address, assets.map(t => t.address)).call();
+            for (var i in balances) {
+                objAssign(this.assets.get(balances[i].token), rpcToObj(balances[i]));
+            }
+            console.log(assets);
+        }
+    }
+</script>

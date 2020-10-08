@@ -1,42 +1,75 @@
-<template id="render_template">
-    <tr>
-        <td>{{ asset.symbol }}</td>
-        <td class="text-right">
-            <span v-if="typeof(asset.decimals) == 'bigint'">
-                {{ asset.balance.print(asset.decimals, 2) }}
-            </span>
-        </td>
-        <td class="text-right">
-            <span v-if="asset.rate && app.ethRate && !asset.hide_value">
-                ${{ (asset.balance * app.ethRate / asset.rate).print(6, 2) }}
-            </span>
-        </td>
-        <td class="text-right">
-            <div class="btn-group" role="group" aria-label="Action">
-                <button type="button" class="btn btn-sm btn-primary ml-3">Swap</button>
-                <button class="btn btn-primary dropdown dropdown-toggle" type="button" id="dropdownMenuButton"
-                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
-                        <a class="dropdown-item" href="#">Send</a>
-                    </div>
-                </button>
-            </div>
-        </td>
-    </tr>
+<template id="component_template">
+    <div>
+        <h4><i class="fas fa-wallet"></i> Wallet <span class="float-right">${{ total.print(6, 2) }}</span></h4>
+        <table class="table table-hover w-100 mb-0">
+            <thead>
+                <tr>
+                    <th colspan=2>Assets</th>
+                    <th class="text-right d-none d-sm-table-cell">Balance</th>
+                    <th class="text-right">Value</th>
+                </tr>
+            </thead>
+            <template v-for="asset in assetsOrdered" v-if="asset.balance > 0n && !asset.hide">
+                <tr style="cursor: pointer;" :key="asset.address" data-toggle="collapse"
+                    :data-target="'.erc20' + asset.address">
+                    <td class="py-2 px-0" style="width: 28px"><img class="rounded" :src="logo_url(asset)"
+                            style="width: 28px; height: 28px;">
+                    </td>
+                    <td>{{ asset.symbol }}</td>
+                    <td class="text-right d-none d-sm-table-cell">
+                        <span v-if="typeof(asset.decimals) == 'bigint'">
+                            {{ asset.balance.print(asset.decimals, 2) }}
+                        </span>
+                    </td>
+                    <td class="text-right">
+                        <span v-if="asset.rate && app.ethRate && !asset.hide_value">
+                            ${{ (asset.balance * app.ethRate / asset.rate).print(6, 2) }}
+                            <span class="d-inline d-sm-none"><br><small
+                                    v-if="typeof(asset.decimals) == 'bigint'">{{ asset.balance.print(asset.decimals, 2) }}</small></span>
+                        </span>
+                    </td>
+                </tr>
+                <tr :class="'collapse erc20' + asset.address">
+                    <td colspan="4">
+                        <div :class="'erc20' + asset.address">
+                            <button type="button" class="btn btn-sm btn-primary">Swap</button>
+                        </div>
+                    </td>
+                </tr>
+            </template>
+        </table>
+    </div>
 </template>
 <script>
-    addComponent('erc20-view', {
-        props: ['asset', 'app'],
-        data: function () {
-            return {
+    addComponent('erc20', {
+        props: ["assets", "app"],
+        computed: {
+            assetsOrdered: function () {
+                console.log(this.assets);
+                let withValue = this.assets.filter(a => a.rate && !a.hide_value).sort((a, b) => Number((b.balance * 1000000000000000000n / b.rate) - (a.balance * 1000000000000000000n / a.rate)));
+                let noValue = this.assets.filter(a => !a.rate || a.hide_value);
+
+                return withValue.concat(noValue);
+            },
+            total: function () {
+                let total = 0n;
+                for (i in this.assets) {
+                    if (this.assets[i].rate && this.app.ethRate && !this.assets[i].hide_value)
+                        total += (this.assets[i].balance * this.app.ethRate / this.assets[i].rate)
+                }
+                return total;
+            }
+        },
+        methods: {
+            logo_url: function (asset) {
+                return 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/' + Web3.utils.toChecksumAddress(asset.address) + '/logo.png';
             }
         }
-    })
+    });
 
     class ERC20Handler {
         constructor(assets) {
             this.assets = assets;
-            this.componentName = "erc20-view";
         }
 
         async init() { };
@@ -46,21 +79,24 @@
             for (var i in balances) {
                 if (BigInt(balances[i].balance) > 0n) {
                     let asset = {};
-                    if (this.assets._allAssetsMap[balances[i].token]) {
-                        objAssign(asset, this.assets._allAssetsMap[balances[i].token]);
+                    if (this.assets._allAssetsMap[balances[i].token.toLowerCase()]) {
+                        objAssign(asset, this.assets._allAssetsMap[balances[i].token.toLowerCase()]);
                     }
                     objAssign(asset, {
                         address: balances[i].token,
                         balance: BigInt(balances[i].balance),
-                        view: 'erc20-view',
+                        view: 'erc20',
                         handler: this
                     });
+                    console.log(asset, asset.hide_value, this.assets._allAssetsMap[balances[i].token.toLowerCase()]);
                     this.assets.add(asset);
                 }
             }
         }
 
         async info(assets) {
+            console.log(assets.length);
+            console.log(assets);
             assets = assets.filter(a => !a.name || !a.symbol || (typeof (a.decimals) != "bigint"));
             let infos = await this.assets.web3.dashboard.getTokenInfo(assets.map(t => t.address)).call();
             for (var i in infos) {

@@ -1,7 +1,7 @@
 [
     {
         "chainId": 1,
-        "address": "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272",
+        "address": "0x8798249c2e607446efb7ad49ec89dd1865ff4272",
         "name": "SushiBar",
         "symbol": "xSUSHI",
         "decimals": 18,

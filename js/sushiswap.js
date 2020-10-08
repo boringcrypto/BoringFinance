@@ -194,12 +194,13 @@ window.DB = {
 }
 
 class LogMonitor {
-    constructor(web3, address, topics, process, output, version) {
+    constructor(web3, address, topics, process, output, version, status) {
         this.web3 = web3;
         this.address = address;
         this.topics = topics;
         this.process = process;
         this.key = address + JSON.stringify(topics) + version;
+        this.status = status;
 
         this.output = output || [];
         this.seen = {};
@@ -220,11 +221,18 @@ class LogMonitor {
             topics: this.topics
         });
 
+        if (this.status && raw_logs.length) {
+            this.status.loading = true;
+        }
+
         for (var i in raw_logs) {
             await this._processLog(raw_logs[i]);
         }
 
         this._save();
+        if (this.status) {
+            this.status.loading = false;
+        }
 
         this.subscription = this.web3.eth.subscribe('logs', {
             address: this.address,
@@ -479,11 +487,13 @@ class SushiBar extends Web3Component {
 class TimeLock extends Web3Component {
     constructor(options) {
         super(options);
+        this.status = {};
+        objAssign(this.status, { loading: false });
     }
 
     getTransactions() {
         let output = [];
-        this.queued = new LogMonitor(this.web3, '0x9a8541ddf3a932a9a922b607e9cf7301f1d47bd1',
+        this.logs = new LogMonitor(this.web3, '0x9a8541ddf3a932a9a922b607e9cf7301f1d47bd1',
             ['0x76e2796dc3a81d57b0e8504b647febcbeeb5f4af818e164f11eef8131a6a763f'],
             async (log) => {
                 let logData = this.web3.decode.timelock.decodeLog(log);
@@ -496,19 +506,23 @@ class TimeLock extends Web3Component {
                     row.txid = logData.events[0].value;
 
                     let fullData = this.web3.utils.keccak256(logData.events[3].value).substr(0, 10) +
-                        logData.events[4].value.substr(2);
+                        (logData.events[4].value ? logData.events[4].value.substr(2) : "");
                     let p = {}
                     try {
-                        let command = this.web3.decode.chef.decodeMethod(fullData);
-                        row.command = command;
                         row.signature = logData.events[3].value;
-                        row.name = command.name;
-                        row.params = command.params;
-
-                        command.params.forEach(param => p[param.name] = param.value);
+                        let command = this.web3.decode.chef.decodeMethod(fullData);
+                        if (command) {
+                            row.command = command;
+                            row.name = command.name;
+                            row.params = command.params;
+                            command.params.forEach(param => p[param.name] = param.value);
+                        }
+                        else {
+                            row.name = "Cannot decode";
+                            row.description = "Cannot decode";
+                        }
                     }
                     catch (e) {
-                        console.log("error", e);
                         row.name = "Cannot decode";
                         row.description = "Cannot decode";
                     }
@@ -534,11 +548,15 @@ class TimeLock extends Web3Component {
                         row.description = `Change migrator to ${p._migrator}.`
                     } else if (row.signature == "migrate(uint256)") {
                         row.description = `Migrate pool ${p._pid}.`
+                    } else if (row.signature == "massUpdatePools()") {
+                        row.description = `massUpdatePools.`
+                    } else {
+                        row.description = `Unknown command.`
                     }
                 }
                 return row;
-            }, output, 5);
-        return this.queued.output;
+            }, output, 5, this.status);
+        return this.logs.output;
     }
 }
 
@@ -564,10 +582,20 @@ class Assets extends Web3Component {
 
     add(asset) {
         asset.address = asset.address.toLowerCase();
+        asset.view = asset.view || "erc20";
+        asset.handler = asset.handler || this._handlerMap["ERC20Handler"];
+
+        if (this._assetmap[asset.address] && this._assetmap[asset.address].view == asset.view) return this._assetmap[asset.address];
+
+        if (this._allAssetsMap[asset.address]) {
+            asset.name = asset.name || this._allAssetsMap[asset.address].name;
+            asset.symbol = asset.symbol || this._allAssetsMap[asset.address].symbol;
+            asset.decimals = asset.decimals || this._allAssetsMap[asset.address].decimals;
+        }
         asset.balance = asset.balance || 0n;
-        asset.view = asset.view || "erc20-view";
         this.assets.push(asset);
         this._assetmap[asset.address] = asset;
+        return asset;
     }
 
     get(address) {
@@ -577,7 +605,7 @@ class Assets extends Web3Component {
     async init() {
         this.addHandler(ERC20Handler);
         this.addHandler(XSushiHandler);
-        //this.addHandler(UniV2Handler);
+        this.addHandler(SLPHandler);
 
         // Get tokens from list
         this.allAssets = (await $.ajax('tokenlist.json')).map(a => {

@@ -50,6 +50,16 @@
         .nav-link {
             padding: 0.5rem 0.8rem;
         }
+
+        tr th:first-child,
+        tr td:first-child {
+            padding-left: 0;
+        }
+
+        tr th:last-child,
+        tr td:last-child {
+            padding-right: 0;
+        }
     </style>
 </head>
 
@@ -195,14 +205,14 @@
     $(document).ready(async function () {
         createApp();
         window.addComponent = function (name, component) {
-            component.template = $("#render_template").html();
+            component.template = $("#component_template").html();
             Vue.component(name, component)
-            $("#render_template").remove();
+            $("#component_template").remove();
         }
 
         await load_component('erc20-view');
-        await load_component('univ2-view');
         await load_component('xsushi-view');
+        await load_component('slp-view');
 
         await load_page('/', 'dashboard');
         await load_page('/swap', 'swap');

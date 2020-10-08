@@ -1,18 +1,10 @@
 <template id="page_template">
     <div class="mt-3">
         <div class="row">
-            <div class="col-12 col-lg-6 mb-3">
-                <div class="card">
+            <div class="col-12 p-0 p-sm-3">
+                <div class="card mx-auto mb-3" style="max-width: 720px" v-for="group in groupedAssets">
                     <div class="card-body">
-                        <h4 class="card-title">Assets</h4>
-                        <table class="w-100">
-                            <tr v-for="asset in assets" v-if="asset.balance > 0n && !asset.hide" :is="asset.view"
-                                :asset="asset" :app="app" :key="asset.address + asset.view">
-                            </tr>
-                        </table>
-                        <p>
-                            This page is a work in progress.
-                        </p>
+                        <div :is="group.view" :assets="group.items" :app="app" :key="group.view"></div>
                     </div>
                 </div>
             </div>
@@ -36,11 +28,23 @@
                 await this.init();
             },
         },
+        computed: {
+            groupedAssets: function () {
+                let groups = {};
+                for (let i in this.assets) {
+                    if (!groups[this.assets[i].view]) {
+                        groups[this.assets[i].view] = { view: this.assets[i].view, items: [] };
+                    }
+                    groups[this.assets[i].view].items.push(this.assets[i]);
+                }
+                return groups;
+            }
+        },
         methods: {
             init: async function () {
                 new Assets(this.manager, this.assets).init();
             }
         }
-    }
+    };
     page_done();
 </script>
