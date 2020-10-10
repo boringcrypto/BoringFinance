@@ -45,7 +45,6 @@
         props: ["assets", "app"],
         computed: {
             assetsOrdered: function () {
-                console.log(this.assets);
                 let withValue = this.assets.filter(a => a.rate && !a.hide_value).sort((a, b) => Number((b.balance * 1000000000000000000n / b.rate) - (a.balance * 1000000000000000000n / a.rate)));
                 let noValue = this.assets.filter(a => !a.rate || a.hide_value);
 
@@ -88,15 +87,12 @@
                         view: 'erc20',
                         handler: this
                     });
-                    console.log(asset, asset.hide_value, this.assets._allAssetsMap[balances[i].token.toLowerCase()]);
                     this.assets.add(asset);
                 }
             }
         }
 
         async info(assets) {
-            console.log(assets.length);
-            console.log(assets);
             assets = assets.filter(a => !a.name || !a.symbol || (typeof (a.decimals) != "bigint"));
             let infos = await this.assets.web3.dashboard.getTokenInfo(assets.map(t => t.address)).call();
             for (var i in infos) {

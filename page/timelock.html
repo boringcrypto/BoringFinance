@@ -50,6 +50,14 @@
                                         </td>
                                     </tr>
                                 </table>
+
+                                <p>
+                                    executeTimeLock("{{ transaction.log.events[1].value }}",
+                                    {{ transaction.log.events[2].value }},
+                                    "{{ transaction.log.events[3].value }}",
+                                    "{{ transaction.log.events[4].value }}",
+                                    {{ transaction.log.events[5].value }})
+                                </p>
                             </div>
                         </div>
                         <p>
@@ -100,7 +108,6 @@
             init: async function () {
                 if (this.manager) {
                     this.timelock = new TimeLock(this.manager);
-                    window.timelock = this.timelock;
                     this.transactions = this.timelock.getTransactions();
                 }
             },

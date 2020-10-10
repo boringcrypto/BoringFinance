@@ -1,0 +1,51 @@
+<template id="page_template">
+    <div class="mt-3">
+        <div class="row">
+            <div class="col-12 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">BentoBox lending</h4>
+                        <p>
+                            Under development. Just for testing.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<script>
+    app.page = {
+        props: ['manager', 'address', 'block'],
+        data: function () {
+            return {
+                base: {},
+                pools: [],
+                tokenlist: []
+            }
+        },
+        mounted: async function () {
+            await this.init();
+        },
+        watch: {
+            'api': async function () {
+                await this.init();
+            },
+            'block': async function () {
+                await this.update()
+            }
+        },
+        computed: {
+        },
+        methods: {
+            init: async function () {
+                if (this.manager) {
+                    await this.update();
+                }
+            },
+            update: async function () {
+            }
+        }
+    }
+    page_done();
+</script>

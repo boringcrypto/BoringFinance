@@ -44,7 +44,6 @@ BigInt.prototype.print = function (divisor, decimalPlaces) {
     //Scale the number down by divisor
     let x = new Decimal(this.toString());
     x = x.dividedBy(powDivisor);
-    //console.log(x.toString(), x.decimalPlaces(), x.precision(), decimalPlaces, x.decimalPlaces() - x.precision() >= decimalPlaces - 4)
     if (x.decimalPlaces() - x.precision() > decimalPlaces - 4) {
         return x.toSignificantDigits(4).toFixed();
     }
@@ -72,6 +71,7 @@ rpcToObj = function (rpc_obj, obj) {
         if (isNaN(i)) {
             // Not always correct, but overall useful
             obj[i] = isNaN(rpc_obj[i]) || i.indexOf("name") != -1 || i.indexOf("symbol") != -1
+                || (typeof (rpc_obj[i]) == "boolean")
                 || (typeof (rpc_obj[i]) == "string" && rpc_obj[i].startsWith("0x"))
                 ? rpc_obj[i]
                 : BigInt(rpc_obj[i]);
@@ -122,7 +122,8 @@ abis = {
     baseInfo: [{ "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }], "name": "OwnershipTransferred", "type": "event" }, { "inputs": [], "name": "getInfo", "outputs": [{ "components": [{ "internalType": "uint256", "name": "BONUS_MULTIPLIER", "type": "uint256" }, { "internalType": "uint256", "name": "bonusEndBlock", "type": "uint256" }, { "internalType": "address", "name": "devaddr", "type": "address" }, { "internalType": "address", "name": "migrator", "type": "address" }, { "internalType": "address", "name": "owner", "type": "address" }, { "internalType": "uint256", "name": "startBlock", "type": "uint256" }, { "internalType": "address", "name": "sushi", "type": "address" }, { "internalType": "uint256", "name": "sushiPerBlock", "type": "uint256" }, { "internalType": "uint256", "name": "totalAllocPoint", "type": "uint256" }, { "internalType": "uint256", "name": "sushiTotalSupply", "type": "uint256" }, { "internalType": "address", "name": "sushiOwner", "type": "address" }], "internalType": "struct BaseInfo", "name": "", "type": "tuple" }, { "components": [{ "internalType": "string", "name": "logo", "type": "string" }, { "internalType": "string", "name": "name", "type": "string" }, { "internalType": "contract IUniswapPair", "name": "lpToken", "type": "address" }, { "internalType": "uint256", "name": "allocPoint", "type": "uint256" }, { "internalType": "uint256", "name": "lastRewardBlock", "type": "uint256" }, { "internalType": "uint256", "name": "accSushiPerShare", "type": "uint256" }, { "internalType": "contract IERC20", "name": "token0", "type": "address" }, { "internalType": "contract IERC20", "name": "token1", "type": "address" }, { "internalType": "string", "name": "token0name", "type": "string" }, { "internalType": "string", "name": "token1name", "type": "string" }, { "internalType": "string", "name": "token0symbol", "type": "string" }, { "internalType": "string", "name": "token1symbol", "type": "string" }, { "internalType": "uint256", "name": "token0decimals", "type": "uint256" }, { "internalType": "uint256", "name": "token1decimals", "type": "uint256" }], "internalType": "struct PoolInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "names_", "type": "address" }, { "internalType": "address", "name": "masterChef_", "type": "address" }], "name": "setContracts", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }],
     userInfo: [{ "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }], "name": "OwnershipTransferred", "type": "event" }, { "inputs": [{ "internalType": "address", "name": "token", "type": "address" }], "name": "getETHRate", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getMyInfoInUSDT", "outputs": [{ "components": [{ "internalType": "uint256", "name": "block", "type": "uint256" }, { "internalType": "uint256", "name": "timestamp", "type": "uint256" }, { "internalType": "uint256", "name": "eth_rate", "type": "uint256" }, { "internalType": "uint256", "name": "sushiBalance", "type": "uint256" }, { "internalType": "address", "name": "delegates", "type": "address" }, { "internalType": "uint256", "name": "currentVotes", "type": "uint256" }, { "internalType": "uint256", "name": "nonces", "type": "uint256" }], "internalType": "struct UserInfo", "name": "", "type": "tuple" }, { "components": [{ "internalType": "uint256", "name": "lastRewardBlock", "type": "uint256" }, { "internalType": "uint256", "name": "accSushiPerShare", "type": "uint256" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }, { "internalType": "uint256", "name": "totalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "uniBalance", "type": "uint256" }, { "internalType": "uint256", "name": "uniTotalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "uniAllowance", "type": "uint256" }, { "internalType": "uint256", "name": "reserve0", "type": "uint256" }, { "internalType": "uint256", "name": "reserve1", "type": "uint256" }, { "internalType": "uint256", "name": "token0rate", "type": "uint256" }, { "internalType": "uint256", "name": "token1rate", "type": "uint256" }, { "internalType": "uint256", "name": "rewardDebt", "type": "uint256" }, { "internalType": "uint256", "name": "pending", "type": "uint256" }], "internalType": "struct UserPoolInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "address", "name": "currency", "type": "address" }], "name": "getUserInfo", "outputs": [{ "components": [{ "internalType": "uint256", "name": "block", "type": "uint256" }, { "internalType": "uint256", "name": "timestamp", "type": "uint256" }, { "internalType": "uint256", "name": "eth_rate", "type": "uint256" }, { "internalType": "uint256", "name": "sushiBalance", "type": "uint256" }, { "internalType": "address", "name": "delegates", "type": "address" }, { "internalType": "uint256", "name": "currentVotes", "type": "uint256" }, { "internalType": "uint256", "name": "nonces", "type": "uint256" }], "internalType": "struct UserInfo", "name": "", "type": "tuple" }, { "components": [{ "internalType": "uint256", "name": "lastRewardBlock", "type": "uint256" }, { "internalType": "uint256", "name": "accSushiPerShare", "type": "uint256" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }, { "internalType": "uint256", "name": "totalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "uniBalance", "type": "uint256" }, { "internalType": "uint256", "name": "uniTotalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "uniAllowance", "type": "uint256" }, { "internalType": "uint256", "name": "reserve0", "type": "uint256" }, { "internalType": "uint256", "name": "reserve1", "type": "uint256" }, { "internalType": "uint256", "name": "token0rate", "type": "uint256" }, { "internalType": "uint256", "name": "token1rate", "type": "uint256" }, { "internalType": "uint256", "name": "rewardDebt", "type": "uint256" }, { "internalType": "uint256", "name": "pending", "type": "uint256" }], "internalType": "struct UserPoolInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "uniFactory_", "type": "address" }, { "internalType": "address", "name": "masterChef_", "type": "address" }, { "internalType": "address", "name": "sushi_", "type": "address" }, { "internalType": "address", "name": "WETH_", "type": "address" }], "name": "setContracts", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }],
     makerInfo: [{ "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }], "name": "OwnershipTransferred", "type": "event" }, { "inputs": [{ "internalType": "contract IFactory", "name": "factory", "type": "address" }, { "internalType": "address", "name": "token", "type": "address" }], "name": "getETHRate", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "pid", "type": "uint256" }, { "internalType": "contract IFactory", "name": "factory", "type": "address" }], "name": "getPair", "outputs": [{ "components": [{ "internalType": "string", "name": "logo", "type": "string" }, { "internalType": "string", "name": "name", "type": "string" }, { "internalType": "contract IPair", "name": "lpToken", "type": "address" }, { "internalType": "contract IERC20", "name": "token0", "type": "address" }, { "internalType": "contract IERC20", "name": "token1", "type": "address" }, { "internalType": "string", "name": "token0name", "type": "string" }, { "internalType": "string", "name": "token1name", "type": "string" }, { "internalType": "string", "name": "token0symbol", "type": "string" }, { "internalType": "string", "name": "token1symbol", "type": "string" }, { "internalType": "uint256", "name": "token0decimals", "type": "uint256" }, { "internalType": "uint256", "name": "token1decimals", "type": "uint256" }, { "internalType": "uint256", "name": "makerBalance", "type": "uint256" }, { "internalType": "uint256", "name": "totalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "reserve0", "type": "uint256" }, { "internalType": "uint256", "name": "reserve1", "type": "uint256" }, { "internalType": "uint256", "name": "token0rate", "type": "uint256" }, { "internalType": "uint256", "name": "token1rate", "type": "uint256" }], "internalType": "struct PairInfo", "name": "", "type": "tuple" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint256[]", "name": "pids", "type": "uint256[]" }, { "internalType": "address", "name": "currency", "type": "address" }, { "internalType": "contract IFactory", "name": "factory", "type": "address" }], "name": "getPairs", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }, { "components": [{ "internalType": "string", "name": "logo", "type": "string" }, { "internalType": "string", "name": "name", "type": "string" }, { "internalType": "contract IPair", "name": "lpToken", "type": "address" }, { "internalType": "contract IERC20", "name": "token0", "type": "address" }, { "internalType": "contract IERC20", "name": "token1", "type": "address" }, { "internalType": "string", "name": "token0name", "type": "string" }, { "internalType": "string", "name": "token1name", "type": "string" }, { "internalType": "string", "name": "token0symbol", "type": "string" }, { "internalType": "string", "name": "token1symbol", "type": "string" }, { "internalType": "uint256", "name": "token0decimals", "type": "uint256" }, { "internalType": "uint256", "name": "token1decimals", "type": "uint256" }, { "internalType": "uint256", "name": "makerBalance", "type": "uint256" }, { "internalType": "uint256", "name": "totalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "reserve0", "type": "uint256" }, { "internalType": "uint256", "name": "reserve1", "type": "uint256" }, { "internalType": "uint256", "name": "token0rate", "type": "uint256" }, { "internalType": "uint256", "name": "token1rate", "type": "uint256" }], "internalType": "struct PairInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "sushiMaker_", "type": "address" }, { "internalType": "address", "name": "sushi_", "type": "address" }, { "internalType": "address", "name": "masterChef_", "type": "address" }, { "internalType": "address", "name": "names_", "type": "address" }, { "internalType": "address", "name": "WETH_", "type": "address" }], "name": "setContracts", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }],
-    dashboard: [{ "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "address[]", "name": "addresses", "type": "address[]" }], "name": "findBalances", "outputs": [{ "components": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }], "internalType": "struct BoringCryptoTokenScanner.Balance[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "contract IFactory", "name": "factory", "type": "address" }, { "internalType": "uint256", "name": "fromID", "type": "uint256" }, { "internalType": "uint256", "name": "toID", "type": "uint256" }], "name": "findPairs", "outputs": [{ "components": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "address", "name": "token0", "type": "address" }, { "internalType": "address", "name": "token1", "type": "address" }], "internalType": "struct BoringCryptoTokenScanner.Pair[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "address[]", "name": "addresses", "type": "address[]" }, { "internalType": "contract IFactory", "name": "factory", "type": "address" }, { "internalType": "address", "name": "currency", "type": "address" }], "name": "getBalances", "outputs": [{ "components": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }, { "internalType": "uint256", "name": "rate", "type": "uint256" }], "internalType": "struct BoringCryptoTokenScanner.BalanceFull[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "contract IFactory[]", "name": "addresses", "type": "address[]" }], "name": "getFactoryInfo", "outputs": [{ "components": [{ "internalType": "contract IFactory", "name": "factory", "type": "address" }, { "internalType": "uint256", "name": "allPairsLength", "type": "uint256" }, { "internalType": "address", "name": "feeTo", "type": "address" }, { "internalType": "address", "name": "feeToSetter", "type": "address" }], "internalType": "struct BoringCryptoTokenScanner.Factory[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "contract IFactory", "name": "factory", "type": "address" }, { "internalType": "uint256", "name": "fromID", "type": "uint256" }, { "internalType": "uint256", "name": "toID", "type": "uint256" }], "name": "getPairs", "outputs": [{ "components": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "address", "name": "token0", "type": "address" }, { "internalType": "address", "name": "token1", "type": "address" }], "internalType": "struct BoringCryptoTokenScanner.Pair[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "address[]", "name": "addresses", "type": "address[]" }], "name": "getPairsFull", "outputs": [{ "components": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "address", "name": "token0", "type": "address" }, { "internalType": "address", "name": "token1", "type": "address" }, { "internalType": "uint256", "name": "reserve0", "type": "uint256" }, { "internalType": "uint256", "name": "reserve1", "type": "uint256" }, { "internalType": "uint256", "name": "totalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }], "internalType": "struct BoringCryptoTokenScanner.PairFull[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address[]", "name": "addresses", "type": "address[]" }], "name": "getTokenInfo", "outputs": [{ "components": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "uint256", "name": "decimals", "type": "uint256" }, { "internalType": "string", "name": "name", "type": "string" }, { "internalType": "string", "name": "symbol", "type": "string" }], "internalType": "struct BoringCryptoTokenScanner.TokenInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }]
+    dashboard: [{ "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "address[]", "name": "addresses", "type": "address[]" }], "name": "findBalances", "outputs": [{ "components": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }], "internalType": "struct BoringCryptoTokenScanner.Balance[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "contract IFactory", "name": "factory", "type": "address" }, { "internalType": "uint256", "name": "fromID", "type": "uint256" }, { "internalType": "uint256", "name": "toID", "type": "uint256" }], "name": "findPairs", "outputs": [{ "components": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "address", "name": "token0", "type": "address" }, { "internalType": "address", "name": "token1", "type": "address" }], "internalType": "struct BoringCryptoTokenScanner.Pair[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "address[]", "name": "addresses", "type": "address[]" }, { "internalType": "contract IFactory", "name": "factory", "type": "address" }, { "internalType": "address", "name": "currency", "type": "address" }], "name": "getBalances", "outputs": [{ "components": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }, { "internalType": "uint256", "name": "rate", "type": "uint256" }], "internalType": "struct BoringCryptoTokenScanner.BalanceFull[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "contract IFactory[]", "name": "addresses", "type": "address[]" }], "name": "getFactoryInfo", "outputs": [{ "components": [{ "internalType": "contract IFactory", "name": "factory", "type": "address" }, { "internalType": "uint256", "name": "allPairsLength", "type": "uint256" }, { "internalType": "address", "name": "feeTo", "type": "address" }, { "internalType": "address", "name": "feeToSetter", "type": "address" }], "internalType": "struct BoringCryptoTokenScanner.Factory[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "contract IFactory", "name": "factory", "type": "address" }, { "internalType": "uint256", "name": "fromID", "type": "uint256" }, { "internalType": "uint256", "name": "toID", "type": "uint256" }], "name": "getPairs", "outputs": [{ "components": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "address", "name": "token0", "type": "address" }, { "internalType": "address", "name": "token1", "type": "address" }], "internalType": "struct BoringCryptoTokenScanner.Pair[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "address[]", "name": "addresses", "type": "address[]" }], "name": "getPairsFull", "outputs": [{ "components": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "address", "name": "token0", "type": "address" }, { "internalType": "address", "name": "token1", "type": "address" }, { "internalType": "uint256", "name": "reserve0", "type": "uint256" }, { "internalType": "uint256", "name": "reserve1", "type": "uint256" }, { "internalType": "uint256", "name": "totalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }], "internalType": "struct BoringCryptoTokenScanner.PairFull[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address[]", "name": "addresses", "type": "address[]" }], "name": "getTokenInfo", "outputs": [{ "components": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "uint256", "name": "decimals", "type": "uint256" }, { "internalType": "string", "name": "name", "type": "string" }, { "internalType": "string", "name": "symbol", "type": "string" }], "internalType": "struct BoringCryptoTokenScanner.TokenInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }],
+    dashboard2: [{ "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "uint256[]", "name": "pids", "type": "uint256[]" }], "name": "findPools", "outputs": [{ "components": [{ "internalType": "uint256", "name": "pid", "type": "uint256" }, { "internalType": "contract IPair", "name": "lpToken", "type": "address" }, { "internalType": "uint256", "name": "allocPoint", "type": "uint256" }, { "internalType": "address", "name": "token0", "type": "address" }, { "internalType": "address", "name": "token1", "type": "address" }], "internalType": "struct BoringCryptoDashboardV2.PoolInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "token", "type": "address" }], "name": "getETHRate", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "address[]", "name": "addresses", "type": "address[]" }], "name": "getPairsFull", "outputs": [{ "components": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "address", "name": "token0", "type": "address" }, { "internalType": "address", "name": "token1", "type": "address" }, { "internalType": "uint256", "name": "reserve0", "type": "uint256" }, { "internalType": "uint256", "name": "reserve1", "type": "uint256" }, { "internalType": "uint256", "name": "totalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }], "internalType": "struct BoringCryptoDashboardV2.PairFull[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint256[]", "name": "pids", "type": "uint256[]" }], "name": "getPools", "outputs": [{ "components": [{ "internalType": "uint256", "name": "totalAllocPoint", "type": "uint256" }, { "internalType": "uint256", "name": "poolLength", "type": "uint256" }], "internalType": "struct BoringCryptoDashboardV2.PoolsInfo", "name": "", "type": "tuple" }, { "components": [{ "internalType": "uint256", "name": "pid", "type": "uint256" }, { "internalType": "contract IPair", "name": "lpToken", "type": "address" }, { "internalType": "uint256", "name": "allocPoint", "type": "uint256" }, { "internalType": "address", "name": "token0", "type": "address" }, { "internalType": "address", "name": "token1", "type": "address" }], "internalType": "struct BoringCryptoDashboardV2.PoolInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "uint256[]", "name": "pids", "type": "uint256[]" }], "name": "pollPools", "outputs": [{ "components": [{ "internalType": "uint256", "name": "pid", "type": "uint256" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }, { "internalType": "uint256", "name": "totalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "lpBalance", "type": "uint256" }, { "internalType": "uint256", "name": "lpTotalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "lpAllowance", "type": "uint256" }, { "internalType": "uint256", "name": "reserve0", "type": "uint256" }, { "internalType": "uint256", "name": "reserve1", "type": "uint256" }, { "internalType": "uint256", "name": "token0rate", "type": "uint256" }, { "internalType": "uint256", "name": "token1rate", "type": "uint256" }, { "internalType": "uint256", "name": "rewardDebt", "type": "uint256" }, { "internalType": "uint256", "name": "pending", "type": "uint256" }], "internalType": "struct BoringCryptoDashboardV2.UserPoolInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }]
 }
 
 Web3.prototype.contract = function (abi_name, address) {
@@ -165,6 +166,8 @@ addContract("baseInfo", abis.baseInfo, { "0x1": "0xBb7dF27209ea65Ae02Fe02E76cC1C
 addContract("userInfo", abis.userInfo, { "0x1": "0x39Ec6247dE60d885239aD0bcE1bC9f1553f4EF75", "0x3": "0xe8f852908A61e074032382E9B5058F86fe2a0ea7" });
 addContract("makerInfo", abis.makerInfo, { "0x1": "0x001c92D884fe654A6C5438fa85a222aA400C1999", "0x3": "" });
 addContract("dashboard", abis.dashboard, { "0x1": "0xD132Ce8eA8865348Ac25E416d95ab1Ba84D216AF" });
+addContract("dashboard2", abis.dashboard2, { "0x1": "0x1B13fC91c6f976959E7c236Ac1CF17E052d113Fc" });
+
 
 window.DB = {
     get: function (key, callback) {
@@ -194,13 +197,15 @@ window.DB = {
 }
 
 class LogMonitor {
-    constructor(web3, address, topics, process, output, version, status) {
-        this.web3 = web3;
+    constructor(manager, address, topics, process, output, version, status, step) {
+        this.manager = manager;
+        this.web3 = manager.web3;
         this.address = address;
         this.topics = topics;
         this.process = process;
         this.key = address + JSON.stringify(topics) + version;
         this.status = status;
+        this.step = step;
 
         this.output = output || [];
         this.seen = {};
@@ -214,22 +219,62 @@ class LogMonitor {
         this._getPastLogsAndSubscribe()
     }
 
+    async _getPastLogs(params) {
+        let raw_logs = null;
+        let oldParams = {};
+        Object.assign(oldParams, params);
+        while (!raw_logs) {
+            try {
+                console.log(params);
+                let raw_logs = await this.web3.eth.getPastLogs(params);
+                Object.assign(params, oldParams);
+                return raw_logs;
+            }
+            catch (e) {
+                if (e.code == -32005) {
+                    console.log(e);
+                    Object.assign(params, oldParams);
+                    params.toBlock -= Math.floor((params.toBlock - params.fromBlock) / 1.25);
+                    console.log(params, oldParams);
+                }
+                else {
+                    throw e;
+                }
+            }
+        }
+    }
+
     async _getPastLogsAndSubscribe() {
-        let raw_logs = await this.web3.eth.getPastLogs({
-            fromBlock: this.lastBlock + 1,
-            address: this.address,
-            topics: this.topics
-        });
+        let finished = false;
+        while (!finished) {
+            let params = {
+                fromBlock: this.lastBlock + 1,
+                address: this.address,
+                topics: this.topics
+            }
+            if (this.step && this.lastBlock + this.step < this.manager.block) {
+                params.toBlock = this.lastBlock + this.step;
+            }
+            else {
+                finished = true;
+            }
+            let raw_logs = await this._getPastLogs(params);
 
-        if (this.status && raw_logs.length) {
-            this.status.loading = true;
+            if (this.status && raw_logs.length) {
+                this.status.loading = true;
+            }
+            for (var i in raw_logs) {
+                await this._processLog(raw_logs[i]);
+            }
+
+            this._save();
+
+            if (params.toBlock) {
+                this.lastBlock = params.toBlock;
+                finished = false;
+            }
         }
 
-        for (var i in raw_logs) {
-            await this._processLog(raw_logs[i]);
-        }
-
-        this._save();
         if (this.status) {
             this.status.loading = false;
         }
@@ -407,7 +452,7 @@ class SushiBar extends Web3Component {
             this.servingMonitor.close();
             this.servingMonitor = null;
         }
-        this.servingMonitor = new LogMonitor(this.web3, '0x795065dcc9f64b5614c407a6efdc400da6221fb0',
+        this.servingMonitor = new LogMonitor(this.options, '0x795065dcc9f64b5614c407a6efdc400da6221fb0',
             ['0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822', '0x0000000000000000000000006684977bbed67e101bb80fc07fccfba655c0a64f', '0x0000000000000000000000008798249c2E607446EfB7Ad49eC89dD1865Ff4272'],
             async (log) => {
                 let serve = {
@@ -437,7 +482,7 @@ class SushiBar extends Web3Component {
             this.transfersOut = null;
         }
 
-        this.transfersIn = new LogMonitor(this.web3, '0x6b3595068778dd592e39a122f4f5a5cf09c90fe2',
+        this.transfersIn = new LogMonitor(this.options, '0x6b3595068778dd592e39a122f4f5a5cf09c90fe2',
             ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
                 this.address.addTopicZeroes(),
                 '0x0000000000000000000000008798249c2e607446efb7ad49ec89dd1865ff4272'],
@@ -451,7 +496,7 @@ class SushiBar extends Web3Component {
                 return transfer;
             }, output);
 
-        this.transfersOut = new LogMonitor(this.web3, '0x6b3595068778dd592e39a122f4f5a5cf09c90fe2',
+        this.transfersOut = new LogMonitor(this.options, '0x6b3595068778dd592e39a122f4f5a5cf09c90fe2',
             ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
                 '0x0000000000000000000000008798249c2e607446efb7ad49ec89dd1865ff4272',
                 this.address.addTopicZeroes()],
@@ -493,7 +538,7 @@ class TimeLock extends Web3Component {
 
     getTransactions() {
         let output = [];
-        this.logs = new LogMonitor(this.web3, '0x9a8541ddf3a932a9a922b607e9cf7301f1d47bd1',
+        this.logs = new LogMonitor(this.options, '0x9a8541ddf3a932a9a922b607e9cf7301f1d47bd1',
             ['0x76e2796dc3a81d57b0e8504b647febcbeeb5f4af818e164f11eef8131a6a763f'],
             async (log) => {
                 let logData = this.web3.decode.timelock.decodeLog(log);
@@ -593,6 +638,7 @@ class Assets extends Web3Component {
             asset.decimals = asset.decimals || this._allAssetsMap[asset.address].decimals;
         }
         asset.balance = asset.balance || 0n;
+        asset.hide_value = asset.hide_value || false;
         this.assets.push(asset);
         this._assetmap[asset.address] = asset;
         return asset;
@@ -615,28 +661,26 @@ class Assets extends Web3Component {
             return a;
         });
 
+        console.log("Init and Find");
         for (let i in this.handlers) {
             await this.handlers[i].init(this.address, this.assets);
             await this.handlers[i].find(this.address, this.allAssets);
         };
 
+        console.log("Info");
         for (let i in this.handlers) {
             await this.handlers[i].info(this.assets.filter(a => a.handler == this.handlers[i]));
         };
 
-        for (let i in this.handlers) {
-            await this.handlers[i].poll(this.address, this.assets.filter(a => a.handler == this.handlers[i]));
-        };
-
-        console.log(this.assets)
+        console.log("Poll");
+        this.poll();
 
         return this;
     }
 
     async poll() {
         for (let i in this.handlers) {
-            let assets = this.assets.filter(a => a.handler = this.handlers[i]);
-            await this.handlers[i].poll(this.address, assets);
+            await this.handlers[i].poll(this.address, this.assets.filter(a => a.handler == this.handlers[i]));
         };
 
         return this;

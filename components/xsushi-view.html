@@ -51,7 +51,7 @@
                 this.xsushi = result[0];
                 this.xsushi.hide = true;
                 this.assets.add({
-                    address: this.xsushi.address,
+                    address: "xsushi",
                     balance: this.xsushi.balance,
                     sushi: this.assets.add({ address: "0x6b3595068778dd592e39a122f4f5a5cf09c90fe2" }),
                     sushiStake: 0n,
@@ -65,14 +65,12 @@
         }
 
         async poll(address, assets) {
-            console.log(this.xsushi);
             if (this.xsushi) {
                 assets[0].balance = this.xsushi.balance;
                 this.barSushi = BigInt(await this.assets.web3.sushi.balanceOf(this.assets.web3.bar.address).call());
                 this.totalXSushi = BigInt(await this.assets.web3.bar.totalSupply().call());
 
                 assets[0].sushiStake = this.barSushi * BigInt(this.xsushi.balance) / this.totalXSushi;
-                console.log(this);
             }
         }
     }
