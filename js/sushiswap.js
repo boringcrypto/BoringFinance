@@ -819,9 +819,9 @@ class VestedSushi extends Web3Component {
     constructor(options) {
         super(options);
 
-        this.vestedSushi = 0n;
-        this.pendingSushi = 0n;
         this.harvestedSushi = 0n;
+        this.pendingSushi = 0n;
+        this.pendingSushiAtStart = 0n;
     }
 
     close() {
@@ -834,53 +834,29 @@ class VestedSushi extends Web3Component {
     async addPendingSushi() {
         let numberOfPools = await this.web3.chef.poolLength().call();
 
-        for(let i = 1; i < numberOfPools; i++) {
+        for (let i = 1; i < numberOfPools; i++) {
             this.pendingSushi += BigInt(await this.web3.chef.pendingSushi(i, this.address).call());
         }
     }
 
     async addHarvestedSushi() {
-        if (this.servingMonitor) {
-            this.servingMonitor.close();
-            this.servingMonitor = null;
-        }
-
-        var tx;
-        this.servingMonitor = new LogMonitor(this.options, '0xc2edad668740f1aa35e4d8f227fb8e17dca888cd',
-            ['0x90890809c654f11d6e72a28fa60149770a0d11ec6c92319d6ceb2bb0a4ea1a15', this.address.addTopicZeroes()], 
-            async (log) => {
-                tx = await this.web3.eth.getTransactionReceipt(log.transactionHash);
-                return tx;
-            }
-        );
-        let output = this.servingMonitor.output;
-
-        for(let i = 0; i < output.length; i++) {
-            if(parseInt(output[i].blockNumber) >= 10959130) {
-                for(let j = 0; j < output[i].logs.length; j++) {
-                    let log = output[i].logs[j];
-                    if(log.topics[0] === '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef' &&
-                    log.topics[1] === '0x000000000000000000000000c2edad668740f1aa35e4d8f227fb8e17dca888cd' &&
-                    log.topics[2] === this.address.addTopicZeroes()) {
+        if (!this.servingMonitor) {
+            this.servingMonitor = new LogMonitor(this.options, '0x6b3595068778dd592e39a122f4f5a5cf09c90fe2',
+                ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+                    "0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd".addTopicZeroes(), this.address.addTopicZeroes()],
+                async (log) => {
+                    if (log.blockNumber >= 10959130) {
                         this.harvestedSushi += BigInt(log.data);
                     }
+                    return null;
                 }
-            }
+            );
         }
     }
 
     async addHarvestableSushiAtVestingBegin() {
         let addresslist = await $.ajax('addresslist-vesting.json');
 
-        this.harvestedSushi -= BigInt(addresslist.find(a => a.address === this.address).sushi);
-    }
-
-    getSushi() {
-        this.vestedSushi = (this.pendingSushi + this.harvestedSushi) * 2n;
-
-        return {
-            vested: this.vestedSushi,
-            pending: this.pendingSushi,
-        };
+        this.pendingSushiAtStart = BigInt(addresslist.find(a => a.address === this.address).sushi);
     }
 }

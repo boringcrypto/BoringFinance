@@ -6,9 +6,13 @@
                     <div class="card">
                         <div class="card-body">
                             <h3 class="card-title">Vested Sushi</h3>
-                            <p>
-                                Your pending SUSHI: {{ this.pendingsushi.print(18, 0) }}<br>
-                                Your vested SUSHI: {{ this.vestedsushi.print(18, 0) }}<br>
+                            <p v-if="vesting">
+                                Your pending SUSHI at lockup start: {{ vesting.pendingSushiAtStart.print(18, 4) }}<br>
+                                Your currently pending SUSHI: {{ vesting.pendingSushi.print(18, 4) }}<br>
+                                Your harvested SUSHI since lockup: {{ vesting.harvestedSushi.print(18, 4) }}<br>
+                                <br>
+                                Estimated in lockup:
+                                {{ ((vesting.pendingSushi - vesting.pendingSushiAtStart + vesting.harvestedSushi) * 2n).print(18, 4) }}
                             </p>
                         </div>
                     </div>
@@ -22,9 +26,7 @@
         props: ['manager', 'address', 'block', 'time'],
         data: function () {
             return {
-                vesting: null,
-                vestedsushi: 0n,
-                pendingsushi: 0n,
+                vesting: null
             }
         },
         mounted: async function () {
@@ -49,12 +51,9 @@
                 }
             },
             update: async function () {
-                    await this.vesting.addPendingSushi();
-                    await this.vesting.addHarvestedSushi();
-                    await this.vesting.addHarvestableSushiAtVestingBegin();
-
-                    this.vestedsushi = this.vesting.getSushi().vested;  
-                    this.pendingsushi = this.vesting.getSushi().pending;
+                await this.vesting.addPendingSushi();
+                await this.vesting.addHarvestedSushi();
+                await this.vesting.addHarvestableSushiAtVestingBegin();
             }
         }
     }
