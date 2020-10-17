@@ -4630,13 +4630,6 @@
     },
     {
         "chainId": 1,
-        "address": "0xba7435a4b4c747e0101780073eeda872a69bdcd4",
-        "name": "Airdrop Token",
-        "symbol": "AIRDROP",
-        "decimals": 18
-    },
-    {
-        "chainId": 1,
         "address": "0x19ddc3605052554a1ac2b174ae745c911456841f",
         "name": "Proof of Nature Tok",
         "symbol": "PON",
