@@ -211,7 +211,7 @@ class LogMonitor {
         this.output = output || [];
         this.seen = {};
         this.local = [];
-        this.lastBlock = this.manager.web3.chainId == "0x1" ? 10750000 : 1;
+        this.lastBlock = 10750000;
         console.log(this.lastBlock);
         DB.get(this.key, (data) => {
             this.lastBlock = data.lastBlock;

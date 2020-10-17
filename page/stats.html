@@ -54,9 +54,9 @@
                     this.userMonitor = new LogMonitor(this.manager, '0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd',
                         ['0x90890809c654f11d6e72a28fa60149770a0d11ec6c92319d6ceb2bb0a4ea1a15'],
                         async (log) => {
-                            let user = "0x" + log.topics[1].slice(26);
+                            let user = "0x" + log.topics[1].slice(26) + "-" + BigInt(log.topics[2]).toString();
                             return this.users.indexOf(user) < 0 ? user : null;
-                        }, this.users, 1, this.status, 5000
+                        }, this.users, 2, this.status, 5000
                     );
                 }
             }
