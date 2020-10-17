@@ -1,11 +1,28 @@
 <template id="page_template">
     <div class="mt-3">
         <div class="row">
-            <div class="col-12 p-0 p-sm-3">
+            <div class="col-12 col-lg-6 p-0 p-sm-3">
                 <div class="card mx-auto mb-3" style="max-width: 720px" v-for="group in groupedAssets">
                     <div class="card-body">
                         <div :is="group.view" :assets="group.items" :app="app" :manager="manager" :key="group.view">
                         </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6 p-0 p-sm-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="card-title">Vested Sushi</h3>
+                        <p v-if="vesting">
+                            This is experimental, these number may not be correct.<br>
+                            <br>
+                            Your pending SUSHI at lockup start: {{ vesting.pendingSushiAtStart.print(18, 4) }}<br>
+                            Your currently pending SUSHI: {{ vesting.pendingSushi.print(18, 4) }}<br>
+                            Your harvested SUSHI since lockup: {{ vesting.harvestedSushi.print(18, 4) }}<br>
+                            <br>
+                            Estimated in lockup:
+                            {{ ((vesting.pendingSushi - vesting.pendingSushiAtStart + vesting.harvestedSushi) * 2n).print(18, 4) }}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -17,6 +34,20 @@
         props: ['manager', 'address', 'app'],
         data: function () {
             return {
+                vesting: null
+            }
+        },
+        mounted: async function () {
+            await this.init();
+        },
+        beforeDestroy: function () {
+            if (this.vesting) {
+                this.vesting.close();
+            }
+        },
+        watch: {
+            'address': async function () {
+                await this.update();
             }
         },
         computed: {
@@ -35,6 +66,18 @@
             }
         },
         methods: {
+            init: async function () {
+                if (this.manager && !this.vesting) {
+                    this.vesting = new VestedSushi(this.manager);
+
+                    await this.update();
+                }
+            },
+            update: async function () {
+                await this.vesting.addPendingSushi();
+                await this.vesting.addHarvestedSushi();
+                await this.vesting.addHarvestableSushiAtVestingBegin();
+            }
         }
     };
     page_done();
