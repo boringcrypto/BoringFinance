@@ -4,7 +4,8 @@
             <div class="col-12 p-0 p-sm-3">
                 <div class="card mx-auto mb-3" style="max-width: 720px" v-for="group in groupedAssets">
                     <div class="card-body">
-                        <div :is="group.view" :assets="group.items" :app="app" :key="group.view"></div>
+                        <div :is="group.view" :assets="group.items" :app="app" :manager="manager" :key="group.view">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -16,19 +17,12 @@
         props: ['manager', 'address', 'app'],
         data: function () {
             return {
-                assets: []
             }
         },
-        mounted: async function () {
-            await this.init();
-        },
-        watch: {
-            'address': async function () {
-                this.assets = [];
-                await this.init();
-            },
-        },
         computed: {
+            assets: function () {
+                return app.assets;
+            },
             groupedAssets: function () {
                 let groups = {};
                 for (let i in this.assets) {
@@ -41,9 +35,6 @@
             }
         },
         methods: {
-            init: async function () {
-                new Assets(this.manager, this.assets).init();
-            }
         }
     };
     page_done();

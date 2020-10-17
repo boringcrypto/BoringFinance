@@ -5530,5 +5530,156 @@
         "name": "Leverj",
         "symbol": "LEV",
         "decimals": 9
+    },
+    {
+        "chainId": 3,
+        "address": "0xc778417E063141139Fce010982780140Aa0cD5Ab",
+        "name": "Wrapped Ether",
+        "symbol": "WETH",
+        "decimals": 18,
+        "compoundSymbol": "ETH"
+    },
+    {
+        "chainId": 3,
+        "address": "0x81db9c598b3ebbdc92426422fc0a1d06e77195ec",
+        "name": "SushiToken",
+        "symbol": "SUSHI",
+        "decimals": 18
+    },
+    {
+        "chainId": 3,
+        "address": "0xe4c6182ea459e63b8f1be7c428381994ccc2d49c",
+        "name": "0x protocol",
+        "symbol": "ZRX",
+        "decimals": 18,
+        "compoundSymbol": "ZRX"
+    },
+    {
+        "chainId": 3,
+        "address": "0x6fd34013cdd2905d8d27b0adad5b97b2345cf2b8",
+        "name": "Augur",
+        "symbol": "REP",
+        "decimals": 18,
+        "compoundSymbol": "REP"
+    },
+    {
+        "chainId": 3,
+        "address": "0x443fd8d5766169416ae42b8e050fe9422f628419",
+        "name": "Basic Attention Token",
+        "symbol": "BAT",
+        "decimals": 18,
+        "compoundSymbol": "BAT"
+    },
+    {
+        "chainId": 3,
+        "address": "0xb19c7bfc9a7cbe4c35189d475725557a96bfb50a",
+        "name": "ChainLink",
+        "symbol": "LINK",
+        "decimals": 18,
+        "compoundSymbol": "LINK"
+    },
+    {
+        "chainId": 3,
+        "address": "0x1fe16de955718cfab7a44605458ab023838c2793",
+        "name": "Compound",
+        "symbol": "COMP",
+        "decimals": 18,
+        "compoundSymbol": "COMP"
+    },
+    {
+        "chainId": 3,
+        "address": "0xc2118d4d90b274016cb7a54c03ef52e6c537d957",
+        "name": "Dai",
+        "symbol": "DAI",
+        "decimals": 18,
+        "compoundSymbol": "DAI"
+    },
+    {
+        "chainId": 3,
+        "address": "0xf0a6664a0a8e95696bffb121a4fb0b1fc8c93d9e",
+        "name": "Kyber Network Crystal",
+        "symbol": "KNC",
+        "decimals": 18,
+        "compoundSymbol": "KNC"
+    },
+    {
+        "chainId": 3,
+        "address": "0x96a62428509002a7ae5f6ad29e4750d852a3f3d7",
+        "name": "Polymath",
+        "symbol": "POLY",
+        "decimals": 18
+    },
+    {
+        "chainId": 3,
+        "address": "0x26ff7457496600c63b3e8902c9f871e60edec4e4",
+        "name": "Sai",
+        "symbol": "SAI",
+        "decimals": 18
+    },
+    {
+        "chainId": 3,
+        "address": "0x5b28e0b36b6017855cf0f205a78a34200589923b",
+        "name": "Token A",
+        "symbol": "A",
+        "decimals": 18
+    },
+    {
+        "chainId": 3,
+        "address": "0xd9593ebb9b9e2476a550aed6762b5d024ff089fa",
+        "name": "Token B",
+        "symbol": "B",
+        "decimals": 18
+    },
+    {
+        "chainId": 3,
+        "address": "0x71d82eb6a5051cff99582f4cdf2ae9cd402a4882",
+        "name": "Uniswap",
+        "symbol": "UNI",
+        "decimals": 18,
+        "compoundSymbol": "UNI"
+    },
+    {
+        "chainId": 3,
+        "address": "0x101848d5c5bbca18e6b4431eedf6b95e9adf82fa",
+        "name": "Weenus",
+        "symbol": "WEENUS",
+        "decimals": 18
+    },
+    {
+        "chainId": 3,
+        "address": "0x7e0480ca9fd50eb7a3855cf53c347a1b4d6a2ff5",
+        "name": "Xeenus",
+        "symbol": "XEENUS",
+        "decimals": 18
+    },
+    {
+        "chainId": 3,
+        "address": "0xf6ff95d53e08c9660dc7820fd5a775484f77183a",
+        "name": "Yeenus",
+        "symbol": "YEENUS",
+        "decimals": 8
+    },
+    {
+        "chainId": 3,
+        "address": "0xc84f8b669ccb91c86ab2b38060362b9956f2de52",
+        "name": "Zeenus",
+        "symbol": "ZEENUS",
+        "decimals": 0
+    },
+    {
+        "chainId": 3,
+        "address": "0x0d9c8723b343a8368bebe0b5e89273ff8d712e3c",
+        "name": "USD Coin",
+        "symbol": "USDC",
+        "decimals": 6,
+        "compoundSymbol": "USDC"
+    },
+    {
+        "chainId": 3,
+        "address": "0xbde8bb00a7ef67007a96945b3a3621177b615c44",
+        "name": "Wrapped BTC",
+        "symbol": "WBTC",
+        "decimals": 8,
+        "compoundSymbol": "BTC"
     }
 ]

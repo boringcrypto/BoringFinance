@@ -154,19 +154,19 @@ Object.defineProperty(Web3.prototype, "ens", {
 // Registered contracts
 addContract("sushi", abis.sushi, { "0x1": "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2", "0x3": "0x81db9c598b3ebbdc92426422fc0a1d06e77195ec" });
 addContract("chef", abis.chef, { "0x1": "0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd", "0x3": "0xFF281cEF43111A83f09C656734Fa03E6375d432A" });
-addContract("factory", abis.factory, { "0x1": "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac", "0x3": "0x0887edCe08f06190BA11706f0C4B442d2888d2b3" });
-addContract("router", abis.router, { "0x1": "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F", "0x3": "0x55321ae0a211495A7493A9dE1385EeD9D9027106" });
+addContract("factory", abis.factory, { "0x1": "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac", "0x3": "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f" });
+addContract("router", abis.router, { "0x1": "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F", "0x3": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D" });
 addContract("bar", abis.bar, { "0x1": "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272", "0x3": "" });
 addContract("maker", abis.maker, { "0x1": "0x6684977bBED67e101BB80Fc07fCcfba655c0a64F", "0x3": "" });
 addContract("timelock", abis.timelock, { "0x1": "0x9a8541ddf3a932a9a922b607e9cf7301f1d47bd1" })
 
-addContract("tokenInfo", abis.tokenInfo, { "0x1": "0x0254804A96beE6D5136F283998268Ed8ba8930B7", "0x3": "" });
-addContract("poolnames", abis.poolnames, { "0x1": "0xb373a5def62A907696C0bBd22Dc512e2Fc8cfC7E" });
+addContract("tokenInfo", abis.tokenInfo, { "0x1": "0x0254804A96beE6D5136F283998268Ed8ba8930B7", "0x3": "0xd9145CCE52D386f254917e481eB44e9943F39138" });
+addContract("poolnames", abis.poolnames, { "0x1": "0xb373a5def62A907696C0bBd22Dc512e2Fc8cfC7E", "0x3": "0x7685f4c573cE27C94F6aF70B330C29b9c41B8290" });
 addContract("baseInfo", abis.baseInfo, { "0x1": "0xBb7dF27209ea65Ae02Fe02E76cC1C0247765dcFF", "0x3": "0x39Bb002c6400f7F1679090fdAc722BC08e2a8C1e" });
 addContract("userInfo", abis.userInfo, { "0x1": "0x39Ec6247dE60d885239aD0bcE1bC9f1553f4EF75", "0x3": "0xe8f852908A61e074032382E9B5058F86fe2a0ea7" });
 addContract("makerInfo", abis.makerInfo, { "0x1": "0x001c92D884fe654A6C5438fa85a222aA400C1999", "0x3": "" });
-addContract("dashboard", abis.dashboard, { "0x1": "0xD132Ce8eA8865348Ac25E416d95ab1Ba84D216AF" });
-addContract("dashboard2", abis.dashboard2, { "0x1": "0x1B13fC91c6f976959E7c236Ac1CF17E052d113Fc" });
+addContract("dashboard", abis.dashboard, { "0x1": "0xD132Ce8eA8865348Ac25E416d95ab1Ba84D216AF", "0x3": "0xC95678C10CB8b3305b694FF4bfC14CDB8aD3AB35" });
+addContract("dashboard2", abis.dashboard2, { "0x1": "0x1B13fC91c6f976959E7c236Ac1CF17E052d113Fc", "0x3": "0xbB7091524A6a42228E396480C9C43f1C4f6c50e2" });
 
 
 window.DB = {
@@ -210,7 +210,8 @@ class LogMonitor {
         this.output = output || [];
         this.seen = {};
         this.local = [];
-        this.lastBlock = 10750000;
+        this.lastBlock = this.manager.web3.chainId == "0x1" ? 10750000 : 1;
+        console.log(this.lastBlock);
         DB.get(this.key, (data) => {
             this.lastBlock = data.lastBlock;
             this.local = data.output;
@@ -225,17 +226,14 @@ class LogMonitor {
         Object.assign(oldParams, params);
         while (!raw_logs) {
             try {
-                console.log(params);
                 let raw_logs = await this.web3.eth.getPastLogs(params);
                 Object.assign(params, oldParams);
                 return raw_logs;
             }
             catch (e) {
                 if (e.code == -32005) {
-                    console.log(e);
                     Object.assign(params, oldParams);
                     params.toBlock -= Math.floor((params.toBlock - params.fromBlock) / 1.25);
-                    console.log(params, oldParams);
                 }
                 else {
                     throw e;
@@ -352,6 +350,10 @@ class Web3Component {
 
     get currency() {
         return this.options.currency;
+    }
+
+    get chainId() {
+        return this.options.chainId;
     }
 }
 
@@ -605,7 +607,7 @@ class TimeLock extends Web3Component {
     }
 }
 
-class Assets extends Web3Component {
+class AssetManager extends Web3Component {
     constructor(options, assets) {
         super(options);
         if (!assets) {
@@ -650,29 +652,26 @@ class Assets extends Web3Component {
 
     async init() {
         this.addHandler(ERC20Handler);
-        this.addHandler(XSushiHandler);
+        //this.addHandler(XSushiHandler);
         this.addHandler(SLPHandler);
 
         // Get tokens from list
-        this.allAssets = (await $.ajax('tokenlist.json')).map(a => {
+        this.allAssets = (await $.ajax('tokenlist.json')).filter(a => a.chainId == this.chainId.slice(2)).map(a => {
             a = rpcToObj(a);
             a.handler = a.handler || "ERC20Handler";
             this._allAssetsMap[a.address] = a;
             return a;
         });
 
-        console.log("Init and Find");
         for (let i in this.handlers) {
             await this.handlers[i].init(this.address, this.assets);
             await this.handlers[i].find(this.address, this.allAssets);
         };
 
-        console.log("Info");
         for (let i in this.handlers) {
             await this.handlers[i].info(this.assets.filter(a => a.handler == this.handlers[i]));
         };
 
-        console.log("Poll");
         this.poll();
 
         return this;

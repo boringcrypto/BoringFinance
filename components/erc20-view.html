@@ -4,7 +4,8 @@
         <table class="table table-hover w-100 mb-0">
             <thead>
                 <tr>
-                    <th colspan=2>Assets</th>
+                    <th v-if="manager.chainId=='0x1'" colspan=2>Assets</th>
+                    <th v-else="">Assets</th>
                     <th class="text-right d-none d-sm-table-cell">Balance</th>
                     <th class="text-right">Value</th>
                 </tr>
@@ -12,8 +13,8 @@
             <template v-for="asset in assetsOrdered" v-if="asset.balance > 0n && !asset.hide">
                 <tr style="cursor: pointer;" :key="asset.address" data-toggle="collapse"
                     :data-target="'.erc20' + asset.address">
-                    <td class="py-2 px-0" style="width: 28px"><img class="rounded" :src="logo_url(asset)"
-                            style="width: 28px; height: 28px;">
+                    <td v-if="manager.chainId=='0x1'" class="py-2 px-0" style="width: 28px"><img class="rounded"
+                            :src="logo_url(asset)" style="width: 28px; height: 28px;">
                     </td>
                     <td>{{ asset.symbol }}</td>
                     <td class="text-right d-none d-sm-table-cell">
@@ -42,7 +43,7 @@
 </template>
 <script>
     addComponent('erc20', {
-        props: ["assets", "app"],
+        props: ["assets", "app", "manager"],
         computed: {
             assetsOrdered: function () {
                 let withValue = this.assets.filter(a => a.rate && !a.hide_value).sort((a, b) => Number((b.balance * 1000000000000000000n / b.rate) - (a.balance * 1000000000000000000n / a.rate)));
@@ -103,8 +104,8 @@
         async poll(address, assets) {
             let balances = await this.assets.web3.dashboard.getBalances(
                 address, assets.map(t => t.address),
-                "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",   // Uniswap (for now), should add to tokenlist.
-                "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"    // Use WETH as currency for rate
+                this.chainId == "0x1" ? "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f" : "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",   // Uniswap (for now), should add to tokenlist.
+                this.chainId == "0x1" ? "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2" : "0xc778417E063141139Fce010982780140Aa0cD5Ab"    // Use WETH as currency for rate
             ).call();
             for (var i in balances) {
                 let asset = this.assets.get(balances[i].token);

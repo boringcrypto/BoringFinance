@@ -8,6 +8,7 @@ class Web3Manager {
         this.currency = null;
         this.provider = "Unknown";
         this.connected = false;
+        this.chainId = "";
 
         let self = this;
 
@@ -42,8 +43,8 @@ class Web3Manager {
     }
 
     async onConnected(self) {
-        console.log("Connected to Web3");
         self.chainId = this.web3.givenProvider.chainId;
+        console.log("Connected to Web3... chain: " + self.chainId);
         self.connected = window.ethereum.isConnected();
         if (self.chainId == "0x1") {
             self.currency = "0xdac17f958d2ee523a2206206994597c13d831ec7";

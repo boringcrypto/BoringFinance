@@ -63,13 +63,10 @@
                         if (asset.pending) {
                             total += asset.pending * this.app.sushiRate / 1000000000000000000n;
                         }
-                        console.log(asset, total)
                     }
                     else {
-                        console.log(asset.token0asset.hide_value)
                         if (this.app.ethRate && asset.token0asset.rate && !asset.token0asset.hide_value && asset.token1asset.rate && !asset.token1asset.hide_value && asset.balance) {
                             total += ((asset.balance * asset.reserve0 / asset.totalSupply) * this.app.ethRate / asset.token0asset.rate) + ((asset.balance * asset.reserve1 / asset.totalSupply) * this.app.ethRate / asset.token1asset.rate);
-                            console.log(asset, total)
                         }
                     }
                 }
@@ -84,7 +81,7 @@
         }
 
         async init() {
-            this.factory = rpcToObj((await this.assets.web3.dashboard.getFactoryInfo(["0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac"]).call())[0]);
+            this.factory = rpcToObj((await this.assets.web3.dashboard.getFactoryInfo([this.assets.chainId == "0x1" ? "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac" : "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f"]).call())[0]);
             this.poolsInfo = await this.assets.web3.dashboard2.getPools([]).call();
         }
 
@@ -115,7 +112,6 @@
             }
 
             let pools = await this.assets.web3.dashboard2.findPools(address, pids).call();
-            console.log(pools, pids);
             for (let i in pools) {
                 let pool = pools[i];
                 this.assets.add({
@@ -147,7 +143,6 @@
             for (let i in balances) {
                 objAssign(this.assets.get(balances[i].token + "_slp"), rpcToObj(balances[i]));
             }
-            console.log("Here")
             let pools = await this.assets.web3.dashboard2.pollPools(address, assets.filter(a => a.staked).map(a => a.pid)).call();
             for (let i in pools) {
                 objAssign(this.assets.get(pools[i].pid + "_pid_staked"), rpcToObj(pools[i]));

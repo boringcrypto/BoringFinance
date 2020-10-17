@@ -3,10 +3,65 @@
         <div class="row">
             <div class="col-12 mb-3">
                 <div class="card">
-                    <div class="card-body">
+                    <div class="card-body" v-if="manager.chainId == '0x3'">
                         <h4 class="card-title">BentoBox lending</h4>
                         <p>
-                            Under development. Just for testing.
+                        </p>
+                        <table class="table">
+                            <tr v-for="pool in pools" v-if="tokens[pool.tokenA]">
+                                <td>{{ tokens[pool.tokenA].symbol }} >
+                                    {{ tokens[pool.tokenB].symbol }}</td>
+                            </tr>
+                        </table>
+
+                        <h4>Create new pair</h4>
+                        <div class="row">
+                            <div class="col-12 col-md-4">
+                                <label for="supplyToken">Asset Supply and Borrow</label>
+                                <select class="form-control" v-model="supplyToken">
+                                    <option v-for="token in app.tokens" :value="token">{{ token.symbol }} -
+                                        {{ token.name }}</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label for="collateralToken">Collateral</label>
+                                <select class="form-control" v-model="collateralToken">
+                                    <option v-for="token in app.tokens" :value="token">{{ token.symbol }} -
+                                        {{ token.name }}</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label for="oracle">Oracle</label>
+                                <select class="form-control" v-model="oracle">
+                                    <option value="pegged">Pegged</option>
+                                    <option value="compound"
+                                        v-if="supplyToken && collateralToken && supplyToken.compoundSymbol && collateralToken.compoundSymbol">
+                                        Compound</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div v-if="oracle == 'compound' && supplyToken && collateralToken && false">
+                            {{ collateralToken.compoundSymbol }} {{ supplyToken.compoundSymbol }}
+                            {{ '1' + '0'.repeat(Number(18n - collateralToken.decimals + supplyToken.decimals)) }}
+                        </div>
+                        <button class="btn btn-primary mt-3" v-if="supplyToken && collateralToken && oracle"
+                            @click="create">Create!</button>
+
+                        <h4 class="mt-4">Get test tokens</h4>
+                        <p>
+                            If you don't have any Ropsten ETH, go to the <a href="https://faucet.metamask.io/"
+                                target="_blank">MetaMask Faucet</a>
+                            to get some.<br>
+                        </p>
+                        <p>
+                            To get some tokens to play with: <br>
+                            <button class="btn btn-primary mt-3" @click="drip">Make it rain!</button>
+                        </p>
+                    </div>
+                    <div class="card-body" v-else="">
+                        <h4 class="card-title">BentoBox lending</h4>
+                        <p>
+                            Please switch to the Ropsten network and then refresh the page.
                         </p>
                     </div>
                 </div>
@@ -15,17 +70,38 @@
     </div>
 </template>
 <script>
+    abis.vault = [{ "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }], "name": "OwnershipTransferred", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "pairContract", "type": "address" }, { "indexed": true, "internalType": "address", "name": "tokenA", "type": "address" }, { "indexed": true, "internalType": "address", "name": "tokenB", "type": "address" }, { "indexed": false, "internalType": "address", "name": "oracle", "type": "address" }, { "indexed": false, "internalType": "address", "name": "clone_address", "type": "address" }], "name": "PairCreated", "type": "event" }, { "inputs": [{ "internalType": "address", "name": "pairContract", "type": "address" }, { "internalType": "address", "name": "tokenA", "type": "address" }, { "internalType": "address", "name": "tokenB", "type": "address" }, { "internalType": "address", "name": "oracle", "type": "address" }], "name": "deploy", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "isPair", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "pairContracts", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "pairContract", "type": "address" }, { "internalType": "bool", "name": "enabled", "type": "bool" }], "name": "setPairContract", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "swapper", "type": "address" }, { "internalType": "bool", "name": "enabled", "type": "bool" }], "name": "setSwapper", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "swappers", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "address", "name": "from", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }];
+    abis.token = [{ "inputs": [], "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "_owner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "_spender", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "_value", "type": "uint256" }], "name": "Approval", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "_from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "_to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "_value", "type": "uint256" }], "name": "Transfer", "type": "event" }, { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "approve", "outputs": [{ "internalType": "bool", "name": "success", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "balanceOf", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "decimals", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "name", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "symbol", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "totalSupply", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "success", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "from", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "internalType": "bool", "name": "success", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }]
+    abis.peggedoracle = [{ "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }], "name": "OwnershipTransferred", "type": "event" }, { "inputs": [{ "internalType": "address", "name": "pair", "type": "address" }], "name": "get", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }, { "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "pair", "type": "address" }], "name": "peek", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "pair", "type": "address" }, { "internalType": "uint256", "name": "rate_", "type": "uint256" }], "name": "set", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }];
+    abis.testoracle = [{ "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }], "name": "OwnershipTransferred", "type": "event" }, { "inputs": [{ "internalType": "address", "name": "pair", "type": "address" }], "name": "get", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }, { "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "pair", "type": "address" }], "name": "peek", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "pair", "type": "address" }, { "internalType": "uint256", "name": "rate_", "type": "uint256" }], "name": "set", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }];
+    abis.faucet = [{ "inputs": [], "name": "drip", "outputs": [], "stateMutability": "nonpayable", "type": "function" }]
+
+    addContract("vault", abis.vault, { "0x1": "", "0x3": "0x0d238A2c8b92ebD18312A9d3ff36E124dBa30EcB" });
+    addContract("tokena", abis.token, { "0x1": "", "0x3": "0x5b28E0b36B6017855cf0f205A78A34200589923B" });
+    addContract("tokenb", abis.token, { "0x1": "", "0x3": "0xD9593EbB9B9E2476a550aEd6762B5D024ff089FA" });
+    addContract("peggedoracle", abis.vault, { "0x1": "", "0x3": "0x577DECacBD9836fE6179713a0ee3fEbCF1FAF0E7" });
+    addContract("testoracle", abis.vault, { "0x1": "", "0x3": "0xaBADb853b0EDfBBc9c1b9ea7b3a7D2fbA07bC228" });
+    addContract("faucet", abis.faucet, { "0x3": "0x6Ae9C78369Cccb2477C4F4c4838333832D7b21BC" })
+    const sushiswapper = "0x59CE06aFC0455612d0D141c80ECdC27dffc3647B";
+
     app.page = {
-        props: ['manager', 'address', 'block'],
+        props: ['manager', 'address', 'block', 'app'],
         data: function () {
             return {
-                base: {},
                 pools: [],
-                tokenlist: []
+                tokens: {},
+                status: {
+                    loading: true
+                },
+                supplyToken: null,
+                collateralToken: null,
+                oracle: null
             }
         },
         mounted: async function () {
             await this.init();
+            this.add_token("0xc778417E063141139Fce010982780140Aa0cD5Ab"); // WETH
+            this.add_token("0x81db9c598b3ebbdc92426422fc0a1d06e77195ec"); // SUSHI
         },
         watch: {
             'api': async function () {
@@ -33,6 +109,13 @@
             },
             'block': async function () {
                 await this.update()
+            },
+            'status.loading': async function () {
+                this.pools.forEach(pool => {
+                    this.add_token(pool.tokenA);
+                    this.add_token(pool.tokenB);
+                });
+                this.update();
             }
         },
         computed: {
@@ -43,7 +126,39 @@
                     await this.update();
                 }
             },
+            add_token: function (address) {
+                address = address.toLowerCase();
+                if (!this.tokens[address]) {
+                    Vue.set(this.tokens, address, {
+                        address: address
+                    });
+                }
+            },
             update: async function () {
+                if (!this.poolMonitor) {
+                    this.poolMonitor = new LogMonitor(this.manager, '0x0d238A2c8b92ebD18312A9d3ff36E124dBa30EcB',
+                        ['0xbb3432dd011e3a520780a665a087a29ccda830ea796ec3d85f051c7340a59c7f'],
+                        async (log) => {
+                            let pool = {
+                                master: "0x" + log.topics[1].slice(26),
+                                tokenA: "0x" + log.topics[2].slice(26),
+                                tokenB: "0x" + log.topics[3].slice(26),
+                                oracle: "0x" + log.data.substr(26, 40),
+                                address: "0x" + log.data.substr(90, 40),
+                            }
+                            this.add_token(pool.tokenA);
+                            this.add_token(pool.tokenB);
+                            return pool;
+                        }, this.pools, 1, this.status
+                    );
+                }
+                let infos = await this.manager.web3.dashboard.getTokenInfo(Object.keys(this.tokens)).call();
+                for (var i in infos) {
+                    objAssign(this.tokens[infos[i].token.toLowerCase()], rpcToObj(infos[i]));
+                }
+            },
+            drip: async function () {
+                await this.manager.web3.faucet.drip().send({ from: this.address });
             }
         }
     }

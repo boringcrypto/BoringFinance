@@ -133,6 +133,8 @@
                 self: null,
                 time: 0,
                 manager: {},
+                assetManager: null,
+                assets: [],
                 ethBalance: 0n,
                 ethRate: 0n,
                 btcRate: 0n,
@@ -153,27 +155,43 @@
                     this.update();
                 }
             },
+            computed: {
+                tokens: function () {
+                    return this.assetManager ? this.assetManager.allAssets.filter(a => a.handler == 'ERC20Handler') : [];
+                }
+            },
             methods: {
                 connect: async function () {
                     this.manager.connect();
                 },
                 update: async function () {
                     if (this.manager && this.manager.web3) {
-                        let pair = this.manager.web3.contract("pair", "0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852");
+                        let pair = this.manager.web3.contract("pair", this.manager.chainId == "0x1" ? "0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852" : "0xbc30AaA8e99d0f0e435FC938034850c2fC77f753");
                         let reserves = rpcToObj(await pair.methods.getReserves().call());
-                        this.ethRate = reserves._reserve1 * 1000000000000000000n / reserves._reserve0;
+                        if (this.manager.chainId == "0x1") {
+                            this.ethRate = reserves._reserve1 * 1000000000000000000n / reserves._reserve0;
+                        } else {
+                            this.ethRate = reserves._reserve0 * 1000000000000000000n / reserves._reserve1;
+                        }
 
-                        pair = this.manager.web3.contract("pair", "0xbb2b8038a1640196fbe3e38816f3e67cba72d940");
+                        pair = this.manager.web3.contract("pair", this.manager.chainId == "0x1" ? "0xbb2b8038a1640196fbe3e38816f3e67cba72d940" : "0x8Ae0289759c06fC1dE15d7BB374371a76C352469");
                         reserves = rpcToObj(await pair.methods.getReserves().call());
                         this.btcRate = (reserves._reserve1 * 100000000n / reserves._reserve0) * this.ethRate / 1000000000000000000n;
 
-                        pair = this.manager.web3.contract("pair", "0x795065dcc9f64b5614c407a6efdc400da6221fb0");
+                        pair = this.manager.web3.contract("pair", this.manager.chainId == "0x1" ? "0x795065dcc9f64b5614c407a6efdc400da6221fb0" : "0x47e1ce10065636AA989c4BFD19b9ac695785B7f1");
                         reserves = rpcToObj(await pair.methods.getReserves().call());
                         this.sushiRate = (reserves._reserve1 * 1000000000000000000n / reserves._reserve0) * this.ethRate / 1000000000000000000n;
 
                         if (this.manager.address) {
                             this.ethBalance = BigInt(await this.manager.web3.eth.getBalance(this.manager.address))
                         }
+                    }
+
+                    if (!this.assetManager) {
+                        this.assetManager = new AssetManager(this.manager, this.assets);
+                        this.assetManager.init();
+                    } else {
+                        this.assetManager.poll();
                     }
                 }
             }
