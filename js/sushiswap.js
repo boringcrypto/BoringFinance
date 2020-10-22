@@ -851,7 +851,7 @@ class VestedSushi extends Web3Component {
                 ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
                     "0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd".addTopicZeroes(), this.address.addTopicZeroes()],
                 async (log) => {
-                    if (log.blockNumber >= 10959130) {
+                    if (log.blockNumber >= 10959148) {
                         this.harvestedSushi += BigInt(log.data);
                     }
                     return null;
