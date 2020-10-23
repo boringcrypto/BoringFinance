@@ -199,7 +199,7 @@
         },
         watch: {
             'block': async function () {
-                console.log(this.block);
+                //console.log(this.block);
                 await this.update();
             },
             'address': async function () {
@@ -231,7 +231,7 @@
             transfersOrdered: function () {
                 if (this.transfers.length == 0 || !this.block) { return []; };
                 let rows = [];
-                let sorted = this.transfers.sort((a, b) => a.block - b.block);
+                let sorted = (this.transfers.concat(this.directTransfers)).sort((a, b) => a.block - b.block);
                 let blockbalance = 0n;
                 for (var i in sorted) {
                     rows.push({
@@ -255,7 +255,10 @@
                 return rows.reverse();
             },
             balance: function () {
-                return this.transfers.reduce((a, t) => t.direction == 'in' ? a + t.amount : a - t.amount, 0n);
+                let output = 0n;
+                output += this.transfers.reduce((a, t) => t.direction == 'in' ? a + t.amount : a - t.amount, 0n);
+                output += this.directTransfers.reduce((a, t) => t.direction == 'in' ? a + t.amount : a - t.amount, 0n)
+                return output;
             },
             servesOrdered: function () {
                 return this.serves.sort((a, b) => b.block - a.block);
@@ -283,6 +286,7 @@
                     this.bar = new SushiBar(this.manager);
 
                     this.transfers = this.bar.getTransfers();
+                    this.directTransfers = this.bar.getDirectTransfers();
                     this.serves = this.bar.getServings();
 
                     await this.update();

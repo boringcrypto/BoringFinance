@@ -212,7 +212,6 @@ class LogMonitor {
         this.seen = {};
         this.local = [];
         this.lastBlock = 10750000;
-        console.log(this.lastBlock);
         DB.get(this.key, (data) => {
             this.lastBlock = data.lastBlock;
             this.local = data.output;
@@ -244,9 +243,10 @@ class LogMonitor {
     }
 
     async _getPastLogsAndSubscribe() {
+        try {
         let finished = false;
         while (!finished) {
-            let params = {
+            var params = {
                 fromBlock: this.lastBlock + 1,
                 address: this.address,
                 topics: this.topics
@@ -278,15 +278,19 @@ class LogMonitor {
             this.status.loading = false;
         }
 
-        this.subscription = this.web3.eth.subscribe('logs', {
-            address: this.address,
-            topics: this.topics
-        }, async (error, log) => {
-            if (!error) {
-                await this._processLog(log);
-                this._save();
-            }
-        });
+        if(this.subscription !== false) {
+            this.subscription = this.web3.eth.subscribe('logs', {
+                address: this.address,
+                topics: this.topics
+            }, async (error, log) => {
+                if (!error) {
+                    await this._processLog(log);
+                    this._save();
+                }
+            });
+        }
+    }
+    catch(err) { console.log(params); throw err;  }
     }
 
     async _processLog(log) {
@@ -327,12 +331,16 @@ class LogMonitor {
     }
 
     close() {
-        // TODO: Wait until there is a subscription?
-        this.subscription.unsubscribe((error, success) => {
-            if (success) {
-                this.subscription = null;
-            }
-        });
+        console.log(this.subscription)
+        if(this.subscription) {
+            this.subscription.unsubscribe((error, success) => {
+                if (success) {
+                    this.subscription = null;
+                }
+                console.log(this.subscription)
+            });
+        }
+        else { this.subscription = false; }
     }
 }
 
@@ -372,6 +380,8 @@ class SushiBar extends Web3Component {
         this.allowance = 0n;
         this.poolShare = 0n;
         this.sushiStake = 0n;
+
+        localStorage.clear()
     }
 
     ETHtoCurrency(value) {
@@ -393,6 +403,16 @@ class SushiBar extends Web3Component {
             this.transfersOut.close();
         }
         delete this.transfersOut;
+
+        if (this.directTransfersIn) {
+            this.directTransfersIn.close();
+        }
+        delete this.directTransfersIn;
+
+        if (this.directTransfersOut) {
+            this.directTransfersOut.close();
+        }
+        delete this.directTransfersOut;
     }
 
     async poll() {
@@ -478,7 +498,7 @@ class SushiBar extends Web3Component {
         let output = [];
         if (this.transfersIn) {
             this.transfersIn.close();
-            this.transfersOut = null;
+            this.transfersIn = null;
         }
         if (this.transfersOut) {
             this.transfersOut.close();
@@ -513,6 +533,62 @@ class SushiBar extends Web3Component {
                 return transfer;
             }, output);
         return output;
+    }
+
+    getDirectTransfers() {
+        let output = [];
+        if (this.directTransfersIn) {
+            this.directTransfersIn.close();
+            this.directTransfersIn = null;
+        }
+
+        this.directTransfersIn = new LogMonitor(this.options, '0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272',
+            ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+                null,
+                this.address.addTopicZeroes()],
+            async (log) => {
+                let logData = this.web3.decode.sushi.decodeLog(log);
+                let transfer;
+                if(logData.events[0].value !== "0x0000000000000000000000000000000000000000") {
+                    transfer = {
+                        direction: "in",
+                        block: log.blockNumber,
+                        amountXsushi: BigInt(logData.events[2].value),
+                        amount: BigInt(Math.trunc(await this.getApproximateSushiXsushiRate(log.blockNumber)*10000000000)) * BigInt(logData.events[2].value) / 10000000000n // Dumb BigInt doesn't support decimals
+                    }
+                }
+                return transfer;
+            }, output);
+        return output;
+    }
+
+    async getApproximateSushiXsushiRate(block) {
+        let blockUp = parseInt(block)+100;
+        let blockDown = parseInt(block)-100;
+        while(true) {
+            var sushi = await this.web3.eth.getPastLogs(
+                {
+                    fromBlock: blockDown,
+                    toBlock: blockUp,
+                    address: '0x6b3595068778dd592e39a122f4f5a5cf09c90fe2',
+                    topics: ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+                            null,
+                            '0x0000000000000000000000008798249c2e607446efb7ad49ec89dd1865ff4272'
+                        ]
+                }
+            )
+            if(sushi[0]) { sushi = sushi[0]; break; }
+            blockUp += 100; blockDown -= 100;
+        }
+
+        let xsushi = await this.web3.eth.getPastLogs(
+            {
+                fromBlock: sushi.blockNumber,
+                toBlock: sushi.blockNumber,
+                address: '0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272'
+            }
+        )
+        return Number(sushi.data) / Number(xsushi[0].data);
     }
 
     async allow() {
