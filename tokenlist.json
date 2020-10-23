@@ -2995,13 +2995,6 @@
     },
     {
         "chainId": 1,
-        "address": "0xc12d1c73ee7dc3615ba4e37e4abfdbddfa38907e",
-        "name": "KickToken",
-        "symbol": "KICK",
-        "decimals": 8
-    },
-    {
-        "chainId": 1,
         "address": "0x3c6ff50c9ec362efa359317009428d52115fe643",
         "name": "PeerEx Network",
         "symbol": "PERX",
