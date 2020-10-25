@@ -62,7 +62,7 @@
                                             {{ transfer.direction }}
                                         </td>
                                         <td class="text-right">
-                                            {{ (transfer.direction == 'in' ? '' : '-') + transfer.amount.print(18, 2) }}
+                                            {{ (transfer.direction == 'in' || 'direct in' ? '' : '-') + transfer.amount.print(18, 2) }}
                                         </td>
                                     </tr>
                                 </tbody>
@@ -238,7 +238,7 @@
                         block: sorted[i].block,
                         direction: sorted[i].direction,
                         amount: sorted[i].amount,
-                        balance: (i == 0 ? 0n : rows[i - 1].balance) + (sorted[i].direction == 'in' ? sorted[i].amount : -sorted[i].amount)
+                        balance: (i == 0 ? 0n : rows[i - 1].balance) + (sorted[i].direction == 'in' || 'direct in' ? sorted[i].amount : -sorted[i].amount)
                     })
                     if (i > 0) {
                         blockbalance += BigInt(rows[i].block - rows[i - 1].block) * rows[i - 1].balance;
@@ -257,7 +257,7 @@
             balance: function () {
                 let output = 0n;
                 output += this.transfers.reduce((a, t) => t.direction == 'in' ? a + t.amount : a - t.amount, 0n);
-                output += this.directTransfers.reduce((a, t) => t.direction == 'in' ? a + t.amount : a - t.amount, 0n)
+                output += this.directTransfers.reduce((a, t) => t.direction == 'direct in' ? a + t.amount : a - t.amount, 0n)
                 return output;
             },
             servesOrdered: function () {

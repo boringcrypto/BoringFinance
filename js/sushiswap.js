@@ -551,7 +551,25 @@ class SushiBar extends Web3Component {
                 let transfer;
                 if(logData.events[0].value !== "0x0000000000000000000000000000000000000000") {
                     transfer = {
-                        direction: "in",
+                        direction: "direct in",
+                        block: log.blockNumber,
+                        amountXsushi: BigInt(logData.events[2].value),
+                        amount: BigInt(Math.trunc(await this.getApproximateSushiXsushiRate(log.blockNumber)*10000000000)) * BigInt(logData.events[2].value) / 10000000000n // Dumb BigInt doesn't support decimals
+                    }
+                }
+                return transfer;
+            }, output);
+
+        this.directTransfersOut = new LogMonitor(this.options, '0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272',
+            ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+                this.address.addTopicZeroes()],
+                null,
+            async (log) => {
+                let logData = this.web3.decode.sushi.decodeLog(log);
+                let transfer;
+                if(logData.events[0].value !== "0x0000000000000000000000000000000000000000") {
+                    transfer = {
+                        direction: "direct out",
                         block: log.blockNumber,
                         amountXsushi: BigInt(logData.events[2].value),
                         amount: BigInt(Math.trunc(await this.getApproximateSushiXsushiRate(log.blockNumber)*10000000000)) * BigInt(logData.events[2].value) / 10000000000n // Dumb BigInt doesn't support decimals
