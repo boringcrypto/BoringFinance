@@ -380,8 +380,6 @@ class SushiBar extends Web3Component {
         this.allowance = 0n;
         this.poolShare = 0n;
         this.sushiStake = 0n;
-
-        localStorage.clear()
     }
 
     ETHtoCurrency(value) {
