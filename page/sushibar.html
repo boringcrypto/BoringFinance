@@ -229,7 +229,7 @@
                 return total;
             },
             transfersOrdered: function () {
-                if (this.transfers.length == 0 || !this.block) { return []; };
+                if (this.transfers.concat(this.directTransfers).length == 0 || !this.block) { return []; };
                 let rows = [];
                 let sorted = (this.transfers.concat(this.directTransfers)).sort((a, b) => a.block - b.block);
                 let blockbalance = 0n;

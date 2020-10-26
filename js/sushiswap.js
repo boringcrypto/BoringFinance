@@ -542,6 +542,11 @@ class SushiBar extends Web3Component {
             this.directTransfersIn = null;
         }
 
+        if (this.directTransfersOut) {
+            this.directTransfersOut.close();
+            this.directTransfersOut = null;
+        }
+
         this.directTransfersIn = new LogMonitor(this.options, '0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272',
             ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
                 null,
@@ -562,8 +567,8 @@ class SushiBar extends Web3Component {
 
         this.directTransfersOut = new LogMonitor(this.options, '0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272',
             ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
-                this.address.addTopicZeroes()],
-                null,
+                this.address.addTopicZeroes(),
+                null],
             async (log) => {
                 let logData = this.web3.decode.sushi.decodeLog(log);
                 let transfer;
@@ -580,11 +585,18 @@ class SushiBar extends Web3Component {
         return output;
     }
 
+    // Finds the closes possible staking tx to a blocknumber
     async getApproximateSushiXsushiRate(block) {
-        let blockUp = parseInt(block)+100;
-        let blockDown = parseInt(block)-100;
+        let blockUp = parseInt(block)+100; // A hundred block above the block we're searching around
+        let blockDown = parseInt(block)-100; // A hundred block below the block we're searching around
+        // Gives us a 200 block initial searching range
+
+        let sushi;
+        // Loop until the end of time... or well, until broken out of
         while(true) {
-            var sushi = await this.web3.eth.getPastLogs(
+            // Get stake logs for the chosen range
+            // First topic is the function - transfer, second would be the source address but we don't care, the third is the destination address - the xSushi token contract
+            sushi = await this.web3.eth.getPastLogs(
                 {
                     fromBlock: blockDown,
                     toBlock: blockUp,
@@ -595,18 +607,16 @@ class SushiBar extends Web3Component {
                         ]
                 }
             )
+            // If a log in the range exists, take it and break;
             if(sushi[0]) { sushi = sushi[0]; break; }
+            // Increase the range and have another try
             blockUp += 100; blockDown -= 100;
         }
 
-        let xsushi = await this.web3.eth.getPastLogs(
-            {
-                fromBlock: sushi.blockNumber,
-                toBlock: sushi.blockNumber,
-                address: '0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272'
-            }
-        )
-        return Number(sushi.data) / Number(xsushi[0].data);
+        // Much easier when we already know a tx hash of a stake tx, just get the appropriate data from it
+        let xsushi = (await this.web3.eth.getTransactionReceipt(sushi.transactionHash)).logs[0].data;
+
+        return Number(sushi.data) / Number(xsushi);
     }
 
     async allow() {
