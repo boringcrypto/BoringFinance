@@ -570,7 +570,7 @@ class SushiBar extends Web3Component {
             async (log) => {
                 let logData = this.web3.decode.sushi.decodeLog(log);
                 let transfer;
-                if(logData.events[0].value !== "0x0000000000000000000000000000000000000000") {
+                if(logData.events[1].value !== "0x0000000000000000000000000000000000000000") {
                     transfer = {
                         direction: "direct out",
                         block: log.blockNumber,
