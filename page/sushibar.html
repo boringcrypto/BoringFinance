@@ -62,7 +62,7 @@
                                             {{ transfer.direction }}
                                         </td>
                                         <td class="text-right">
-                                            {{ (transfer.direction == 'in' ? '' : '-') + transfer.amount.print(18, 2) }}
+                                            {{ (transfer.direction == 'in' || 'direct in' ? '' : '-') + transfer.amount.print(18, 2) }}
                                         </td>
                                     </tr>
                                 </tbody>
@@ -199,7 +199,7 @@
         },
         watch: {
             'block': async function () {
-                console.log(this.block);
+                //console.log(this.block);
                 await this.update();
             },
             'address': async function () {
@@ -229,16 +229,16 @@
                 return total;
             },
             transfersOrdered: function () {
-                if (this.transfers.length == 0 || !this.block) { return []; };
+                if (this.transfers.concat(this.directTransfers).length == 0 || !this.block) { return []; };
                 let rows = [];
-                let sorted = this.transfers.sort((a, b) => a.block - b.block);
+                let sorted = (this.transfers.concat(this.directTransfers)).sort((a, b) => a.block - b.block);
                 let blockbalance = 0n;
                 for (var i in sorted) {
                     rows.push({
                         block: sorted[i].block,
                         direction: sorted[i].direction,
                         amount: sorted[i].amount,
-                        balance: (i == 0 ? 0n : rows[i - 1].balance) + (sorted[i].direction == 'in' ? sorted[i].amount : -sorted[i].amount)
+                        balance: (i == 0 ? 0n : rows[i - 1].balance) + (sorted[i].direction == 'in' || 'direct in' ? sorted[i].amount : -sorted[i].amount)
                     })
                     if (i > 0) {
                         blockbalance += BigInt(rows[i].block - rows[i - 1].block) * rows[i - 1].balance;
@@ -255,7 +255,10 @@
                 return rows.reverse();
             },
             balance: function () {
-                return this.transfers.reduce((a, t) => t.direction == 'in' ? a + t.amount : a - t.amount, 0n);
+                let output = 0n;
+                output += this.transfers.reduce((a, t) => t.direction == 'in' ? a + t.amount : a - t.amount, 0n);
+                output += this.directTransfers.reduce((a, t) => t.direction == 'direct in' ? a + t.amount : a - t.amount, 0n)
+                return output;
             },
             servesOrdered: function () {
                 return this.serves.sort((a, b) => b.block - a.block);
@@ -283,6 +286,7 @@
                     this.bar = new SushiBar(this.manager);
 
                     this.transfers = this.bar.getTransfers();
+                    this.directTransfers = this.bar.getDirectTransfers();
                     this.serves = this.bar.getServings();
 
                     await this.update();
