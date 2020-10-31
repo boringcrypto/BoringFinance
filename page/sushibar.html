@@ -296,6 +296,10 @@
                 await this.bar.poll();
 
                 await this.bar.getMakerInfo();
+
+                this.transfers = this.bar.getTransfers();
+                this.directTransfers = this.bar.getDirectTransfers();
+
                 this.pairs = this.bar.makerPairs;
             },
             userShare: function (pair) {
