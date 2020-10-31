@@ -331,13 +331,11 @@ class LogMonitor {
     }
 
     close() {
-        console.log(this.subscription)
         if(this.subscription) {
             this.subscription.unsubscribe((error, success) => {
                 if (success) {
                     this.subscription = null;
                 }
-                console.log(this.subscription)
             });
         }
         else { this.subscription = false; }
@@ -935,6 +933,8 @@ class VestedSushi extends Web3Component {
     }
 
     async addPendingSushi() {
+        this.pendingSushi = 0n;
+
         let numberOfPools = await this.web3.chef.poolLength().call();
 
         let pids = [];
@@ -948,8 +948,14 @@ class VestedSushi extends Web3Component {
     }
 
     async addHarvestedSushi() {
-        if (!this.servingMonitor) {
-            this.servingMonitor = new LogMonitor(this.options, '0x6b3595068778dd592e39a122f4f5a5cf09c90fe2',
+        if (this.servingMonitor) {
+            this.servingMonitor.close();
+            this.servingMonitor = null;
+        }
+        
+        this.harvestedSushi = 0n;
+
+        this.servingMonitor = new LogMonitor(this.options, '0x6b3595068778dd592e39a122f4f5a5cf09c90fe2',
                 ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
                     "0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd".addTopicZeroes(), this.address.addTopicZeroes()],
                 async (log) => {
@@ -959,14 +965,12 @@ class VestedSushi extends Web3Component {
                     return null;
                 }
             );
-        }
     }
 
     async addHarvestableSushiAtVestingBegin() {
         if (!this.addresslist) {
             this.addresslist = await $.ajax('addresslist-vesting.json');
         }
-
         let info = this.addresslist.find(a => a.address === this.address);
         this.pendingSushiAtStart = info ? BigInt(info.sushi) : 0n;
     }
