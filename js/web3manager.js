@@ -4,6 +4,7 @@ class Web3Manager {
         this.web3 = web3;
         this.addresses = [];
 
+        this.block = 0n;
         this.address = null;
         this.currency = null;
         this.provider = "Unknown";
@@ -64,7 +65,9 @@ class Web3Manager {
             self.header = result.header;
         });
 
+        console.log('Setting block...');
         self.block = await this.web3.eth.getBlockNumber();
+        console.log('Set block.', self.block, self);
     }
 
     onDisconnected(self) {

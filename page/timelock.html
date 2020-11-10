@@ -6,24 +6,33 @@
                     <div class="card-body">
                         <h4 class="card-title">Timelock</h4>
                         <p>
-                            Once the time passes these commands CAN be executed. The exact time is will be executed will
-                            depend also on the availability of the team. 3 out of 5 teammembers have to be available.
+                            Once the time passes these commands CAN be executed. The exact time is will be executed
+                            will
+                            depend also on the availability of the team. 3 out of 5 teammembers have to be
+                            available.
                         </p>
 
-                        <div v-if="timelock.status.loading" class="text-center mb-3">
-                            <div class="spinner-border" role="status">
-                                <span class="sr-only">Loading...</span>
+                        <web3 :manager="manager" :poll="poll"></web3>
+                        <eventreader :manager='manager' address="0x9a8541ddf3a932a9a922b607e9cf7301f1d47bd1"
+                            :topics="['0x76e2796dc3a81d57b0e8504b647febcbeeb5f4af818e164f11eef8131a6a763f']"
+                            :handler='transaction_handler' :output='transactions' :abi='abis.timelock'>
+                            <div class="text-center mb-3">
+                                <div class="spinner-border" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
                             </div>
-                        </div>
+                        </eventreader>
 
-                        <div v-for="transaction in txs" v-if="transaction.queued">
+                        <div v-for="transaction in txs">
                             <a class="btn btn-primary float-right" data-toggle="collapse"
                                 :href="'#txinfo-' + transaction.txid" role="button" aria-expanded="false"
                                 aria-controls="collapseExample">
                                 More
                             </a>
                             <p>
-                            <h5>{{ transaction.description }}</h5>
+                            <h5>{{ transaction.description || 'Cannot decode' }}<span
+                                    v-if="transaction.status == 'queued'">
+                                    (QUEUED)</span></h5>
                             <small>Block {{ transaction.block }} - Unlocks at
                                 {{ new Date(transaction.log.events[5].value * 1000).toLocaleString() }}</small><br />
                             <span v-if="explanations[transaction.txid]">{{ explanations[transaction.txid] }}</span>
@@ -61,7 +70,8 @@
                             </div>
                         </div>
                         <p>
-                            Loading the commands in the TimeLock first the first time can take a while. Currently only
+                            Loading the commands in the TimeLock first the first time can take a while. Currently
+                            only
                             showing commands that haven't been excuted yet.
                         </p>
                     </div>
@@ -83,20 +93,7 @@
                     "0x56b64ddca0da5c95d812e15b31baf2014eb019ebd322d8f85f0b542b52112067": "This pool isn't a real pool. It's a dummy pool to help get the 138k UNI locked into the MasterChef contract out. Rewards are obviously set to 0.",
                     "0x45e551e2d681a8adead1019ba8b9e006ecb3e2eddad1bd33a3e04c8a1c28266d": "This updates the migrator to the UniMigrator, whose only purpose is to transfer the UNI out of the MasterChef contract.",
                     "0x14bebf246af39906c2ba7016c03912d2c4ad020bd2216f2b0c34321375388eb7": "This executes the migration on the dummy pool for UNI to unlock the UNI and take it out of the MasterChef contract."
-                },
-                timelock: {
-                    status: {
-                        loading: false
-                    }
                 }
-            }
-        },
-        mounted: async function () {
-            await this.init();
-        },
-        watch: {
-            'api': async function () {
-                await this.init();
             }
         },
         computed: {
@@ -105,13 +102,50 @@
             }
         },
         methods: {
-            init: async function () {
-                if (this.manager) {
-                    this.timelock = new TimeLock(this.manager);
-                    this.transactions = this.timelock.getTransactions();
+            transaction_handler: async function (log, web3, row, decoded) {
+                row.log = decoded;
+
+                // Decode Masterchef events
+                if (decoded.target == "0xc2edad668740f1aa35e4d8f227fb8e17dca888cd") {
+                    let p = {}
+                    try {
+                        let command = web3.decode.chef.decodeMethod(web3.utils.keccak256(decoded.signature).substr(0, 10) + (decoded.data ? decoded.data.substr(2) : ""));
+                        row.params = command.params;
+                        command.params.forEach(param => p[param.name] = param.value);
+                    } catch { }
+
+                    if (typeof (p._pid) == "string") { p.poolname = await web3.poolnames.names(p._pid).call(); }
+
+                    if (decoded.signature == "set(uint256,uint256,bool)") {
+                        row.description = `Set pool allocation for ${p.poolname} (${p._pid}) to ${p._allocPoint / 1000}`;
+                    } else if (decoded.signature == "add(uint256,address,bool)") {
+                        try {
+                            let pair_info = await web3.dashboard.getPairsFull(this.address, [p._lpToken]).call();
+                            let token_info = await web3.dashboard.getTokenInfo([pair_info[0].token0, pair_info[0].token1]).call();
+                            row.description = `Add pool ${token_info[0].symbol}/${token_info[1].symbol} with allocation of ${p._allocPoint / 1000}`;
+                        }
+                        catch {
+                            row.description = `Add pool ${p._lpToken} with allocation of ${p._allocPoint / 1000}`;
+                        }
+
+                    } else if (decoded.signature == "setMigrator(address)") {
+                        row.description = `Change migrator to ${p._migrator}`
+                    } else if (decoded.signature == "migrate(uint256)") {
+                        row.description = `Migrate pool ${p.poolname} (${p._pid})`
+                    } else if (decoded.signature == "massUpdatePools()") {
+                        row.description = `massUpdatePools`
+                    } else {
+                        row.description = `Unknown command`
+                    }
+                    row.status = 'unknown';
+                    if (await web3.timelock.queuedTransactions(row.txid).call()) {
+                        row.status = 'queued';
+                    };
+
                 }
+                return row;
             },
-            done: function () {
+            poll: async function () {
 
             }
         }

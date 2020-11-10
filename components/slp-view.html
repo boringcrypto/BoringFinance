@@ -1,56 +1,118 @@
 <template id="component_template">
     <div>
         <h4>🍣 SushiSwap <span class="float-right">${{ total.print(6, 2) }}</span></h4>
+        <h5>SushiSwap Liquidity Pools</h5>
         <table class="table w-100 mb-0">
             <thead>
                 <th>Assets</th>
                 <th class="text-right">Balance</th>
                 <th class="text-right">Value</th>
             </thead>
-            <tr v-for="asset in assets" v-if="asset.balance > 0n && !asset.hide && !asset.staked">
-                <td>{{ asset.symbol }}</td>
-                <td class="text-right">
-                    <span v-if="asset.totalSupply">
-                        {{ (asset.balance * asset.reserve0 / asset.totalSupply).print(asset.token0asset.decimals, 2) }}
-                        {{ asset.token0asset.symbol }}<br />
-                        {{ (asset.balance * asset.reserve1 / asset.totalSupply).print(asset.token1asset.decimals, 2) }}
-                        {{ asset.token1asset.symbol }}
-                    </span>
-                </td>
-                <td class="text-right">
-                    <span
-                        v-if="app.ethRate && asset.token0asset.rate && !asset.token0asset.hide_value && asset.token1asset.rate && !asset.token1asset.hide_value">
-                        ${{ (((asset.balance * asset.reserve0 / asset.totalSupply) * app.ethRate / asset.token0asset.rate) + ((asset.balance * asset.reserve1 / asset.totalSupply) * app.ethRate / asset.token1asset.rate)).print(6, 2) }}
-                    </span>
-                </td>
-            </tr>
+            <template v-for="asset in assetsUnstaked">
+                <tr style="cursor: pointer;" data-toggle="collapse" :data-target="'.slpunstaked' + asset.address">
+                    <td>{{ asset.symbol }}</td>
+                    <td class="text-right">
+                        <span v-if="asset.totalSupply">
+                            {{ (asset.balance * asset.reserve0 / asset.totalSupply).print(asset.token0asset.decimals, 2) }}
+                            {{ asset.token0asset.symbol }}<br />
+                            {{ (asset.balance * asset.reserve1 / asset.totalSupply).print(asset.token1asset.decimals, 2) }}
+                            {{ asset.token1asset.symbol }}
+                        </span>
+                    </td>
+                    <td class="text-right">
+                        <span
+                            v-if="app.ethRate && asset.token0asset.rate && !asset.token0asset.hide_value && asset.token1asset.rate && !asset.token1asset.hide_value">
+                            ${{ (((asset.balance * asset.reserve0 / asset.totalSupply) * app.ethRate / asset.token0asset.rate) + ((asset.balance * asset.reserve1 / asset.totalSupply) * app.ethRate / asset.token1asset.rate)).print(6, 2) }}
+                        </span>
+                    </td>
+                </tr>
+                <tr :class="'collapse slpunstaked' + asset.address">
+                    <td colspan="4">
+                        <div :class="'slpunstaked' + asset.address">
+                            <div class="input-group mb-3">
+                                <input class="form-control" type="number" v-model="stakeAmount"><br>
+                                <div class="input-group-append">
+                                    <span class="input-group-text" style="cursor: pointer;"
+                                        @click="stakeAmount = asset.balance.toDec(18)">Max</span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-primary">Stake</button>
+                        </div>
+                    </td>
+                </tr>
+            </template>
+        </table>
 
-            <tr v-for="asset in assets" v-if="asset.balance > 0n && !asset.hide && asset.staked">
-                <td>{{ asset.symbol }}</td>
-                <td class="text-right">
-                    <span v-if="asset.totalSupply">
-                        {{ (asset.balance * asset.reserve0 / asset.lpTotalSupply).print(asset.token0asset.decimals, 2) }}
-                        {{ asset.token0asset.symbol }}<br />
-                        {{ (asset.balance * asset.reserve1 / asset.lpTotalSupply).print(asset.token1asset.decimals, 2) }}
-                        {{ asset.token1asset.symbol }}<br />
-                        <small>{{ asset.pending.print(18,3) }} SUSHI</small>
-                    </span>
-                </td>
-                <td class="text-right">
-                    <span
-                        v-if="app.ethRate && asset.token0rate && !asset.token0asset.hide_value && asset.token1rate && !asset.token1asset.hide_value">
-                        ${{ (((asset.balance * asset.reserve0 / asset.lpTotalSupply) * app.ethRate / asset.token0rate) + ((asset.balance * asset.reserve1 / asset.lpTotalSupply) * app.ethRate / asset.token1rate)).print(6, 2) }}<br />
+        <h5>SushiSwap Staked Assets</h5>
+        <p>
+            Total pending SUSHI: {{ totalPending.print(18, 2) }} (${{ (totalPending * app.sushiRate).print(24, 2) }})
+        </p>
+        <table class="table w-100 mb-0">
+            <thead>
+                <th>Assets</th>
+                <th class="text-right">Balance</th>
+                <th class="text-right">Value</th>
+            </thead>
+
+            <template v-for="asset in assetsStaked">
+                <tr style="cursor: pointer;" data-toggle="collapse" :data-target="'.slpstaked' + asset.address">
+                    <td>{{ asset.symbol }}<br />
                         <br />
-                        <small>${{ (asset.pending * app.sushiRate).print(24, 2) }}</small>
-                    </span>
-                </td>
-            </tr>
+                        <span class="badge badge-primary" v-if='asset.allocPoint'>Reward:
+                            {{ asset.allocPoint.print(3, 2) }}x</span>
+                        <span class="badge badge-warning" v-else=''>No rewards!</span>
+                    </td>
+                    <td class="text-right">
+                        <span v-if="asset.totalSupply">
+                            {{ (asset.balance * asset.reserve0 / asset.lpTotalSupply).print(asset.token0asset.decimals, 2) }}
+                            {{ asset.token0asset.symbol }}<br />
+                            {{ (asset.balance * asset.reserve1 / asset.lpTotalSupply).print(asset.token1asset.decimals, 2) }}
+                            {{ asset.token1asset.symbol }}<br />
+                            <small>{{ asset.pending.print(18,3) }} SUSHI</small>
+                        </span>
+                    </td>
+                    <td class="text-right">
+                        <span
+                            v-if="app.ethRate && asset.token0rate && !asset.token0asset.hide_value && asset.token1rate && !asset.token1asset.hide_value">
+                            ${{ (((asset.balance * asset.reserve0 / asset.lpTotalSupply) * app.ethRate / asset.token0rate) + ((asset.balance * asset.reserve1 / asset.lpTotalSupply) * app.ethRate / asset.token1rate)).print(6, 2) }}<br />
+                            <br />
+                            <small>${{ (asset.pending * app.sushiRate).print(24, 2) }}</small>
+                        </span>
+                    </td>
+                </tr>
+                <tr :class="'collapse slpstaked' + asset.address">
+                    <td colspan="4">
+                        <div :class="'slpstaked' + asset.address">
+                            <div class="input-group mb-3">
+                                <input class="form-control" type="number" v-model="unstakeAmount"><br>
+                                <div class="input-group-append">
+                                    <span class="input-group-text" style="cursor: pointer;"
+                                        @click="unstakeAmount = asset.balance.toDec(18)">Max</span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-primary"
+                                @click='unstake(asset.pid)'>Unstake</button>
+                        </div>
+                    </td>
+                </tr>
+            </template>
         </table>
     </div>
 </template>
 <script>
     addComponent('slp', {
-        props: ["assets", "app"],
+        props: ["assets", "app", "web3", "address"],
+        data: function () {
+            return {
+                stakeAmount: 0,
+                unstakeAmount: 0
+            }
+        },
+        methods: {
+            unstake: async function (pid) {
+                this.web3.chef.withdraw(pid, this.unstakeAmount.toInt(18)).send({ from: this.address });
+            }
+        },
         computed: {
             total: function () {
                 let total = 0n;
@@ -71,7 +133,10 @@
                     }
                 }
                 return total;
-            }
+            },
+            assetsStaked: function () { return this.assets.filter(a => a.balance > 0n && !a.hide && a.staked) },
+            assetsUnstaked: function () { return this.assets.filter(a => a.balance > 0n && !a.hide && !a.staked) },
+            totalPending: function () { return this.assetsStaked.map(a => a.pending).sum(0n) }
         }
     });
 
@@ -106,16 +171,18 @@
 
             let pids = [];
             for (let i = 0; i < Number(this.poolsInfo[0].poolLength); i++) {
-                if ([29, 30].indexOf(i) < 0) {
+                if ([29, 30, 45].indexOf(i) < 0) {
                     pids.push(i);
                 }
             }
 
             let pools = await this.assets.web3.dashboard2.findPools(address, pids).call();
+            console.log(pools)
             for (let i in pools) {
                 let pool = pools[i];
                 this.assets.add({
                     pid: pool.pid,
+                    allocPoint: BigInt(pool.allocPoint),
                     address: pool.pid + "_pid_staked",
                     name: null,
                     symbol: null,

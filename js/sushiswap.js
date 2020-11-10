@@ -1,8 +1,4 @@
-﻿Decimal.config({ precision: 36 })
-Decimal.config({ toExpNeg: -1000 })
-Decimal.config({ toExpPos: 1000 })
-
-// Add ability to serialize BigInt as JSON
+﻿// Add ability to serialize BigInt as JSON
 JSON.stringifyBigInt = function (obj) {
     return JSON.stringify(obj, (key, value) => {
         if (typeof value === 'bigint') {
@@ -22,10 +18,6 @@ JSON.parseBigInt = function (str) {
     })
 }
 
-String.prototype.addTopicZeroes = function () {
-    return '0x000000000000000000000000' + this.substr(2);
-}
-
 objAssign = function (to, from) {
     if (window.Vue) {
         for (let i in from) {
@@ -37,32 +29,6 @@ objAssign = function (to, from) {
     }
 }
 
-// Returns a string where the value is divided by 10^divisor and cut off to decimalPlaces decimal places
-// Pass in sep to change the decimal point. No rounding done at the moment.
-BigInt.prototype.print = function (divisor, decimalPlaces) {
-    let powDivisor = new Decimal(10).toPower(divisor.toString());
-    //Scale the number down by divisor
-    let x = new Decimal(this.toString());
-    x = x.dividedBy(powDivisor);
-    if (x.decimalPlaces() - x.precision() > decimalPlaces - 4) {
-        return x.toSignificantDigits(4).toFixed();
-    }
-    else {
-        return x.toFixed(decimalPlaces);
-    }
-}
-
-BigInt.prototype.toDec = function (divisor) {
-    return new Decimal(this.toString()).dividedBy(new Decimal(10).toPower(divisor.toString()));
-}
-
-Decimal.prototype.toInt = function (decimals) {
-    return BigInt(this.times(new Decimal("10").pow(decimals)).todp(0));
-}
-
-const bigIntMax = (...args) => args.reduce((m, e) => e > m ? e : m);
-const bigIntMin = (...args) => args.reduce((m, e) => e < m ? e : m);
-
 rpcToObj = function (rpc_obj, obj) {
     if (!obj) {
         obj = {};
@@ -70,11 +36,16 @@ rpcToObj = function (rpc_obj, obj) {
     for (let i in rpc_obj) {
         if (isNaN(i)) {
             // Not always correct, but overall useful
-            obj[i] = isNaN(rpc_obj[i]) || i.indexOf("name") != -1 || i.indexOf("symbol") != -1
-                || (typeof (rpc_obj[i]) == "boolean")
-                || (typeof (rpc_obj[i]) == "string" && rpc_obj[i].startsWith("0x"))
-                ? rpc_obj[i]
-                : BigInt(rpc_obj[i]);
+            try {
+                obj[i] = isNaN(rpc_obj[i]) || i.indexOf("name") != -1 || i.indexOf("symbol") != -1
+                    || (typeof (rpc_obj[i]) == "boolean")
+                    || (typeof (rpc_obj[i]) == "string" && rpc_obj[i].startsWith("0x"))
+                    || (typeof (rpc_obj[i]) == "object")
+                    ? rpc_obj[i]
+                    : BigInt(rpc_obj[i]);
+            } catch (e) {
+                console.log('pcToObj error', rpc_obj[i], typeof(rpc_obj[i]))
+            }
         }
     }
     return obj;
@@ -103,6 +74,31 @@ function addContract(name, abi, addresses) {
     });
 }
 
+Web3.prototype.contract = function (abi_name, address) {
+    return new this.eth.Contract(abis[abi_name], address);
+}
+
+// Add a decode method to all web3 instances
+// To get the ABI decoder, use web3.decode.abi_name
+Object.defineProperty(Web3.prototype, "decode", {
+    get: function () {
+        let web3 = this;
+        return new Proxy({}, {
+            get: function (target, name) {
+                let decoder = new Decoder(web3);
+                decoder.addABI(abis[name]);
+                return decoder;
+            }
+        });
+    }
+});
+
+Object.defineProperty(Web3.prototype, "ens", {
+    get: function () {
+        return new ENS(this);
+    }
+})
+
 // ABIs
 abis = {
     erc20: [{ "constant": true, "inputs": [], "name": "name", "outputs": [{ "name": "", "type": "string" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "name": "spender", "type": "address" }, { "name": "value", "type": "uint256" }], "name": "approve", "outputs": [{ "name": "", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [], "name": "totalSupply", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "name": "from", "type": "address" }, { "name": "to", "type": "address" }, { "name": "value", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "name": "", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [], "name": "decimals", "outputs": [{ "name": "", "type": "uint8" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "name": "spender", "type": "address" }, { "name": "addedValue", "type": "uint256" }], "name": "increaseAllowance", "outputs": [{ "name": "", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": false, "inputs": [{ "name": "value", "type": "uint256" }], "name": "burn", "outputs": [], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [{ "name": "owner", "type": "address" }], "name": "balanceOf", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "symbol", "outputs": [{ "name": "", "type": "string" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "name": "spender", "type": "address" }, { "name": "subtractedValue", "type": "uint256" }], "name": "decreaseAllowance", "outputs": [{ "name": "", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": false, "inputs": [{ "name": "to", "type": "address" }, { "name": "value", "type": "uint256" }], "name": "transfer", "outputs": [{ "name": "", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [{ "name": "owner", "type": "address" }, { "name": "spender", "type": "address" }], "name": "allowance", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "inputs": [], "payable": false, "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [{ "indexed": true, "name": "from", "type": "address" }, { "indexed": true, "name": "to", "type": "address" }, { "indexed": false, "name": "value", "type": "uint256" }], "name": "Transfer", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "name": "owner", "type": "address" }, { "indexed": true, "name": "spender", "type": "address" }, { "indexed": false, "name": "value", "type": "uint256" }], "name": "Approval", "type": "event" }],
@@ -126,31 +122,6 @@ abis = {
     dashboard2: [{ "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "uint256[]", "name": "pids", "type": "uint256[]" }], "name": "findPools", "outputs": [{ "components": [{ "internalType": "uint256", "name": "pid", "type": "uint256" }, { "internalType": "contract IPair", "name": "lpToken", "type": "address" }, { "internalType": "uint256", "name": "allocPoint", "type": "uint256" }, { "internalType": "address", "name": "token0", "type": "address" }, { "internalType": "address", "name": "token1", "type": "address" }], "internalType": "struct BoringCryptoDashboardV2.PoolInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "token", "type": "address" }], "name": "getETHRate", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "address[]", "name": "addresses", "type": "address[]" }], "name": "getPairsFull", "outputs": [{ "components": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "address", "name": "token0", "type": "address" }, { "internalType": "address", "name": "token1", "type": "address" }, { "internalType": "uint256", "name": "reserve0", "type": "uint256" }, { "internalType": "uint256", "name": "reserve1", "type": "uint256" }, { "internalType": "uint256", "name": "totalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }], "internalType": "struct BoringCryptoDashboardV2.PairFull[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint256[]", "name": "pids", "type": "uint256[]" }], "name": "getPools", "outputs": [{ "components": [{ "internalType": "uint256", "name": "totalAllocPoint", "type": "uint256" }, { "internalType": "uint256", "name": "poolLength", "type": "uint256" }], "internalType": "struct BoringCryptoDashboardV2.PoolsInfo", "name": "", "type": "tuple" }, { "components": [{ "internalType": "uint256", "name": "pid", "type": "uint256" }, { "internalType": "contract IPair", "name": "lpToken", "type": "address" }, { "internalType": "uint256", "name": "allocPoint", "type": "uint256" }, { "internalType": "address", "name": "token0", "type": "address" }, { "internalType": "address", "name": "token1", "type": "address" }], "internalType": "struct BoringCryptoDashboardV2.PoolInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "uint256[]", "name": "pids", "type": "uint256[]" }], "name": "pollPools", "outputs": [{ "components": [{ "internalType": "uint256", "name": "pid", "type": "uint256" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }, { "internalType": "uint256", "name": "totalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "lpBalance", "type": "uint256" }, { "internalType": "uint256", "name": "lpTotalSupply", "type": "uint256" }, { "internalType": "uint256", "name": "lpAllowance", "type": "uint256" }, { "internalType": "uint256", "name": "reserve0", "type": "uint256" }, { "internalType": "uint256", "name": "reserve1", "type": "uint256" }, { "internalType": "uint256", "name": "token0rate", "type": "uint256" }, { "internalType": "uint256", "name": "token1rate", "type": "uint256" }, { "internalType": "uint256", "name": "rewardDebt", "type": "uint256" }, { "internalType": "uint256", "name": "pending", "type": "uint256" }], "internalType": "struct BoringCryptoDashboardV2.UserPoolInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }],
     pending: [{ "inputs": [{ "internalType": "address", "name": "who", "type": "address" }, { "internalType": "uint256[]", "name": "pids", "type": "uint256[]" }], "name": "getPendingSushi", "outputs": [{ "components": [{ "internalType": "uint256", "name": "totalAllocPoint", "type": "uint256" }, { "internalType": "uint256", "name": "poolLength", "type": "uint256" }], "internalType": "struct BoringSushiPending.PoolsInfo", "name": "", "type": "tuple" }, { "components": [{ "internalType": "uint256", "name": "pid", "type": "uint256" }, { "internalType": "address", "name": "lpToken", "type": "address" }, { "internalType": "uint256", "name": "allocPoint", "type": "uint256" }, { "internalType": "uint256", "name": "pendingSushi", "type": "uint256" }], "internalType": "struct BoringSushiPending.PoolInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }]
 }
-
-Web3.prototype.contract = function (abi_name, address) {
-    return new this.eth.Contract(abis[abi_name], address);
-}
-
-// Add a decode method to all web3 instances
-// To get the ABI decoder, use web3.decode.abi_name
-Object.defineProperty(Web3.prototype, "decode", {
-    get: function () {
-        let web3 = this;
-        return new Proxy({}, {
-            get: function (target, name) {
-                let decoder = new Decoder(web3);
-                decoder.addABI(abis[name])
-                return decoder;
-            }
-        });
-    }
-});
-
-Object.defineProperty(Web3.prototype, "ens", {
-    get: function () {
-        return new ENS(this);
-    }
-})
 
 // Registered contracts
 addContract("sushi", abis.sushi, { "0x1": "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2", "0x3": "0x81db9c598b3ebbdc92426422fc0a1d06e77195ec" });
@@ -198,26 +169,35 @@ window.DB = {
 }
 
 class LogMonitor {
-    constructor(manager, address, topics, process, output, version, status, step) {
+    constructor(manager, address, topics, process, output, version, status, step, abi, onSynced) {
         this.manager = manager;
         this.web3 = manager.web3;
         this.address = address;
-        this.topics = topics;
+        this.topics = topics.map(t => t.length == 42 ? '0x000000000000000000000000' + t.substr(2) : t);
+        console.log(topics, this.topics)
         this.process = process;
         this.key = address + JSON.stringify(topics) + version;
         this.status = status;
         this.step = step;
+        this.onSynced = onSynced;
 
         this.output = output || [];
         this.seen = {};
         this.local = [];
         this.lastBlock = 10750000;
-        console.log(this.lastBlock);
+        this.should_close = false;
         DB.get(this.key, (data) => {
             this.lastBlock = data.lastBlock;
             this.local = data.output;
             this.output.push(...data.output);
         })
+        if (abi) {
+            this.decoder = new Decoder(this.web3);
+            this.decoder.addABI(abi);
+        }
+    }
+
+    async init() {
         this._getPastLogsAndSubscribe()
     }
 
@@ -245,7 +225,7 @@ class LogMonitor {
 
     async _getPastLogsAndSubscribe() {
         let finished = false;
-        while (!finished) {
+        while (!finished && !this.should_close) {
             let params = {
                 fromBlock: this.lastBlock + 1,
                 address: this.address,
@@ -254,16 +234,13 @@ class LogMonitor {
             if (this.step && this.lastBlock + this.step < this.manager.block) {
                 params.toBlock = this.lastBlock + this.step;
             }
-            else {
-                finished = true;
-            }
+            else { finished = true; }
             let raw_logs = await this._getPastLogs(params);
 
-            if (this.status && raw_logs.length) {
-                this.status.loading = true;
-            }
+            if (this.status && raw_logs.length) { this.status.loading = true; }
             for (var i in raw_logs) {
                 await this._processLog(raw_logs[i]);
+                if (this.should_close) { break; }
             }
 
             this._save();
@@ -274,25 +251,34 @@ class LogMonitor {
             }
         }
 
-        if (this.status) {
-            this.status.loading = false;
-        }
+        if (this.status) { this.status.loading = false; }
 
-        this.subscription = this.web3.eth.subscribe('logs', {
-            address: this.address,
-            topics: this.topics
-        }, async (error, log) => {
+        if (this.should_close) { console.log("Skip Subscribe"); return; };
+        console.log("Subscribe");
+        if (this.onSynced) { await this.onSynced() };
+
+        this.subscription = this.web3.eth.subscribe('logs', { address: this.address, topics: this.topics }, async (error, log) => {
             if (!error) {
                 await this._processLog(log);
                 this._save();
+            } else {
+                this.subscription = null;
             }
         });
     }
 
     async _processLog(log) {
         if (!this.seen[log.blockNumber + "-" + log.logIndex]) {
-            //console.log('Log received ', log);
-            let result = await this.process(log);
+            let row = {
+                block: log.blockNumber,
+                txid: log.transactionHash
+            }
+            let decoded = null;
+            if (this.decoder) {
+                decoded = this.decoder.decodeLog(log);
+                decoded.events.forEach(e => decoded[e.name] = e.value);
+            }
+            let result = await this.process(log, this.web3, row, rpcToObj(decoded));
             if (result) {
                 this.local.push(result);
                 this.output.push(result);
@@ -327,12 +313,15 @@ class LogMonitor {
     }
 
     close() {
-        // TODO: Wait until there is a subscription?
-        this.subscription.unsubscribe((error, success) => {
-            if (success) {
-                this.subscription = null;
-            }
-        });
+        this.should_close = true;
+        if (this.subscription) {
+            console.log("Unsubscribe");
+            this.subscription.unsubscribe((error, success) => {
+                if (success) {
+                    this.subscription = null;
+                }
+            });
+        }
     }
 }
 
@@ -355,335 +344,6 @@ class Web3Component {
 
     get chainId() {
         return this.options.chainId;
-    }
-}
-
-// Get info and interact with the SushiBar and SushiMaker
-class SushiBar extends Web3Component {
-    constructor(options) {
-        super(options);
-
-        this.makerPairs = [];
-        this.eth_rate = 0n;
-        this.sushi = 0n;
-        this.barSushi = 0n;
-        this.xsushi = 0n;
-        this.totalXSushi = 0n;
-        this.allowance = 0n;
-        this.poolShare = 0n;
-        this.sushiStake = 0n;
-    }
-
-    ETHtoCurrency(value) {
-        return value * this.eth_rate / BigInt("1000000000000000000");
-    }
-
-    close() {
-        if (this.servingMonitor) {
-            this.servingMonitor.close();
-        }
-        delete this.servingMonitor;
-
-        if (this.transfersIn) {
-            this.transfersIn.close();
-        }
-        delete this.transfersIn;
-
-        if (this.transfersOut) {
-            this.transfersOut.close();
-        }
-        delete this.transfersOut;
-    }
-
-    async poll() {
-        /*var batch = new this.web3.eth.BatchRequest();
-        batch.add(this.web3.sushi.balanceOf(this.address).call.request((e, r) => { this.sushi = BigInt(r) }));
-        console.log(batch.execute());*/
-        this.sushi = BigInt(await this.web3.sushi.balanceOf(this.address).call());
-        this.barSushi = BigInt(await this.web3.sushi.balanceOf(this.web3.bar.address).call());
-        this.xsushi = BigInt(await this.web3.bar.balanceOf(this.address).call());
-        this.totalXSushi = BigInt(await this.web3.bar.totalSupply().call());
-        this.allowance = BigInt(await this.web3.sushi.allowance(this.address, this.web3.bar.address).call());
-
-        this.poolShare = this.xsushi * BigInt("1000000000000000000") / this.totalXSushi;
-        this.sushiStake = this.barSushi * this.xsushi / this.totalXSushi;
-    }
-
-    async getMakerInfo() {
-        if (!this.currency) {
-            return;
-        }
-        var result = await this.web3.makerInfo.getPairs(
-            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28],
-            this.currency, "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac").call({ gas: 50000000 });
-        this.eth_rate = BigInt(result[0]);
-
-        for (var i in result[1]) {
-            let pair = {};
-            pair.pair = result[1][i].lpToken;
-            pair.balance = BigInt(result[1][i].makerBalance);
-            pair.totalSupply = BigInt(result[1][i].totalSupply);
-            pair.reserve0 = BigInt(result[1][i].reserve0);
-            pair.reserve1 = BigInt(result[1][i].reserve1);
-            pair.token0rate = BigInt(result[1][i].token0rate);
-            pair.token1rate = BigInt(result[1][i].token1rate);
-            pair.token0 = result[1][i].token0;
-            pair.token1 = result[1][i].token1;
-            pair.token0symbol = result[1][i].token0symbol;
-            pair.token1symbol = result[1][i].token1symbol;
-
-            pair.name = pair.token0symbol + "-" + pair.token1symbol;
-            pair.shareOfPool = pair.totalSupply ? pair.balance * BigInt("1000000000000000000") / pair.totalSupply : 0n;
-            pair.totalToken0 = pair.reserve0 * pair.shareOfPool / BigInt("1000000000000000000");
-            pair.totalToken1 = pair.reserve1 * pair.shareOfPool / BigInt("1000000000000000000");
-            pair.valueToken0 = pair.token0rate ? pair.totalToken0 * BigInt("1000000000000000000") / pair.token0rate : 0n;
-            pair.valueToken1 = pair.token1rate ? pair.totalToken1 * BigInt("1000000000000000000") / pair.token1rate : 0n;
-            pair.valueToken0InCurrency = this.ETHtoCurrency(pair.valueToken0);
-            pair.valueToken1InCurrency = this.ETHtoCurrency(pair.valueToken1);
-            pair.totalValueInCurrency = pair.valueToken0InCurrency + pair.valueToken1InCurrency;
-
-            if (i >= this.makerPairs.length) {
-                this.makerPairs.push(pair);
-            } else {
-                this.makerPairs[i] = pair;
-            }
-        }
-    }
-
-    getServings() {
-        if (this.servingMonitor) {
-            this.servingMonitor.close();
-            this.servingMonitor = null;
-        }
-        this.servingMonitor = new LogMonitor(this.options, '0x795065dcc9f64b5614c407a6efdc400da6221fb0',
-            ['0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822', '0x0000000000000000000000006684977bbed67e101bb80fc07fccfba655c0a64f', '0x0000000000000000000000008798249c2E607446EfB7Ad49eC89dD1865Ff4272'],
-            async (log) => {
-                let serve = {
-                    block: log.blockNumber,
-                    txid: log.transactionHash,
-                    amount: BigInt(0)
-                }
-                let tx = await this.web3.eth.getTransactionReceipt(serve.txid);
-                serve.from = await this.web3.ens.reverse(tx.from);
-                let logsData = this.web3.decode.pair.decodeLogs(tx.logs);
-                serve.amount = logsData.filter(l => l.name == "Transfer" && l.address == "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2" && l.events[1].value == "0x8798249c2e607446efb7ad49ec89dd1865ff4272").map(l => BigInt(l.events[2].value)).reduce((a, b) => a + b, 0n);
-                serve.pair = logsData.filter(l => l.name == "Burn")[0].address;
-                return serve;
-            }
-        );
-        return this.servingMonitor.output;
-    }
-
-    getTransfers() {
-        let output = [];
-        if (this.transfersIn) {
-            this.transfersIn.close();
-            this.transfersOut = null;
-        }
-        if (this.transfersOut) {
-            this.transfersOut.close();
-            this.transfersOut = null;
-        }
-
-        this.transfersIn = new LogMonitor(this.options, '0x6b3595068778dd592e39a122f4f5a5cf09c90fe2',
-            ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
-                this.address.addTopicZeroes(),
-                '0x0000000000000000000000008798249c2e607446efb7ad49ec89dd1865ff4272'],
-            async (log) => {
-                let logData = this.web3.decode.sushi.decodeLog(log);
-                let transfer = {
-                    direction: "in",
-                    block: log.blockNumber,
-                    amount: BigInt(logData.events[2].value)
-                }
-                return transfer;
-            }, output);
-
-        this.transfersOut = new LogMonitor(this.options, '0x6b3595068778dd592e39a122f4f5a5cf09c90fe2',
-            ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
-                '0x0000000000000000000000008798249c2e607446efb7ad49ec89dd1865ff4272',
-                this.address.addTopicZeroes()],
-            async (log) => {
-                let logData = this.web3.decode.sushi.decodeLog(log);
-                let transfer = {
-                    direction: "out",
-                    block: log.blockNumber,
-                    amount: BigInt(logData.events[2].value)
-                }
-                return transfer;
-            }, output);
-        return output;
-    }
-
-    async allow() {
-        await this.web3.sushi.approve(this.web3.bar.address, 1000000000000000000000000000000000000n).send({ from: this.address, gas: 60000 });
-    }
-
-    async enter(amount) {
-        await this.web3.bar.enter(amount).send({ from: this.address, gas: 100000 });
-    }
-
-    async leave(amount) {
-        await this.web3.bar.leave(amount).send({ from: this.address, gas: 200000 });
-    }
-
-    async convert(from, token0, token1) {
-        await this.web3.maker.convert(token0, token1).send({ from: from });
-    }
-}
-
-class TimeLock extends Web3Component {
-    constructor(options) {
-        super(options);
-        this.status = {};
-        objAssign(this.status, { loading: false });
-    }
-
-    getTransactions() {
-        let output = [];
-        this.logs = new LogMonitor(this.options, '0x9a8541ddf3a932a9a922b607e9cf7301f1d47bd1',
-            ['0x76e2796dc3a81d57b0e8504b647febcbeeb5f4af818e164f11eef8131a6a763f'],
-            async (log) => {
-                let logData = this.web3.decode.timelock.decodeLog(log);
-                let row = {
-                    block: log.blockNumber,
-                    description: "",
-                    log: logData
-                }
-                if (logData.events[1].value == "0xc2edad668740f1aa35e4d8f227fb8e17dca888cd") {
-                    row.txid = logData.events[0].value;
-
-                    let fullData = this.web3.utils.keccak256(logData.events[3].value).substr(0, 10) +
-                        (logData.events[4].value ? logData.events[4].value.substr(2) : "");
-                    let p = {}
-                    try {
-                        row.signature = logData.events[3].value;
-                        let command = this.web3.decode.chef.decodeMethod(fullData);
-                        if (command) {
-                            row.command = command;
-                            row.name = command.name;
-                            row.params = command.params;
-                            command.params.forEach(param => p[param.name] = param.value);
-                        }
-                        else {
-                            row.name = "Cannot decode";
-                            row.description = "Cannot decode";
-                        }
-                    }
-                    catch (e) {
-                        row.name = "Cannot decode";
-                        row.description = "Cannot decode";
-                    }
-                    row.queued = await this.web3.timelock.queuedTransactions(row.txid).call();
-
-                    if (typeof (p._pid) == "string") {
-                        p.poolname = await this.web3.poolnames.names(p._pid).call();
-                    }
-
-                    if (row.signature == "set(uint256,uint256,bool)") {
-                        row.description = `Set pool allocation for ${p.poolname} (${p._pid}) to ${p._allocPoint / 1000}`;
-                    } else if (row.signature == "add(uint256,address,bool)") {
-                        try {
-                            let pair_info = await this.web3.dashboard.getPairsFull(this.address, [p._lpToken]).call();
-                            let token_info = await this.web3.dashboard.getTokenInfo([pair_info[0].token0, pair_info[0].token1]).call();
-                            row.description = `Add pool ${token_info[0].symbol}/${token_info[1].symbol} with allocation of ${p._allocPoint / 1000}`;
-                        }
-                        catch {
-                            row.description = `Add pool ${p._lpToken} with allocation of ${p._allocPoint / 1000}`;
-                        }
-
-                    } else if (row.signature == "setMigrator(address)") {
-                        row.description = `Change migrator to ${p._migrator}.`
-                    } else if (row.signature == "migrate(uint256)") {
-                        row.description = `Migrate pool ${p._pid}.`
-                    } else if (row.signature == "massUpdatePools()") {
-                        row.description = `massUpdatePools.`
-                    } else {
-                        row.description = `Unknown command.`
-                    }
-                }
-                return row;
-            }, output, 5, this.status);
-        return this.logs.output;
-    }
-}
-
-class AssetManager extends Web3Component {
-    constructor(options, assets) {
-        super(options);
-        if (!assets) {
-            assets = []
-        }
-        this.handlers = [];
-        this._handlerMap = {};
-        this.allAssets = [];
-        this._allAssetsMap = {};
-        this.assets = assets;
-        this._assetmap = {};
-    }
-
-    addHandler(handlerClass) {
-        let handler = new handlerClass(this);
-        this._handlerMap[handlerClass.name] = handler;
-        this.handlers.push(handler);
-    }
-
-    add(asset) {
-        asset.address = asset.address.toLowerCase();
-        asset.view = asset.view || "erc20";
-        asset.handler = asset.handler || this._handlerMap["ERC20Handler"];
-
-        if (this._assetmap[asset.address] && this._assetmap[asset.address].view == asset.view) return this._assetmap[asset.address];
-
-        if (this._allAssetsMap[asset.address]) {
-            asset.name = asset.name || this._allAssetsMap[asset.address].name;
-            asset.symbol = asset.symbol || this._allAssetsMap[asset.address].symbol;
-            asset.decimals = asset.decimals || this._allAssetsMap[asset.address].decimals;
-        }
-        asset.balance = asset.balance || 0n;
-        asset.hide_value = asset.hide_value || false;
-        this.assets.push(asset);
-        this._assetmap[asset.address] = asset;
-        return asset;
-    }
-
-    get(address) {
-        return this._assetmap[address.toLowerCase()];
-    }
-
-    async init() {
-        this.addHandler(ERC20Handler);
-        //this.addHandler(XSushiHandler);
-        this.addHandler(SLPHandler);
-
-        // Get tokens from list
-        this.allAssets = (await $.ajax('tokenlist.json')).filter(a => a.chainId == this.chainId.slice(2)).map(a => {
-            a = rpcToObj(a);
-            a.handler = a.handler || "ERC20Handler";
-            this._allAssetsMap[a.address] = a;
-            return a;
-        });
-
-        for (let i in this.handlers) {
-            await this.handlers[i].init(this.address, this.assets);
-            await this.handlers[i].find(this.address, this.allAssets);
-        };
-
-        for (let i in this.handlers) {
-            await this.handlers[i].info(this.assets.filter(a => a.handler == this.handlers[i]));
-        };
-
-        this.poll();
-
-        return this;
-    }
-
-    async poll() {
-        for (let i in this.handlers) {
-            await this.handlers[i].poll(this.address, this.assets.filter(a => a.handler == this.handlers[i]));
-        };
-
-        return this;
     }
 }
 
@@ -816,56 +476,3 @@ class SushiPools extends Web3Component {
     }
 }
 
-class VestedSushi extends Web3Component {
-    constructor(options) {
-        super(options);
-
-        this.harvestedSushi = 0n;
-        this.pendingSushi = 0n;
-        this.pendingSushiAtStart = 0n;
-    }
-
-    close() {
-        if (this.servingMonitor) {
-            this.servingMonitor.close();
-        }
-        delete this.servingMonitor;
-    }
-
-    async addPendingSushi() {
-        let numberOfPools = await this.web3.chef.poolLength().call();
-
-        let pids = [];
-        for (let i = 0; i < numberOfPools; i++) {
-            pids.push(i)
-        }
-        let result = await this.web3.pending.getPendingSushi(this.address, pids).call();
-        for (let i in result[1]) {
-            this.pendingSushi += rpcToObj(result[1][i]).pendingSushi;
-        }
-    }
-
-    async addHarvestedSushi() {
-        if (!this.servingMonitor) {
-            this.servingMonitor = new LogMonitor(this.options, '0x6b3595068778dd592e39a122f4f5a5cf09c90fe2',
-                ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
-                    "0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd".addTopicZeroes(), this.address.addTopicZeroes()],
-                async (log) => {
-                    if (log.blockNumber >= 10959148) {
-                        this.harvestedSushi += BigInt(log.data);
-                    }
-                    return null;
-                }
-            );
-        }
-    }
-
-    async addHarvestableSushiAtVestingBegin() {
-        if (!this.addresslist) {
-            this.addresslist = await $.ajax('addresslist-vesting.json');
-        }
-
-        let info = this.addresslist.find(a => a.address === this.address);
-        this.pendingSushiAtStart = info ? BigInt(info.sushi) : 0n;
-    }
-}

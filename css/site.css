@@ -1,0 +1,32 @@
+body,
+html {
+    height: 100%;
+}
+
+.bg {
+    /* The image used */
+    background-image: url("../img/bar.jpg");
+
+    /* Full height */
+    height: 100%;
+
+    /* Center and scale the image nicely */
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+.nav-link {
+    padding: 0.5rem 0.8rem;
+}
+
+tr th:first-child,
+tr td:first-child {
+    padding-left: 0;
+}
+
+tr th:last-child,
+tr td:last-child {
+    padding-right: 0;
+}

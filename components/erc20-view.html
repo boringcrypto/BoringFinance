@@ -11,8 +11,7 @@
                 </tr>
             </thead>
             <template v-for="asset in assetsOrdered" v-if="asset.balance > 0n && !asset.hide">
-                <tr style="cursor: pointer;" :key="asset.address" data-toggle="collapse"
-                    :data-target="'.erc20' + asset.address">
+                <tr style="cursor: pointer;" data-toggle="collapse" :data-target="'.erc20' + asset.address">
                     <td v-if="manager.chainId=='0x1'" class="py-2 px-0" style="width: 28px"><img class="rounded"
                             :src="logo_url(asset)" style="width: 28px; height: 28px;">
                     </td>
@@ -102,11 +101,13 @@
         }
 
         async poll(address, assets) {
+            console.log("Polling ERC20")
             let balances = await this.assets.web3.dashboard.getBalances(
                 address, assets.map(t => t.address),
-                this.chainId == "0x1" ? "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f" : "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",   // Uniswap (for now), should add to tokenlist.
-                this.chainId == "0x1" ? "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2" : "0xc778417E063141139Fce010982780140Aa0cD5Ab"    // Use WETH as currency for rate
+                "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",   // Uniswap (for now), should add to tokenlist.
+                "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"    // Use WETH as currency for rate
             ).call();
+
             for (var i in balances) {
                 let asset = this.assets.get(balances[i].token);
                 objAssign(asset, rpcToObj(balances[i]));

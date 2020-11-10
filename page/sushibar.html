@@ -51,6 +51,15 @@
                     <div class="card">
                         <div class="card-body">
                             <h3 class="card-title">Your Transfers</h3>
+                            <eventreader :manager='manager' address="0x6b3595068778dd592e39a122f4f5a5cf09c90fe2"
+                                :topics="['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', manager.address, '0x0000000000000000000000008798249c2e607446efb7ad49ec89dd1865ff4272']"
+                                :handler='transfer_handler' :output='transfers' :abi='abis.sushi'>
+                            </eventreader>
+                            <eventreader :manager='manager' address="0x6b3595068778dd592e39a122f4f5a5cf09c90fe2"
+                                :topics="['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', '0x0000000000000000000000008798249c2e607446efb7ad49ec89dd1865ff4272', manager.address]"
+                                :handler='transfer_handler' :output='transfers' :abi='abis.sushi'>
+                            </eventreader>
+
                             <table class="w-100 mb-3">
                                 <thead>
                                     <th>Direction</th>
@@ -62,7 +71,7 @@
                                             {{ transfer.direction }}
                                         </td>
                                         <td class="text-right">
-                                            {{ (transfer.direction == 'in' ? '' : '-') + transfer.amount.print(18, 2) }}
+                                            {{ transfer.amount.print(18, 2) }}
                                         </td>
                                     </tr>
                                 </tbody>
@@ -125,6 +134,15 @@
                             <p>
                                 Thanks to these generous chefs we've enjoyed some great sushi!
                             </p>
+                            <eventreader :manager='manager' address="0x795065dcc9f64b5614c407a6efdc400da6221fb0"
+                                :topics="['0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822', '0x0000000000000000000000006684977bbed67e101bb80fc07fccfba655c0a64f', '0x0000000000000000000000008798249c2E607446EfB7Ad49eC89dD1865Ff4272']"
+                                :handler='serving_handler' :output='serves'>
+                                <div class="text-center mb-3">
+                                    <div class="spinner-border" role="status">
+                                        <span class="sr-only">Loading...</span>
+                                    </div>
+                                </div>
+                            </eventreader>
                             <table class="w-100 mb-3">
                                 <thead>
                                     <th>From</th>
@@ -192,11 +210,6 @@
         mounted: async function () {
             await this.init();
         },
-        beforeDestroy: function () {
-            if (this.bar) {
-                this.bar.close();
-            }
-        },
         watch: {
             'block': async function () {
                 console.log(this.block);
@@ -238,7 +251,7 @@
                         block: sorted[i].block,
                         direction: sorted[i].direction,
                         amount: sorted[i].amount,
-                        balance: (i == 0 ? 0n : rows[i - 1].balance) + (sorted[i].direction == 'in' ? sorted[i].amount : -sorted[i].amount)
+                        balance: (i == 0 ? 0n : rows[i - 1].balance) + sorted[i].amount
                     })
                     if (i > 0) {
                         blockbalance += BigInt(rows[i].block - rows[i - 1].block) * rows[i - 1].balance;
@@ -255,7 +268,7 @@
                 return rows.reverse();
             },
             balance: function () {
-                return this.transfers.reduce((a, t) => t.direction == 'in' ? a + t.amount : a - t.amount, 0n);
+                return this.transfers.map(t => t.amount).sum(0n);
             },
             servesOrdered: function () {
                 return this.serves.sort((a, b) => b.block - a.block);
@@ -278,12 +291,26 @@
             }
         },
         methods: {
+            transfer_handler: async function (log, web3, row, decoded) {
+                return {
+                    direction: decoded.to == "0x8798249c2e607446efb7ad49ec89dd1865ff4272" ? "in" : "out",
+                    block: row.block,
+                    amount: decoded.to == "0x8798249c2e607446efb7ad49ec89dd1865ff4272" ? decoded.value : -decoded.value
+                }
+            },
+            serving_handler: async function (log, web3, row, decoded) {
+                let tx = await web3.eth.getTransactionReceipt(row.txid);
+                row.from = await web3.ens.reverse(tx.from);
+                let logsData = web3.decode.pair.decodeLogs(tx.logs);
+                row.amount = logsData.filter(l => l.name == "Transfer" &&
+                    l.address == "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2" &&
+                    l.events[1].value == "0x8798249c2e607446efb7ad49ec89dd1865ff4272").map(l => BigInt(l.events[2].value)).sum(0n);
+                row.pair = logsData.filter(l => l.name == "Burn")[0].address;
+                return row;
+            },
             init: async function () {
                 if (this.manager && !this.bar) {
                     this.bar = new SushiBar(this.manager);
-
-                    this.transfers = this.bar.getTransfers();
-                    this.serves = this.bar.getServings();
 
                     await this.update();
                 }
@@ -303,4 +330,93 @@
         }
     }
     page_done();
+
+    // Get info and interact with the SushiBar and SushiMaker
+    class SushiBar extends Web3Component {
+        constructor(options) {
+            super(options);
+
+            this.makerPairs = [];
+            this.eth_rate = 0n;
+            this.sushi = 0n;
+            this.barSushi = 0n;
+            this.xsushi = 0n;
+            this.totalXSushi = 0n;
+            this.allowance = 0n;
+            this.poolShare = 0n;
+            this.sushiStake = 0n;
+        }
+
+        ETHtoCurrency(value) {
+            return value * this.eth_rate / BigInt("1000000000000000000");
+        }
+
+        async poll() {
+            this.sushi = BigInt(await this.web3.sushi.balanceOf(this.address).call());
+            this.barSushi = BigInt(await this.web3.sushi.balanceOf(this.web3.bar.address).call());
+            this.xsushi = BigInt(await this.web3.bar.balanceOf(this.address).call());
+            this.totalXSushi = BigInt(await this.web3.bar.totalSupply().call());
+            this.allowance = BigInt(await this.web3.sushi.allowance(this.address, this.web3.bar.address).call());
+
+            this.poolShare = this.xsushi * BigInt("1000000000000000000") / this.totalXSushi;
+            this.sushiStake = this.barSushi * this.xsushi / this.totalXSushi;
+        }
+
+        async getMakerInfo() {
+            if (!this.currency) {
+                return;
+            }
+            let pids = [...Array(45).keys()].filter(pid => pid != 29 && pid != 30 && pid != 33 && pid != 45);
+            console.log(pids);
+            var result = await this.web3.makerInfo.getPairs(pids, this.currency, "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac").call({ gas: 50000000 });
+            this.eth_rate = BigInt(result[0]);
+
+            for (var i in result[1]) {
+                let pair = {};
+                pair.pair = result[1][i].lpToken;
+                pair.balance = BigInt(result[1][i].makerBalance);
+                pair.totalSupply = BigInt(result[1][i].totalSupply);
+                pair.reserve0 = BigInt(result[1][i].reserve0);
+                pair.reserve1 = BigInt(result[1][i].reserve1);
+                pair.token0rate = BigInt(result[1][i].token0rate);
+                pair.token1rate = BigInt(result[1][i].token1rate);
+                pair.token0 = result[1][i].token0;
+                pair.token1 = result[1][i].token1;
+                pair.token0symbol = result[1][i].token0symbol;
+                pair.token1symbol = result[1][i].token1symbol;
+
+                pair.name = pair.token0symbol + "-" + pair.token1symbol;
+                pair.shareOfPool = pair.totalSupply ? pair.balance * BigInt("1000000000000000000") / pair.totalSupply : 0n;
+                pair.totalToken0 = pair.reserve0 * pair.shareOfPool / BigInt("1000000000000000000");
+                pair.totalToken1 = pair.reserve1 * pair.shareOfPool / BigInt("1000000000000000000");
+                pair.valueToken0 = pair.token0rate ? pair.totalToken0 * BigInt("1000000000000000000") / pair.token0rate : 0n;
+                pair.valueToken1 = pair.token1rate ? pair.totalToken1 * BigInt("1000000000000000000") / pair.token1rate : 0n;
+                pair.valueToken0InCurrency = this.ETHtoCurrency(pair.valueToken0);
+                pair.valueToken1InCurrency = this.ETHtoCurrency(pair.valueToken1);
+                pair.totalValueInCurrency = pair.valueToken0InCurrency + pair.valueToken1InCurrency;
+
+                if (i >= this.makerPairs.length) {
+                    this.makerPairs.push(pair);
+                } else {
+                    this.makerPairs[i] = pair;
+                }
+            }
+        }
+
+        async allow() {
+            await this.web3.sushi.approve(this.web3.bar.address, 1000000000000000000000000000000000000n).send({ from: this.address, gas: 60000 });
+        }
+
+        async enter(amount) {
+            await this.web3.bar.enter(amount).send({ from: this.address, gas: 100000 });
+        }
+
+        async leave(amount) {
+            await this.web3.bar.leave(amount).send({ from: this.address, gas: 200000 });
+        }
+
+        async convert(from, token0, token1) {
+            await this.web3.maker.convert(token0, token1).send({ from: from });
+        }
+    }
 </script>

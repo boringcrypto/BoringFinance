@@ -4,7 +4,8 @@
             <div class="col-12 col-lg-6 p-0 p-sm-3">
                 <div class="card mx-auto mb-3" style="max-width: 720px" v-for="group in groupedAssets">
                     <div class="card-body">
-                        <div :is="group.view" :assets="group.items" :app="app" :manager="manager" :key="group.view">
+                        <div :is="group.view" :assets="group.items" :app="app" :manager="manager" :address="address"
+                            :web3="web3" :key="group.view">
                         </div>
                     </div>
                 </div>
@@ -13,15 +14,25 @@
                 <div class="card">
                     <div class="card-body">
                         <h3 class="card-title">Vested Sushi</h3>
-                        <p v-if="vesting">
+                        <web3 :manager='manager' :poll='poll'></web3>
+                        <eventreader :manager='manager' address="0x6b3595068778dd592e39a122f4f5a5cf09c90fe2"
+                            :topics="['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', '0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd', address]"
+                            :handler='harvest_handler' :output='harvests' :abi='abis.sushi'>
+                            <div class="text-center mb-3">
+                                <div class="spinner-border" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                            </div>
+                        </eventreader>
+                        <p>
                             This is experimental, these number may not be correct.<br>
                             <br>
-                            Your pending SUSHI at lockup start: {{ vesting.pendingSushiAtStart.print(18, 4) }}<br>
-                            Your currently pending SUSHI: {{ vesting.pendingSushi.print(18, 4) }}<br>
-                            Your harvested SUSHI since lockup: {{ vesting.harvestedSushi.print(18, 4) }}<br>
+                            Your pending SUSHI at lockup start: {{ pendingSushiAtStart.print(18, 4) }}<br>
+                            Your currently pending SUSHI: {{ pendingSushi.print(18, 4) }}<br>
+                            Your harvested SUSHI since lockup: {{ harvestedSushi.print(18, 4) }}<br>
                             <br>
                             Estimated in lockup:
-                            {{ ((vesting.pendingSushi - vesting.pendingSushiAtStart + vesting.harvestedSushi) * 2n).print(18, 4) }}
+                            {{ ((pendingSushi - pendingSushiAtStart + harvestedSushi) * 2n).print(18, 4) }}
                         </p>
                     </div>
                 </div>
@@ -31,23 +42,12 @@
 </template>
 <script>
     app.page = {
-        props: ['manager', 'address', 'app'],
+        props: ['manager', 'web3', 'address'],
         data: function () {
             return {
-                vesting: null
-            }
-        },
-        mounted: async function () {
-            await this.init();
-        },
-        beforeDestroy: function () {
-            if (this.vesting) {
-                this.vesting.close();
-            }
-        },
-        watch: {
-            'address': async function () {
-                await this.update();
+                harvests: [],
+                pendingSushi: 0n,
+                pendingSushiAtStart: 0n
             }
         },
         computed: {
@@ -63,20 +63,26 @@
                     groups[this.assets[i].view].items.push(this.assets[i]);
                 }
                 return groups;
+            },
+            harvestedSushi: function () {
+                return this.harvests.sum(0n);
             }
         },
         methods: {
-            init: async function () {
-                if (this.manager && !this.vesting) {
-                    this.vesting = new VestedSushi(this.manager);
-
-                    await this.update();
+            harvest_handler: function (log, web3, row, decoded) {
+                if (row.block >= 10959148) {
+                    return decoded.value;
                 }
             },
-            update: async function () {
-                await this.vesting.addPendingSushi();
-                await this.vesting.addHarvestedSushi();
-                await this.vesting.addHarvestableSushiAtVestingBegin();
+            poll: async function () {
+                if (!this.addresslist) { this.addresslist = await $.ajax('addresslist-vesting.json') };
+                let info = this.addresslist.find(a => a.address === this.address);
+                this.pendingSushiAtStart = info ? BigInt(info.sushi) : 0n;
+
+                let numberOfPools = await this.web3.chef.poolLength().call();
+                let pids = [...Array(parseInt(numberOfPools)).keys()];
+                let result = await this.web3.pending.getPendingSushi(this.address, pids).call();
+                this.pendingSushi = result[1].map(p => BigInt(p.pendingSushi)).sum(0n);
             }
         }
     };
