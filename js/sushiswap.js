@@ -174,7 +174,6 @@ class LogMonitor {
         this.web3 = manager.web3;
         this.address = address;
         this.topics = topics.map(t => t.length == 42 ? '0x000000000000000000000000' + t.substr(2) : t);
-        console.log(topics, this.topics)
         this.process = process;
         this.key = address + JSON.stringify(topics) + version;
         this.status = status;

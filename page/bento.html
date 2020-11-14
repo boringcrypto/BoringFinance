@@ -14,7 +14,7 @@
                         </p>
                         <eventreader :manager='manager' address="0xFBBe6BD840aFfc96547854a1F821d797a8c662D9"
                             :topics="['0xbb3432dd011e3a520780a665a087a29ccda830ea796ec3d85f051c7340a59c7f']"
-                            :handler='pair_handler' :output='pairs_raw' :abi='abis.vault' :synced='update'>
+                            :handler='pair_handler' :output='pairs_raw' :abi='abis.vault' :synced='pairs_synced'>
                             <div class="text-center mb-3">
                                 <div class="spinner-border" role="status">
                                     <span class="sr-only">Loading...</span>
@@ -136,7 +136,6 @@
                         Asset: this.pairs_raw[i].tokenB ? app.assetManager.add({ address: this.pairs_raw[i].tokenB }) : {}
                     }
                     objAssign(fullPair, this.pairs_raw[i]);
-                    console.log(p);
                     p.push(fullPair);
                 }
                 return p;
@@ -162,9 +161,9 @@
                 app.assetManager.add({ address: row.tokenB });
                 return this.whitelistedOracles.indexOf(row.oracle) >= 0 ? row : null;
             },
-            update: async function () {
+            pairs_synced: async function () {
                 console.log('Updating')
-                infos = await this.manager.web3.bentohelper.getPairs(this.address, this.pairs_raw.map(p => p.address)).call();
+                infos = await this.manager.web3.bentohelper.getPairs(this.address, this.pairs_raw.filter(p => !p.vault).map(p => p.address)).call();
                 for (var i in infos) {
                     objAssign(this.pairs_raw[i], rpcToObj(infos[i]));
                 }

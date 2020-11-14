@@ -83,6 +83,8 @@
                 <tr :class="'collapse slpstaked' + asset.address">
                     <td colspan="4">
                         <div :class="'slpstaked' + asset.address">
+                            <button type="button" class="btn btn-sm btn-primary mb-3"
+                                @click='harvest(asset.pid)'>Harvest</button><br>
                             <div class="input-group mb-3">
                                 <input class="form-control" type="number" v-model="unstakeAmount"><br>
                                 <div class="input-group-append">
@@ -109,6 +111,9 @@
             }
         },
         methods: {
+            harvest: async function (pid) {
+                this.web3.chef.withdraw(pid, 0).send({ from: this.address });
+            },
             unstake: async function (pid) {
                 this.web3.chef.withdraw(pid, this.unstakeAmount.toInt(18)).send({ from: this.address });
             }
@@ -177,7 +182,6 @@
             }
 
             let pools = await this.assets.web3.dashboard2.findPools(address, pids).call();
-            console.log(pools)
             for (let i in pools) {
                 let pool = pools[i];
                 this.assets.add({

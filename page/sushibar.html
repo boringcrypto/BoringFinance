@@ -129,8 +129,6 @@
                 <div class="col-12 col-lg-6 mb-3">
                     <div class="card">
                         <div class="card-body">
-                            <span class="float-right" style="cursor: pointer;" @click="bar.servingMonitor.refresh()"><i
-                                    class="fas fa-sync"></i></span>
                             <h3 class="card-title">Who's serving?</h3>
                             <p>
                                 Thanks to these generous chefs we've enjoyed some great sushi!
@@ -151,14 +149,14 @@
                                     <th class="text-right">Amount</th>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="serve in servesOrdered.slice(0, 25)">
+                                    <tr v-for="serve in servesOrdered">
                                         <td :title="serve.from">
                                             <a :href="'https://etherscan.io/tx/' + serve.txid">
                                                 {{ serve.from }}
                                             </a>
                                         </td>
                                         <td>{{ pairNames[serve.pair] }}</td>
-                                        <td class="text-right">{{ serve.amount.print(18, 2) }}</td>
+                                        <td class="text-right" v-if="serve.amount">{{ serve.amount.print(18, 2) }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -195,7 +193,7 @@
 </template>
 <script>
     app.page = {
-        props: ['manager', 'address', 'block', 'time'],
+        props: ['manager', 'address', 'web3', 'block', 'time'],
         data: function () {
             return {
                 bar: null,
@@ -261,7 +259,7 @@
                 return output;
             },
             servesOrdered: function () {
-                return this.serves.sort((a, b) => b.block - a.block);
+                return this.serves.sort((a, b) => b.block - a.block).slice(0, 25);
             },
             pairsOrdered: function () {
                 return this.pairs.sort((a, b) => Number(b.totalValueInCurrency) - Number(a.totalValueInCurrency)).slice(0, 15);
@@ -289,18 +287,18 @@
                 }
             },
             serving_handler: async function (log, web3, row, decoded) {
-                console.log(log, row, decoded);
+                row.amount = null;
                 return row;
             },
             servings_synced: async function () {
-                this.servesOrdered.filter(s => !s.amount).forEach(row => {
-                    let tx = await web3.eth.getTransactionReceipt(row.txid);
-                    row.from = tx.from;
-                    let logsData = web3.decode.pair.decodeLogs(tx.logs);
-                    row.amount = logsData.filter(l => l.name == "Transfer" &&
+                this.servesOrdered.filter(s => !s.amount).forEach(async row => {
+                    let tx = await this.web3.eth.getTransactionReceipt(row.txid);
+                    row.from = await this.web3.ens.reverse(tx.from);
+                    let logsData = this.web3.decode.pair.decodeLogs(tx.logs);
+                    row.amount = logsData.filter(l => l && l.name == "Transfer" &&
                         l.address == "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2" &&
                         l.events[1].value == "0x8798249c2e607446efb7ad49ec89dd1865ff4272").map(l => BigInt(l.events[2].value)).sum(0n);
-                    row.pair = logsData.filter(l => l.name == "Burn")[0].address;
+                    row.pair = logsData.filter(l => l && l.name == "Burn")[0].address;
                 });
             },
             init: async function () {
@@ -358,7 +356,6 @@
                 return;
             }
             let pids = [...Array(45).keys()].filter(pid => pid != 29 && pid != 30 && pid != 33 && pid != 45);
-            console.log(pids);
             var result = await this.web3.makerInfo.getPairs(pids, this.currency, "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac").call({ gas: 50000000 });
             this.eth_rate = BigInt(result[0]);
 
