@@ -1,5 +1,6 @@
 <template id="page_template">
     <div class="mt-3">
+        <web3 :manager='manager' :init='init' :poll='poll'></web3>
         <div v-if="bar" style="min-height: 100%;">
             <div class="row">
                 <div class="col-12 col-md-6 col-lg-4 mb-3">
@@ -136,7 +137,7 @@
                             </p>
                             <eventreader :manager='manager' address="0x795065dcc9f64b5614c407a6efdc400da6221fb0"
                                 :topics="['0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822', '0x0000000000000000000000006684977bbed67e101bb80fc07fccfba655c0a64f', '0x0000000000000000000000008798249c2E607446EfB7Ad49eC89dD1865Ff4272']"
-                                :handler='serving_handler' :output='serves'>
+                                :handler='serving_handler' :output='serves' :abi='abis.pair' :synced='servings_synced'>
                                 <div class="text-center mb-3">
                                     <div class="spinner-border" role="status">
                                         <span class="sr-only">Loading...</span>
@@ -201,25 +202,11 @@
                 pairs: [],
                 serves: [],
                 transfers: [],
+                directTransfers: [],
                 TWAbalance: 0n,
                 yearlyROI: 0n,
                 enterAmount: 0,
                 leaveAmount: 0
-            }
-        },
-        mounted: async function () {
-            await this.init();
-        },
-        watch: {
-            'block': async function () {
-                console.log(this.block);
-                await this.update();
-            },
-            'address': async function () {
-                this.transfers = this.bar.getTransfers();
-                this.serves = this.bar.getServings();
-
-                await this.update();
             }
         },
         computed: {
@@ -242,9 +229,9 @@
                 return total;
             },
             transfersOrdered: function () {
-                if (this.transfers.length == 0 || !this.block) { return []; };
+                if (this.transfers.concat(this.directTransfers).length == 0 || !this.block) { return []; };
                 let rows = [];
-                let sorted = this.transfers.sort((a, b) => a.block - b.block);
+                let sorted = (this.transfers.concat(this.directTransfers)).sort((a, b) => a.block - b.block);
                 let blockbalance = 0n;
                 for (var i in sorted) {
                     rows.push({
@@ -268,7 +255,10 @@
                 return rows.reverse();
             },
             balance: function () {
-                return this.transfers.map(t => t.amount).sum(0n);
+                let output = 0n;
+                output += this.transfers.map(t => t.amount).sum(0n);
+                output += this.directTransfers.map(t => t.amount).sum(0n);
+                return output;
             },
             servesOrdered: function () {
                 return this.serves.sort((a, b) => b.block - a.block);
@@ -299,25 +289,27 @@
                 }
             },
             serving_handler: async function (log, web3, row, decoded) {
-                let tx = await web3.eth.getTransactionReceipt(row.txid);
-                row.from = await web3.ens.reverse(tx.from);
-                let logsData = web3.decode.pair.decodeLogs(tx.logs);
-                row.amount = logsData.filter(l => l.name == "Transfer" &&
-                    l.address == "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2" &&
-                    l.events[1].value == "0x8798249c2e607446efb7ad49ec89dd1865ff4272").map(l => BigInt(l.events[2].value)).sum(0n);
-                row.pair = logsData.filter(l => l.name == "Burn")[0].address;
+                console.log(log, row, decoded);
                 return row;
+            },
+            servings_synced: async function () {
+                this.servesOrdered.filter(s => !s.amount).forEach(row => {
+                    let tx = await web3.eth.getTransactionReceipt(row.txid);
+                    row.from = tx.from;
+                    let logsData = web3.decode.pair.decodeLogs(tx.logs);
+                    row.amount = logsData.filter(l => l.name == "Transfer" &&
+                        l.address == "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2" &&
+                        l.events[1].value == "0x8798249c2e607446efb7ad49ec89dd1865ff4272").map(l => BigInt(l.events[2].value)).sum(0n);
+                    row.pair = logsData.filter(l => l.name == "Burn")[0].address;
+                });
             },
             init: async function () {
                 if (this.manager && !this.bar) {
                     this.bar = new SushiBar(this.manager);
-
-                    await this.update();
                 }
             },
-            update: async function () {
+            poll: async function () {
                 await this.bar.poll();
-
                 await this.bar.getMakerInfo();
                 this.pairs = this.bar.makerPairs;
             },
@@ -331,7 +323,6 @@
     }
     page_done();
 
-    // Get info and interact with the SushiBar and SushiMaker
     class SushiBar extends Web3Component {
         constructor(options) {
             super(options);

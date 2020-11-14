@@ -1,4 +1,4 @@
-﻿// Add ability to serialize BigInt as JSON
+﻿﻿// Add ability to serialize BigInt as JSON
 JSON.stringifyBigInt = function (obj) {
     return JSON.stringify(obj, (key, value) => {
         if (typeof value === 'bigint') {
@@ -260,6 +260,7 @@ class LogMonitor {
         this.subscription = this.web3.eth.subscribe('logs', { address: this.address, topics: this.topics }, async (error, log) => {
             if (!error) {
                 await this._processLog(log);
+                if (this.onSynced) { await this.onSynced() };
                 this._save();
             } else {
                 this.subscription = null;
