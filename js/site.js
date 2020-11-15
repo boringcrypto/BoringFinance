@@ -72,21 +72,21 @@ Vue.component('web3', {
     },
     methods: {
         do_init: async function () {
-            console.log("Init");
+            //console.log("Init");
             if (this.init) { await this.init(this.manager.web3, this.manager); }
         },
         do_poll: async function () {
-            console.log("Poll");
+            //console.log("Poll");
             if (this.poll) { await this.poll(this.manager.web3, this.manager); }
         },
         do_close: async function () {
-            console.log("Close");
+            //console.log("Close");
             if (this.close) { await this.close(this.manager.web3, this.manager); }
         },
         update: async function () {
-            console.log('updating...', this.manager.block)
+            //console.log('updating...', this.manager.block)
             if (!this.initialized && !this.initializing && !this.should_close && this.manager && this.manager.web3 && this.manager.block && (this.isglobal || this.manager.address)) {
-                console.log('updating...pass')
+                //console.log('updating...pass')
                 this.initializing = true;
                 await this.do_init();
                 this.initialized = true;
@@ -101,11 +101,11 @@ Vue.component('web3', {
         }
     },
     mounted: function () {
-        console.log("Mounted");
+        //console.log("Mounted");
         this.update();
     },
     beforeDestroy: async function () {
-        console.log("Unmounting");
+        //console.log("Unmounting");
         if (this.initialized) {
             await this.do_close();
         } else {
@@ -124,15 +124,15 @@ Vue.component('eventreader', {
     },
     methods: {
         init: async function (web3, manager) {
-            console.log("Event Init");
+            //console.log("Event Init");
             this.logs = new LogMonitor(this.manager, this.address, this.topics, this.handler, this.output, this.version, this.status, this.step, this.abi, this.synced);
             await this.logs.init();
         },
         poll: async function (web3, manager) {
-            console.log("Event Poll");
+            //console.log("Event Poll");
         },
         close: async function (web3, manager) {
-            console.log("Event Close");
+            //console.log("Event Close");
             if (this.logs) {
                 this.logs.close();
             }

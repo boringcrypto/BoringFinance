@@ -61,6 +61,15 @@
                                 :handler='transfer_handler' :output='transfers' :abi='abis.sushi'>
                             </eventreader>
 
+                            <eventreader :manager='manager' address="0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272"
+                                :topics="['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', null, manager.address]"
+                                :handler='directTransfer_handler' :output='directTransfers' :abi='abis.sushi'>
+                            </eventreader>
+                            <eventreader :manager='manager' address="0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272"
+                                :topics="['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', manager.address]"
+                                :handler='directTransfer_handler' :output='directTransfers' :abi='abis.sushi'>
+                            </eventreader>
+
                             <table class="w-100 mb-3">
                                 <thead>
                                     <th>Direction</th>
@@ -285,6 +294,48 @@
                     block: row.block,
                     amount: decoded.to == "0x8798249c2e607446efb7ad49ec89dd1865ff4272" ? decoded.value : decoded.value * -1n
                 }
+            },
+            directTransfer_handler: async function (log, web3, row, decoded) {
+                if(decoded.from === "0x0000000000000000000000000000000000000000" || decoded.to === "0x0000000000000000000000000000000000000000") {return;}
+
+                let amount = BigInt(Math.trunc(await this.getApproximateSushiXsushiRate(row.block)*10000000000)) * BigInt(decoded.value) / 10000000000n;
+                return {
+                    direction: decoded.from == this.address ? "direct out" : "direct in",
+                    block: row.block,
+                    amount: decoded.from == this.address ? amount * -1n : amount,
+                }
+            },
+            getApproximateSushiXsushiRate: async function (block) {
+                let blockUp = parseInt(block)+100; // A hundred block above the block we're searching around
+                let blockDown = parseInt(block)-100; // A hundred block below the block we're searching around
+                // Gives us a 200 block initial searching range
+
+                let sushi;
+                // Loop until the end of time... or well, until broken out of
+                while(true) {
+                    // Get stake logs for the chosen range
+                    // First topic is the function - transfer, second would be the source address but we don't care, the third is the destination address - the xSushi token contract
+                    sushi = await this.web3.eth.getPastLogs(
+                        {
+                            fromBlock: blockDown,
+                            toBlock: blockUp,
+                            address: '0x6b3595068778dd592e39a122f4f5a5cf09c90fe2',
+                            topics: ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+                                    null,
+                                    '0x0000000000000000000000008798249c2e607446efb7ad49ec89dd1865ff4272'
+                                ]
+                        }
+                    )
+                    // If a log in the range exists, take it and break;
+                    if(sushi[0]) { sushi = sushi[0]; break; }
+                    // Increase the range and have another try
+                    blockUp += 100; blockDown -= 100;
+                }
+
+                // Much easier when we already know a tx hash of a stake tx, just get the appropriate data from it
+                let xsushi = (await this.web3.eth.getTransactionReceipt(sushi.transactionHash)).logs[0].data;
+
+                return Number(sushi.data) / Number(xsushi);
             },
             serving_handler: async function (log, web3, row, decoded) {
                 row.amount = null;
