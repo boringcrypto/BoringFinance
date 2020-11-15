@@ -11,7 +11,7 @@ JSON.stringifyBigInt = function (obj) {
 
 JSON.parseBigInt = function (str) {
     return JSON.parse(str, (key, value) => {
-        if (typeof value === 'string' && /^\d+n$/.test(value)) {
+        if (typeof value === 'string' && /^-?\d+n$/.test(value)) {
             return BigInt(value.slice(0, -1));
         }
         return value;
