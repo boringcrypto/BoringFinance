@@ -231,7 +231,6 @@
                 let rows = [];
                 let sorted = (this.transfers.concat(this.directTransfers)).sort((a, b) => a.block - b.block);
                 let blockbalance = 0n;
-                console.log('A');
                 for (var i in sorted) {
                     rows.push({
                         block: sorted[i].block,
@@ -239,21 +238,17 @@
                         amount: BigInt(sorted[i].amount),
                         balance: (i == 0 ? 0n : rows[i - 1].balance) + BigInt(sorted[i].amount)
                     })
-                    console.log(rows[rows.length - 1]);
                     if (i > 0) {
                         blockbalance += BigInt(rows[i].block - rows[i - 1].block) * rows[i - 1].balance;
                     }
                 }
-                console.log('B');
                 blockbalance += BigInt(this.block - rows[i].block) * rows[i].balance;
 
-                console.log('C');
                 let totalBlocks = BigInt(this.block - rows[0].block);
                 this.TWAbalance = blockbalance / totalBlocks;
                 this.dailyReturn = (this.bar.sushiStake - this.balance) / totalBlocks * 6440n;
                 this.dailyROI = this.dailyReturn * 1000000000000000000n / this.TWAbalance;
                 this.yearlyROI = this.dailyROI * 365n;
-                console.log('D');
 
                 return rows.reverse();
             },
