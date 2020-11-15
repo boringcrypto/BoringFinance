@@ -145,10 +145,8 @@ window.DB = {
     get: function (key, callback) {
         if (typeof (Storage) !== "undefined") {
             let data = JSON.parseBigInt(localStorage.getItem(key));
-            if (data) {
-                callback(data);
-                return true;
-            }
+            callback(data);
+            return true;
         }
         return false;
     },
@@ -165,8 +163,22 @@ window.DB = {
             return true;
         }
         return false;
+    },
+    clear: function () {
+        if (typeof (Storage) !== "undefined") {
+            localStorage.clear();
+            return true;
+        }
+        return false;
     }
 }
+
+DB.get("version", version => {
+    if (version != 1) {
+        DB.clear();
+        DB.set("version", 1);
+    }
+});
 
 class LogMonitor {
     constructor(manager, address, topics, process, output, version, status, step, abi, onSynced) {
@@ -186,9 +198,11 @@ class LogMonitor {
         this.lastBlock = 10750000;
         this.should_close = false;
         DB.get(this.key, (data) => {
-            this.lastBlock = data.lastBlock;
-            this.local = data.output;
-            this.output.push(...data.output);
+            if (data) {
+                this.lastBlock = data.lastBlock;
+                this.local = data.output;
+                this.output.push(...data.output);
+            }
         })
         if (abi) {
             this.decoder = new Decoder(this.web3);
