@@ -180,6 +180,7 @@
         await load_component('erc20-view');
         await load_component('xsushi-view');
         await load_component('slp-view');
+        await load_component('univ2lp-view');
 
         createApp();
 
@@ -237,6 +238,7 @@
             this.addHandler(ERC20Handler);
             this.addHandler(XSushiHandler);
             this.addHandler(SLPHandler);
+            this.addHandler(UniV2LPHandler);
 
             // Get tokens from list
             this.allAssets = (await $.ajax('tokenlist.json')).filter(a => a.chainId == this.chainId.slice(2)).map(a => {

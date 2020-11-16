@@ -1531,7 +1531,8 @@
         "address": "0xea26c4ac16d4a5a106820bc8aee85fd0b7b2b664",
         "name": "QuarkChain",
         "symbol": "QKC",
-        "decimals": 18
+        "decimals": 18,
+        "hide_value": true
     },
     {
         "chainId": 1,

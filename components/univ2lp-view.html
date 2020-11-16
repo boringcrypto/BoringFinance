@@ -1,0 +1,139 @@
+<template id="component_template">
+    <div>
+        <h4>UniSwap <span class="float-right">${{ total.print(6, 2) }}</span></h4>
+        <h5>UniSwap Liquidity Pools</h5>
+        <table class="table table-hover w-100 mb-0">
+            <thead>
+                <th>Assets</th>
+                <th class="text-right">Balance</th>
+                <th class="text-right">Value</th>
+            </thead>
+            <tbody>
+                <template v-for="asset in assetsUnstaked">
+                    <tr style="cursor: pointer;" data-toggle="collapse"
+                        :data-target="'.univ2lpunstaked' + asset.address">
+                        <td>
+                            {{ asset.symbol }}<br>
+                            <button type="button" class="btn btn-sm btn-primary mt-1"
+                                @click="migrate(asset.address)">Migrate
+                                to SushiSwap</button>
+                        </td>
+                        <td class="text-right">
+                            <span v-if="asset.totalSupply">
+                                {{ (asset.balance * asset.reserve0 / asset.totalSupply).print(asset.token0asset.decimals, 2) }}
+                                {{ asset.token0asset.symbol }}<br />
+                                {{ (asset.balance * asset.reserve1 / asset.totalSupply).print(asset.token1asset.decimals, 2) }}
+                                {{ asset.token1asset.symbol }}
+                            </span>
+                        </td>
+                        <td class="text-right">
+                            <span
+                                v-if="app.ethRate && asset.token0asset.rate && !asset.token0asset.hide_value && asset.token1asset.rate && !asset.token1asset.hide_value">
+                                ${{ (((asset.balance * asset.reserve0 / asset.totalSupply) * app.ethRate / asset.token0asset.rate) + ((asset.balance * asset.reserve1 / asset.totalSupply) * app.ethRate / asset.token1asset.rate)).print(6, 2) }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr :class="'collapse univ2lpunstaked' + asset.address">
+                        <td colspan="4">
+                            <div :class="'univ2lpunstaked' + asset.address">
+                            </div>
+                        </td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+    </div>
+</template>
+<script>
+    addComponent('univ2lp', {
+        props: ["assets", "app", "web3", "address"],
+        data: function () {
+            return {
+                stakeAmount: 0,
+                unstakeAmount: 0
+            }
+        },
+        methods: {
+            migrate: async function (lp_address) {
+                lp_address = lp_address.slice(0, 42);
+                let balance = BigInt(await this.web3.contract('erc20', lp_address).methods.balanceOf(this.address).call());
+                let allowance = BigInt(await this.web3.contract('erc20', lp_address).methods.allowance(this.address, this.web3.univ2tosushi.address).call());
+                if (allowance < balance) {
+                    await this.web3.contract('erc20', lp_address).methods.approve(this.web3.univ2tosushi.address, "115792089237316195423570985008687907853269984665640564039457584007913129639935").send({ from: this.address });
+                }
+                await this.web3.univ2tosushi.migrate(lp_address, balance).send({ from: this.address });
+            }
+        },
+        computed: {
+            total: function () {
+                let total = 0n;
+                for (let i in this.assets) {
+                    let asset = this.assets[i];
+                    if (asset.staked) {
+                        if (this.app.ethRate && asset.token0rate && !asset.token0asset.hide_value && asset.token1rate && !asset.token1asset.hide_value) {
+                            total += ((asset.balance * asset.reserve0 / asset.lpTotalSupply) * this.app.ethRate / asset.token0rate) + ((asset.balance * asset.reserve1 / asset.lpTotalSupply) * this.app.ethRate / asset.token1rate);
+                        }
+                        if (asset.pending) {
+                            total += asset.pending * this.app.sushiRate / 1000000000000000000n;
+                        }
+                    }
+                    else {
+                        if (this.app.ethRate && asset.token0asset.rate && !asset.token0asset.hide_value && asset.token1asset.rate && !asset.token1asset.hide_value && asset.balance) {
+                            total += ((asset.balance * asset.reserve0 / asset.totalSupply) * this.app.ethRate / asset.token0asset.rate) + ((asset.balance * asset.reserve1 / asset.totalSupply) * this.app.ethRate / asset.token1asset.rate);
+                        }
+                    }
+                }
+                return total;
+            },
+            assetsStaked: function () { return this.assets.filter(a => a.balance > 0n && !a.hide && a.staked) },
+            assetsUnstaked: function () { return this.assets.filter(a => a.balance > 0n && !a.hide && !a.staked) },
+            totalPending: function () { return this.assetsStaked.map(a => a.pending).sum(0n) }
+        }
+    });
+
+    class UniV2LPHandler {
+        constructor(assets) {
+            this.assets = assets;
+        }
+
+        async init() {
+            this.factory = rpcToObj((await this.assets.web3.dashboard.getFactoryInfo(["0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f"]).call())[0]);
+            this.poolsInfo = await this.assets.web3.dashboard2.getPools([]).call();
+        }
+
+        async find(address, allAssets) {
+            let stepsize = 3333n;
+            for (let b = 0n; b <= this.factory.allPairsLength / stepsize; b++) {
+                let pairs = await this.assets.web3.dashboard.findPairs(address, this.factory.factory, b * stepsize, bigIntMin(this.factory.allPairsLength, (b + 1n) * stepsize)).call();
+                for (let i in pairs) {
+                    this.assets.add({
+                        name: null,
+                        symbol: null,
+                        address: pairs[i].token + "_univ2lp",
+                        token0asset: this.assets.add({ address: pairs[i].token0 }),
+                        token1asset: this.assets.add({ address: pairs[i].token1 }),
+                        decimals: 18,
+                        factory: this.factory,
+                        view: 'univ2lp',
+                        handler: this
+                    });
+                }
+            }
+        }
+
+        async info(assets) {
+            for (let i in assets) {
+                let asset = assets[i];
+                asset.name = asset.token0asset.name + "-" + asset.token1asset.name + " UniSwap LP";
+                asset.symbol = asset.token0asset.symbol + "-" + asset.token1asset.symbol;
+            }
+        }
+
+        async poll(address, assets) {
+            let balances = await this.assets.web3.dashboard2.getPairsFull(address, assets.filter(a => !a.staked).map(a => a.address.slice(0, 42))).call();
+            for (let i in balances) {
+                objAssign(this.assets.get(balances[i].token + "_univ2lp"), rpcToObj(balances[i]));
+            }
+        }
+    }
+</script>
