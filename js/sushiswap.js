@@ -237,7 +237,7 @@ class LogMonitor {
         this.manager = manager;
         this.web3 = manager.web3;
         this.address = address;
-        this.topics = topics.map(t => t.length == 42 ? '0x000000000000000000000000' + t.substr(2) : t);
+        this.topics = topics.map(t => t === null ? t : (t.length == 42 ? '0x000000000000000000000000' + t.substr(2) : t));
         this.process = process;
         this.key = address + JSON.stringify(topics) + version;
         this.status = status;
@@ -263,6 +263,7 @@ class LogMonitor {
     }
 
     async init() {
+        //console.log(this.topics)
         this._getPastLogsAndSubscribe()
     }
 
