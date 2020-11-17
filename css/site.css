@@ -5,7 +5,7 @@ html {
 
 .bg {
     /* The image used */
-    background-image: url("../img/bar.jpg");
+    /*background-image: url("../img/bar.jpg");*/
 
     /* Full height */
     height: 100%;
@@ -17,8 +17,9 @@ html {
     background-attachment: fixed;
 }
 
-.nav-link {
+.navbar .nav-link {
     padding: 0.5rem 0.8rem;
+    font-size: 0.875rem;
 }
 
 tr th:first-child,

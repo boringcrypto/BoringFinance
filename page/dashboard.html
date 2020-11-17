@@ -1,40 +1,32 @@
 <template id="page_template">
     <div class="mt-3">
         <div class="row">
-            <div class="col-12 col-lg-6 p-0 px-sm-3">
-                <div class="card mx-auto mb-3" style="max-width: 720px" v-for="group in groupedAssets">
-                    <div class="card-body">
-                        <div :is="group.view" :assets="group.items" :app="app" :manager="manager" :address="address"
-                            :web3="web3" :key="group.view">
-                        </div>
-                    </div>
+            <div class="col-12 mb-5 mx-auto" style="max-width: 720px" v-for="group in groupedAssets">
+                <div :is="group.view" :assets="group.items" :app="app" :manager="manager" :address="address"
+                    :web3="web3" :key="group.view">
                 </div>
             </div>
-            <div class="col-12 col-lg-6 p-0 px-sm-3">
-                <div class="card">
-                    <div class="card-body">
-                        <h3 class="card-title">Vested Sushi</h3>
-                        <web3 :manager='manager' :poll='poll'></web3>
-                        <eventreader :manager='manager' address="0x6b3595068778dd592e39a122f4f5a5cf09c90fe2"
-                            :topics="['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', '0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd', address]"
-                            :handler='harvest_handler' :output='harvests' :abi='abis.sushi'>
-                            <div class="text-center mb-3">
-                                <div class="spinner-border" role="status">
-                                    <span class="sr-only">Loading...</span>
-                                </div>
-                            </div>
-                        </eventreader>
-                        <p>
-                            This is experimental, these number may not be correct.<br>
-                            <br>
-                            Your pending SUSHI at lockup start: {{ pendingSushiAtStart.print(18, 4) }}<br>
-                            Your currently pending SUSHI: {{ pendingSushi.print(18, 4) }}<br>
-                            Your harvested SUSHI since lockup: {{ harvestedSushi.print(18, 4) }}<br>
-                            <br>
-                            Estimated in lockup:
-                            {{ ((pendingSushi - pendingSushiAtStart + harvestedSushi) * 2n).print(18, 4) }}
-                        </p>
+            <div class="col-12 mx-auto" style="max-width: 720px">
+                <h3>Vested Sushi</h3>
+                <web3 :manager='manager' :poll='poll'></web3>
+                <eventreader :manager='manager' address="0x6b3595068778dd592e39a122f4f5a5cf09c90fe2"
+                    :topics="['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', '0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd', address]"
+                    :handler='harvest_handler' :output='harvests' :abi='abis.sushi'>
+                    <div class="text-center mb-3">
+                        <div class="spinner-border" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
                     </div>
+                </eventreader>
+                <div class="jumbotron">
+                    This is experimental, these number may not be correct.<br>
+                    <br>
+                    Your pending SUSHI at lockup start: {{ pendingSushiAtStart.print(18, 4) }}<br>
+                    Your currently pending SUSHI: {{ pendingSushi.print(18, 4) }}<br>
+                    Your harvested SUSHI since lockup: {{ harvestedSushi.print(18, 4) }}<br>
+                    <br>
+                    Estimated in lockup:
+                    {{ ((pendingSushi - pendingSushiAtStart + harvestedSushi) * 2n).print(18, 4) }}
                 </div>
             </div>
         </div>

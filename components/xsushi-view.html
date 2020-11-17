@@ -1,6 +1,6 @@
 <template id="component_template">
     <div>
-        <h4><i class="fas fa-cocktail"></i> SushiBar <span class="float-right">${{ total.print(6, 2) }}</span></h4>
+        <h3><i class="fas fa-cocktail"></i> SushiBar <span class="float-right">${{ total.print(6, 2) }}</span></h3>
         <table class="table w-100 mb-0">
             <tr v-for="asset in assets" v-if="asset.balance > 0n && !asset.hide">
                 <td>xSUSHI</td>
