@@ -297,12 +297,11 @@
             },
             directTransfer_handler: async function (log, web3, row, decoded) {
                 if(decoded.from === "0x0000000000000000000000000000000000000000" || decoded.to === "0x0000000000000000000000000000000000000000") {return;}
-
                 let amount = BigInt(Math.trunc(await this.getApproximateSushiXsushiRate(row.block)*10000000000)) * BigInt(decoded.value) / 10000000000n;
                 return {
-                    direction: decoded.from == this.address ? "direct out" : "direct in",
+                    direction: decoded.from == this.address.toLowerCase() ? "direct out" : "direct in",
                     block: row.block,
-                    amount: decoded.from == this.address ? amount * -1n : amount,
+                    amount: decoded.from == this.address.toLowerCase() ? amount * -1n : amount,
                 }
             },
             getApproximateSushiXsushiRate: async function (block) {
@@ -327,14 +326,14 @@
                         }
                     )
                     // If a log in the range exists, take it and break;
-                    if(sushi[0]) { sushi = sushi[0]; break; }
+                    if(sushi[0] && sushi[0].topics[1] != "0x0000000000000000000000006684977bbed67e101bb80fc07fccfba655c0a64f") { sushi = sushi[0]; break; }
                     // Increase the range and have another try
                     blockUp += 100; blockDown -= 100;
                 }
 
                 // Much easier when we already know a tx hash of a stake tx, just get the appropriate data from it
                 let xsushi = (await this.web3.eth.getTransactionReceipt(sushi.transactionHash)).logs[0].data;
-
+        
                 return Number(sushi.data) / Number(xsushi);
             },
             serving_handler: async function (log, web3, row, decoded) {
