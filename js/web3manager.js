@@ -20,6 +20,7 @@ class Web3Manager {
 
                 this.provider = 'MetaMask';
             }
+            
             else {
                 console.log("Non MetaMask provider detected.")
 
@@ -44,14 +45,21 @@ class Web3Manager {
     }
 
     async onConnected(self) {
-        self.chainId = this.web3.givenProvider.chainId;
-        console.log("Connected to Web3... chain: " + self.chainId);
-        self.connected = window.ethereum.isConnected();
-        if (self.chainId == "0x1") {
-            self.currency = "0xdac17f958d2ee523a2206206994597c13d831ec7";
+        try {
+            self.chainId = this.web3.givenProvider.chainId;
+            console.log("Connected to Web3... chain: " + self.chainId);
+            self.connected = window.ethereum.isConnected();
+            if (self.chainId == "0x1") {
+                self.currency = "0xdac17f958d2ee523a2206206994597c13d831ec7";
+            }
+            else if (self.chainId == "0x3") {
+                self.currency = "0x292c703A980fbFce4708864Ae6E8C40584DAF323";
+            }
         }
-        else if (self.chainId == "0x3") {
-            self.currency = "0x292c703A980fbFce4708864Ae6E8C40584DAF323";
+        catch { 
+            self.chainId = "0x1";
+            self.currency = "0xdac17f958d2ee523a2206206994597c13d831ec7";
+            console.log(self.connected, "connected")
         }
 
         self.hash = "";
@@ -97,6 +105,31 @@ class Web3Manager {
             let addresses = await window.ethereum.enable();
             this.handleAccountsChanged(this, addresses);
         }
+    }
+
+    async connectWC() {
+        this.wcProvider = await new WalletConnectProvider.default({
+            infuraId: "3f78f4c272f34d399b8529f5cc84438f"
+        });
+
+        this.wcProvider.on("disconnect", (code, reason) => {
+            this.onWCDisconnected();
+            console.log(code, reason);
+          });
+
+        try { await this.wcProvider.enable(); }
+        catch(err) {
+            return;
+        }
+        this.connected = true;
+        this.provider = "WalletConnect"
+        this.web3 = new Web3(this.wcProvider)
+        this.handleAccountsChanged(this, await this.web3.eth.getAccounts());
+        this.onConnected(this)
+    }
+
+    onWCDisconnected() {
+        this.connected = false;
     }
 
     close() {

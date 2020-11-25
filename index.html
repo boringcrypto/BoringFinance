@@ -31,6 +31,8 @@
     <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.2.11/dist/web3.min.js"
         integrity="sha384-ov1JhoOZ+CNgADocviQd7922YCzI4v0xlGUxWiVKBjwNOk/K+oDSbFiXEFpL4Cf1"
         crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/@walletconnect/web3-provider@1.3.1"
+        crossorigin="anonymous"></script>
     <script src="js/abi-decode.js"></script>
     <script src="js/ens.js"></script>
     <script src="js/sushiswap.js"></script>
@@ -82,16 +84,16 @@
                 <div v-if="btcRate" class="navbar-text my-auto p-0">BTC ${{ btcRate.print(6, 2) }}</div>&nbsp;
                 <div v-if="sushiRate" class="navbar-text my-auto p-0">SUSHI ${{ sushiRate.print(6, 2) }}</div>
             </nav>
+            <nav v-if="!manager.connected && manager.provider === 'WalletConnect'" class="navbar bg-dark py-1">
+                <p></p>
+                <button class="btn btn-primary" @click="connectWC">Reconnect WalletConnect</button>
+            </nav>
         </div>
         <div class="container-fluid">
-            <div class="text-center mt-3" v-if="manager.provider == 'None'">
-                Sorry, this app currently only works with MetaMask.
-            </div>
-            <div class="text-center mt-3" v-if="!manager.address">
-                <p v-if="manager.provider != 'MetaMask'">
-                    This app has only been tested with MetaMask, it may work, it may not...
-                </p>
+
+            <div class="text-center mt-3" v-if="!manager.address || manager.provider === 'None'">
                 <button class="btn btn-lg btn-primary" @click="connect">Connect Metamask</button>
+                <button class="btn btn-lg btn-primary" @click="connectWC">Connect WalletConnect</button>
             </div>
             <router-view v-if="assetManager && manager && manager.address" :address="manager.address"
                 :block="manager.block" :header="manager.header" :time="time" :manager="manager" :web3="manager.web3">
@@ -144,16 +146,17 @@
                 }
             },
             watch: {
-                'manager.address': async function () { await this.assetManager.onAddress(); }
+                'manager.address': async function () { if (this.assetManager) { await this.assetManager.onAddress() } }
             },
             methods: {
                 connect: async function () { this.manager.connect(); },
+                connectWC: async function () { this.manager.connectWC(); },
                 init: async function () {
                     this.assetManager = await new AssetManager(this.manager, this.assets).init();
                 },
                 poll: async function () {
                     await this.assetManager.poll();
-
+                    
                     let pair = this.manager.web3.contract("pair", this.manager.chainId == "0x1" ? "0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852" : "0xbc30AaA8e99d0f0e435FC938034850c2fC77f753");
                     let reserves = rpcToObj(await pair.methods.getReserves().call());
                     if (this.manager.chainId == "0x1") {
@@ -249,7 +252,7 @@
             this.addHandler(XSushiHandler);
             this.addHandler(SLPHandler);
             this.addHandler(UniV2LPHandler);
-
+            
             // Get tokens from list
             this.allAssets = (await $.ajax('tokenlist.json')).filter(a => a.chainId == this.chainId.slice(2)).map(a => {
                 a = rpcToObj(a);
@@ -257,10 +260,12 @@
                 this._allAssetsMap[a.address] = a;
                 return a;
             });
-
+            
             for (let i in this.handlers) {
                 await this.handlers[i].init();
             };
+            
+            await this.onAddress();
 
             return this;
         }
@@ -274,7 +279,7 @@
                 for (let i in this.handlers) {
                     await this.handlers[i].info(this.assets.filter(a => a.handler == this.handlers[i]));
                 };
-
+                
                 this.poll();
             }
         }
