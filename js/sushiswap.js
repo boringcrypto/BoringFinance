@@ -58,14 +58,15 @@ function addContract(name, abi, addresses) {
     Object.defineProperty(Web3.prototype, name, {
         get: function () {
             let web3 = this;
+            let chainId = web3.currentProvider.chainId == "1" ? "0x1" : web3.currentProvider.chainId
             return new Proxy({}, {
                 get: function (target, method) {
                     if (method == "address") {
-                        return addresses[web3.currentProvider.chainId];
+                        return addresses[chainId];
                     }
 
                     return function (...params) {
-                        let contract = new web3.eth.Contract(abi, addresses[web3.currentProvider.chainId]);
+                        let contract = new web3.eth.Contract(abi, addresses[chainId]);
                         return contract.methods[method](...params)
                     }
                 }
