@@ -16,6 +16,69 @@
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">My Borrow Pairs</h4>
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Pair</th>
+                                    <th>Oracle</th>
+                                    <th class="text-right">Collateral</th>
+                                    <th class="text-right">Borrowed</th>
+                                    <th class="text-right">Borrow APR</th>
+                                </tr>
+                            </thead>
+                            <tr v-for="pair in pairs_raw"
+                                v-if="pair.latestExchangeRate && (pair.userBorrowFraction > 0n || pair.userCollateralShare > 0n)"
+                                @click="openPair(pair)" style="cursor: pointer;">
+                                <td>{{ pair.collateral.symbol }} > {{ pair.asset.symbol }}
+                                </td>
+                                <td>
+                                    {{ pair.oracleName }}
+                                </td>
+                                <td class="text-right">
+                                    {{ pair.userCollateralAmount.print(pair.collateral.decimals, 2) }}
+                                    {{ pair.collateral.symbol }}
+                                </td>
+                                <td class="text-right">
+                                    {{ pair.userBorrowAmount.print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}
+                                </td>
+                                <td class="text-right">
+                                    {{ (pair.interestPerBlock * 2372500n).print(16, 2) }}%
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">My Supply Pairs</h4>
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Pair</th>
+                                    <th>Oracle</th>
+                                    <th class="text-right">Supplied</th>
+                                    <th class="text-right">Supply APR</th>
+                                </tr>
+                            </thead>
+                            <tr v-for="pair in pairs_raw" v-if="pair.latestExchangeRate && pair.userAssetFraction > 0n"
+                                @click="openPair(pair)" style="cursor: pointer;">
+                                <td>{{ pair.collateral.symbol }} > {{ pair.asset.symbol }}
+                                </td>
+                                <td>
+                                    {{ pair.oracleName }}
+                                </td>
+                                <td class="text-right">
+                                    {{ pair.userAssetAmount.print(pair.asset.decimals, 2) }}
+                                    {{ pair.asset.symbol }}
+                                </td>
+                                <td class="text-right">
+                                    {{ (pair.totalBorrowShare == 0n ? 0n : (pair.interestPerBlock * pair.totalBorrowShare * 2372500n / pair.totalAssetShare)).print(16, 2) }}%
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
             </div>
