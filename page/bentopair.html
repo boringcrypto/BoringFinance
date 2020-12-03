@@ -15,7 +15,8 @@
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">Collateral Balance
-                            <small class="float-right">{{ pair.userCollateralAmount.print(pair.collateral.decimals) }}
+                            <small
+                                class="float-right">{{ pair.userCollateralAmount.print(pair.collateral.decimals, 4) }}
                                 {{ pair.collateral.symbol }}</small></h4>
                         <div class="input-group mb-3">
                             <input class="form-control" type="number" v-model="addCollateralAmount"><br>
@@ -34,10 +35,10 @@
                     <div class="card-body">
                         <h4 class="card-title">Asset Balance<small class="float-right">
                                 <span
-                                    v-if="pair.userAssetAmount > 0n">{{ pair.userAssetAmount.print(pair.asset.decimals) }}
+                                    v-if="pair.userAssetAmount > 0n">{{ pair.userAssetAmount.print(pair.asset.decimals, 4) }}
                                     {{ pair.asset.symbol }}<br></span>
                                 <span
-                                    v-if="pair.userBorrowAmount > 0n">-{{ pair.userBorrowAmount.print(pair.asset.decimals) }}
+                                    v-if="pair.userBorrowAmount > 0n">-{{ pair.userBorrowAmount.print(pair.asset.decimals, 4) }}
                                     {{ pair.asset.symbol }}</span>
                             </small></h4>
                         <div class="input-group mb-3">
@@ -100,7 +101,7 @@
                 return -this.pair.interestPerBlock * 2372500n;
             },
             netAPR: function () {
-                return (this.pair.userAssetFraction * this.supplyAPR + this.pair.userBorrowFraction * this.borrowAPR) / (this.pair.userAssetFraction + this.pair.userBorrowFraction);
+                return this.pair.userAssetFraction + this.pair.userBorrowFraction == 0n ? 0n : (this.pair.userAssetFraction * this.supplyAPR + this.pair.userBorrowFraction * this.borrowAPR) / (this.pair.userAssetFraction + this.pair.userBorrowFraction);
             }
         },
         mounted: async function () {
