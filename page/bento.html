@@ -1,54 +1,76 @@
 <template id="page_template">
     <div class="mt-3">
-        <div class="row">
+        <h1>BentoBox Lending</h1>
+        <div v-if="manager.chainId!='0x3'" class="row">
             <div class="col-12 mb-3">
                 <div class="card">
                     <div class="card-body">
-                        <h4 class="card-title">BentoBox lending - DO NOT USE! Not final version...</h4>
-                        <p>
-                            This has been deployed to mainnet for testing... If you want to play and lose a few dollars,
-                            that's ok, but assume funds will be lost.
-                            At random times I may upgrade to a new version, leaving the old pairs only available though
-                            etherscan.
-                            Contracts are still in development and unaudited.
-                        </p>
-                        <eventreader :manager='manager' address="0xFBBe6BD840aFfc96547854a1F821d797a8c662D9"
-                            :topics="['0xbb3432dd011e3a520780a665a087a29ccda830ea796ec3d85f051c7340a59c7f']"
-                            :handler='pair_handler' :output='pairs_raw' :abi='abis.vault' :synced='pairs_synced'>
+                        <h4 class="card-title">BentoBox Testing</h4>
+                        Please switch to the Ropsten Testnet, then refresh the page.
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div v-else="" class="row">
+            <div class="col-12 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">My Borrow Pairs</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">BentoBox Pairs</h4>
+                        <eventreader :manager='manager' address="0x42192Cc25e0feb6debbd5fB32180Ee706c80F322"
+                            :topics="['0xd62166f3c2149208e51788b1401cc356bf5da1fc6c7886a32e18570f57d88b3b']"
+                            :handler='pair_handler' :output='pairs_raw' :abi='abis.bentobox' :synced='pairs_synced'>
                             <div class="text-center mb-3">
                                 <div class="spinner-border" role="status">
                                     <span class="sr-only">Loading...</span>
                                 </div>
                             </div>
                         </eventreader>
-                        <table class="table">
-                            <tr v-for="pair in pairs" v-if="pair.latestExchangeRate">
-                                <td>Pair: {{ pair.Collateral.symbol }} > {{ pair.Asset.symbol }}
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Pair</th>
+                                    <th>Oracle</th>
+                                    <th class="text-right">Supply</th>
+                                    <th class="text-right">Borrowed</th>
+                                    <th class="text-right">Supply APR</th>
+                                    <th class="text-right">Borrow APR</th>
+                                </tr>
+                            </thead>
+                            <tr v-for="pair in pairs_raw" v-if="pair.latestExchangeRate" @click="openPair(pair)"
+                                style="cursor: pointer;">
+                                <td>{{ pair.collateral.symbol }} > {{ pair.asset.symbol }}
                                 </td>
                                 <td>
-                                    {{ pair.totalAsset.print(pair.Asset.decimals, 0) }}
-                                    {{ pair.Asset.symbol }}<br />
-                                    {{ pair.totalCollateral.print(pair.Collateral.decimals, 0) }}
-                                    {{ pair.Collateral.symbol }}<br />
-                                    Rate: {{ pair.latestExchangeRate.print(pair.Collateral.decimals, 4) }}
+                                    {{ pair.oracleName }}
                                 </td>
-                                <td>
-                                    <button class="btn btn-primary btn-sm" @click="approve_asset(pool)">Approve
-                                        Asset</button>
-                                    <button class="btn btn-primary btn-sm" @click="approve_collateral(pool)">Approve
-                                        Collateral</button>
-                                    <button class="btn btn-primary btn-sm" @click="add_asset(pool)">Add Asset</button>
-                                    <button class="btn btn-primary btn-sm" @click="add_collateral(pool)">Add
-                                        Collateral</button>
-                                    <button class="btn btn-primary btn-sm" @click="borrow(pool)">Borrow</button>
+                                <td class="text-right">
+                                    {{ pair.totalAssetAmount.print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}
                                 </td>
-                                <td>
-                                    {{ (pair.userAssetShare ? (pair.userAssetShare * pair.totalAsset / pair.totalAssetShare) : 0n).print(pair.Asset.decimals, 0) }}
-                                    {{ pair.tokenAsset.symbol }}
+                                <td class="text-right">
+                                    {{ pair.totalBorrowAmount.print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}
+                                </td>
+                                <td class="text-right">
+                                    {{ (pair.totalBorrowShare == 0n ? 0n : (pair.interestPerBlock * pair.totalBorrowShare * 2372500n / pair.totalAssetShare)).print(16, 2) }}%
+                                </td>
+                                <td class="text-right">
+                                    {{ (pair.interestPerBlock * 2372500n).print(16, 2) }}%
                                 </td>
                             </tr>
                         </table>
-
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 mb-3" v-if="false">
+                <div class="card">
+                    <div class="card-body">
                         <h4>Create new pair</h4>
                         <div class="row">
                             <div class="col-12 col-md-4">
@@ -86,27 +108,26 @@
                     </div>
                 </div>
             </div>
+            <div class="col-12 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h4>BentoBox Testing</h4>
+                        <p>Currently this only works on the Ropsten test network. To get some tokens to play with, use
+                            the Boring Faucet...</p>
+                        <p>
+                            You'll receive 'fake' SUSHI, POLY, ZRX, USDC, REP, BAT, LINK, COMP, DAI, KNC, SAI, UNI,
+                            WBTC, WEENUS, XEENUS, YEENUS and ZEENUS tokens to play with.
+                        </p>
+                        <button class="btn btn-primary mt-3" @click="drip">Gimme, gimme, gimme!</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </template>
 <script>
-    abis.vault = [{ "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "user", "type": "address" }, { "indexed": true, "internalType": "address", "name": "token", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "fee", "type": "uint256" }], "name": "FlashLoan", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }], "name": "OwnershipTransferred", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "pairContract", "type": "address" }, { "indexed": false, "internalType": "bool", "name": "enabled", "type": "bool" }], "name": "PairContractSet", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "pairContract", "type": "address" }, { "indexed": true, "internalType": "address", "name": "tokenA", "type": "address" }, { "indexed": true, "internalType": "address", "name": "tokenB", "type": "address" }, { "indexed": false, "internalType": "address", "name": "oracle", "type": "address" }, { "indexed": false, "internalType": "address", "name": "clone_address", "type": "address" }], "name": "PairCreated", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "address", "name": "swapper", "type": "address" }, { "indexed": false, "internalType": "bool", "name": "enabled", "type": "bool" }], "name": "SwapperSet", "type": "event" }, { "inputs": [{ "internalType": "address", "name": "pairContract", "type": "address" }, { "internalType": "address", "name": "tokenA", "type": "address" }, { "internalType": "address", "name": "tokenB", "type": "address" }, { "internalType": "address", "name": "oracle", "type": "address" }, { "internalType": "bytes", "name": "oracleData", "type": "bytes" }], "name": "deploy", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "dev", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "feeTo", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "feesPending", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "user", "type": "address" }, { "internalType": "address", "name": "token", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }, { "internalType": "bytes", "name": "params", "type": "bytes" }], "name": "flashLoan", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "isPair", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "pairContracts", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newDev", "type": "address" }], "name": "setDev", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newFeeTo", "type": "address" }], "name": "setFeeTo", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "pairContract", "type": "address" }, { "internalType": "bool", "name": "enabled", "type": "bool" }], "name": "setPairContract", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "swapper", "type": "address" }, { "internalType": "bool", "name": "enabled", "type": "bool" }], "name": "setSwapper", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "swappers", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transfer", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "token", "type": "address" }, { "internalType": "address", "name": "from", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transferFrom", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "token", "type": "address" }], "name": "withdrawFees", "outputs": [], "stateMutability": "nonpayable", "type": "function" }];
-    abis.peggedoracle = [{ "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }], "name": "OwnershipTransferred", "type": "event" }, { "inputs": [{ "internalType": "address", "name": "pair", "type": "address" }], "name": "get", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }, { "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "rate_", "type": "uint256" }], "name": "getInitData", "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }], "stateMutability": "pure", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "rate_", "type": "uint256" }, { "internalType": "address", "name": "pair", "type": "address" }], "name": "init", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "pair", "type": "address" }], "name": "peek", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }];
-    abis.compoundoracle = [{ "inputs": [{ "internalType": "address", "name": "pair", "type": "address" }], "name": "get", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }, { "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "string", "name": "collateralSymbol", "type": "string" }, { "internalType": "string", "name": "assetSymbol", "type": "string" }, { "internalType": "uint256", "name": "division", "type": "uint256" }], "name": "getInitData", "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }], "stateMutability": "pure", "type": "function" }, { "inputs": [{ "internalType": "string", "name": "collateralSymbol", "type": "string" }, { "internalType": "string", "name": "assetSymbol", "type": "string" }, { "internalType": "uint256", "name": "division", "type": "uint256" }], "name": "init", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "pair", "type": "address" }], "name": "peek", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "string", "name": "collateralSymbol", "type": "string" }, { "internalType": "string", "name": "assetSymbol", "type": "string" }, { "internalType": "uint256", "name": "division", "type": "uint256" }], "name": "test", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }];
-    abis.bentohelper = [{ "inputs": [{ "internalType": "address", "name": "user", "type": "address" }, { "internalType": "contract IPair[]", "name": "pairs", "type": "address[]" }], "name": "getPairs", "outputs": [{ "components": [{ "internalType": "contract IPair", "name": "pair", "type": "address" }, { "internalType": "contract IOracle", "name": "oracle", "type": "address" }, { "internalType": "contract IVault", "name": "vault", "type": "address" }, { "internalType": "contract IERC20", "name": "tokenAsset", "type": "address" }, { "internalType": "contract IERC20", "name": "tokenCollateral", "type": "address" }, { "internalType": "uint256", "name": "latestExchangeRate", "type": "uint256" }, { "internalType": "uint256", "name": "lastBlockAccrued", "type": "uint256" }, { "internalType": "uint256", "name": "interestRate", "type": "uint256" }, { "internalType": "uint256", "name": "totalCollateral", "type": "uint256" }, { "internalType": "uint256", "name": "totalAsset", "type": "uint256" }, { "internalType": "uint256", "name": "totalBorrow", "type": "uint256" }, { "internalType": "uint256", "name": "totalCollateralShare", "type": "uint256" }, { "internalType": "uint256", "name": "totalAssetShare", "type": "uint256" }, { "internalType": "uint256", "name": "totalBorrowShare", "type": "uint256" }, { "internalType": "uint256", "name": "interestPerBlock", "type": "uint256" }, { "internalType": "uint256", "name": "lastInterestBlock", "type": "uint256" }, { "internalType": "uint256", "name": "colRate", "type": "uint256" }, { "internalType": "uint256", "name": "openColRate", "type": "uint256" }, { "internalType": "uint256", "name": "liqMultiplier", "type": "uint256" }, { "internalType": "uint256", "name": "feesPending", "type": "uint256" }, { "internalType": "uint256", "name": "userCollateralShare", "type": "uint256" }, { "internalType": "uint256", "name": "userAssetShare", "type": "uint256" }, { "internalType": "uint256", "name": "userBorrowShare", "type": "uint256" }, { "internalType": "uint256", "name": "userAssetBalance", "type": "uint256" }, { "internalType": "uint256", "name": "userCollateralBalance", "type": "uint256" }, { "internalType": "uint256", "name": "userAssetAllowance", "type": "uint256" }, { "internalType": "uint256", "name": "userCollateralAllowance", "type": "uint256" }], "internalType": "struct BentoHelper.PairInfo[]", "name": "info", "type": "tuple[]" }], "stateMutability": "view", "type": "function" }];
-    abis.bentopair = [{ "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "share", "type": "uint256" }], "name": "AddAsset", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "share", "type": "uint256" }], "name": "AddBorrow", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "share", "type": "uint256" }], "name": "AddCollateral", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "_owner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "_spender", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "_value", "type": "uint256" }], "name": "Approval", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "rate", "type": "uint256" }], "name": "NewExchangeRate", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "share", "type": "uint256" }], "name": "RemoveAsset", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "share", "type": "uint256" }], "name": "RemoveBorrow", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "share", "type": "uint256" }], "name": "RemoveCollateral", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "_from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "_to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "_value", "type": "uint256" }], "name": "Transfer", "type": "event" }, { "inputs": [], "name": "accrue", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "addAsset", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "addCollateral", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "approve", "outputs": [{ "internalType": "bool", "name": "success", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "balanceOf", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }, { "internalType": "address", "name": "to", "type": "address" }], "name": "borrow", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "colRate", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "decimals", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "feesPending", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "contract Vault", "name": "vault_", "type": "address" }, { "internalType": "address", "name": "collateral_address", "type": "address" }, { "internalType": "address", "name": "asset_address", "type": "address" }, { "internalType": "contract IOracle", "name": "oracle_address", "type": "address" }, { "internalType": "bytes", "name": "oracleData", "type": "bytes" }], "name": "init", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "interestPerBlock", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "user", "type": "address" }, { "internalType": "bool", "name": "open", "type": "bool" }], "name": "isSolvent", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "lastBlockAccrued", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "lastInterestBlock", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "liqMultiplier", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address[]", "name": "users", "type": "address[]" }, { "internalType": "uint256[]", "name": "borrowShares", "type": "uint256[]" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "address", "name": "swapper", "type": "address" }, { "internalType": "bool", "name": "open", "type": "bool" }], "name": "liquidate", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "name", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "openColRate", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "oracle", "outputs": [{ "internalType": "contract IOracle", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "share", "type": "uint256" }, { "internalType": "address", "name": "to", "type": "address" }], "name": "removeAsset", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "share", "type": "uint256" }, { "internalType": "address", "name": "to", "type": "address" }], "name": "removeCollateral", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "share", "type": "uint256" }], "name": "repay", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "swapper", "type": "address" }, { "internalType": "uint256", "name": "amountAsset", "type": "uint256" }, { "internalType": "uint256", "name": "minAmountCollateral", "type": "uint256" }], "name": "short", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "symbol", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "tokenAsset", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "tokenCollateral", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "totalAsset", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "totalBorrow", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "totalBorrowShare", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "totalCollateral", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "totalCollateralShare", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "totalSupply", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "success", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "from", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "internalType": "bool", "name": "success", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
-    { "inputs": [{ "internalType": "address", "name": "swapper", "type": "address" }, { "internalType": "uint256", "name": "borrowShare", "type": "uint256" }, { "internalType": "uint256", "name": "maxAmountCollateral", "type": "uint256" }], "name": "unwind", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "updateExchangeRate", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "updateInterestRate", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "userBorrowShare", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "userCollateralShare", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "vault", "outputs": [{ "internalType": "contract Vault", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "withdrawFees", "outputs": [], "stateMutability": "nonpayable", "type": "function" }];
-
-    addContract("vault", abis.vault, { "0x1": "0xFBBe6BD840aFfc96547854a1F821d797a8c662D9", "0x3": "0x0d238A2c8b92ebD18312A9d3ff36E124dBa30EcB" });
-    addContract("peggedoracle", abis.peggedoracle, { "0x1": "0x461386ec09FfDd372af72f1f278ff7a730E5b8D1", "0x3": "0x577DECacBD9836fE6179713a0ee3fEbCF1FAF0E7" });
-    addContract("compoundoracle", abis.compoundoracle, { "0x1": "0x70f4EF6cC5f7B2c29056d1b4dbfd26D5cAf857Cc" });
-    addContract("chainlinkoracle", abis.compoundoracle, { "0x1": "0x85422F87d109EbC9069aBb9548683625ae479aBE" });
-    addContract("bentohelper", abis.bentohelper, { "0x1": "0x835766B30eB2dCD07F392c7CB56d16E2141eef4D" });
-    const pairtemplate = "0xF541947cBb87FB3b7Ca81dAe9c66831167eA9f8C";
-    const sushiswapper = "0xbEc7773A76fD8C0A9fdDDB44cD6472e1EE5027b3";
-
     app.page = {
-        props: ['manager', 'address', 'block'],
+        props: ['web3', 'manager', 'address', 'block'],
         data: function () {
             return {
                 pairs_raw: [],
@@ -114,7 +135,7 @@
                 collateralToken: null,
                 oracle: null,
                 oracleInit: "",
-                whitelistedOracles: [this.manager.web3.compoundoracle.address.toLowerCase()]
+                whitelistedOracles: [this.web3.peggedoracle.address.toLowerCase(), this.web3.compoundoracle.address.toLowerCase()]
             }
         },
         asyncComputed: {
@@ -122,7 +143,7 @@
                 if (this.oracle == "compound") {
                     if (this.assetToken.compoundSymbol && this.collateralToken.compoundSymbol) {
                         let division = "1" + "0".repeat(Number(18n + this.assetToken.decimals - this.collateralToken.decimals));
-                        let result = await this.manager.web3.compoundoracle.test(this.collateralToken.compoundSymbol, this.assetToken.compoundSymbol, division).call();
+                        let result = await this.web3.compoundoracle.test(this.collateralToken.compoundSymbol, this.assetToken.compoundSymbol, division).call();
                     }
                 }
             }
@@ -131,10 +152,7 @@
             pairs: function () {
                 let p = [];
                 for (let i in this.pairs_raw) {
-                    let fullPair = {
-                        Collateral: this.pairs_raw[i].tokenA ? app.assetManager.add({ address: this.pairs_raw[i].tokenA }) : {},
-                        Asset: this.pairs_raw[i].tokenB ? app.assetManager.add({ address: this.pairs_raw[i].tokenB }) : {}
-                    }
+                    let fullPair = {};
                     objAssign(fullPair, this.pairs_raw[i]);
                     p.push(fullPair);
                 }
@@ -142,36 +160,45 @@
             }
         },
         methods: {
-            approve_asset: async function (pool) {
-                await this.manager.web3.contract('erc20', pool.tokenAsset).methods.approve(this.manager.web3.vault.address, "115792089237316195423570985008687907853269984665640564039457584007913129639935").send({ from: this.address });
+            drip: async function () {
+                await this.web3.faucet.drip().send({ from: this.address });
             },
-            approve_collateral: async function (pool) {
-                await this.manager.web3.contract('erc20', pool.tokenCollateral).methods.approve(this.manager.web3.vault.address, "115792089237316195423570985008687907853269984665640564039457584007913129639935").send({ from: this.address });
-            },
-            add_asset: async function (pool) {
-                await this.manager.web3.contract('bentopair', pool.address).methods.addAsset("100000000000000000").send({ from: this.address });
-            },
-            add_collateral: async function (pool) {
-                await this.manager.web3.contract('bentopair', pool.address).methods.addCollateral("10000000").send({ from: this.address });
+            openPair: function (pair) {
+                app.$router.push('/bentopair/' + pair.address);
+                console.log(pair.address);
             },
             pair_handler: async function (log, web3, row, decoded) {
                 objAssign(row, decoded);
                 row.address = decoded.clone_address;
-                app.assetManager.add({ address: row.tokenA });
-                app.assetManager.add({ address: row.tokenB });
+                if (decoded.masterContract == "0xdae20fa3487e3fe47de1e7ea973fc42b6cfe4737") {
+                    let initData = web3.eth.abi.decodeParameters(abis.lendingpair.find(f => f.name == 'getInitData').inputs, decoded.data);
+                    row.assetAddress = initData.asset_.toLowerCase();
+                    row.collateralAddress = initData.collateral_.toLowerCase();
+                    row.oracle = initData.oracle_.toLowerCase();
+                    row.oracleData = initData.oracleData_;
+                    row.asset = {};
+                    row.collateral = {};
+                }
+                if (row.oracle == "0xb5C8A2d1C8d393Dace7b3C1D98f35d645A1cD1fc".toLowerCase()) { row.oracleName = "Pegged" };
+                if (row.oracle == "0xf1EFAf821B7FE3CCdFA1dC2b7c553B08BC53d707".toLowerCase()) { row.oracleName = "Compound" };
+
                 return this.whitelistedOracles.indexOf(row.oracle) >= 0 ? row : null;
             },
             pairs_synced: async function () {
                 console.log('Updating')
-                infos = await this.manager.web3.bentohelper.getPairs(this.address, this.pairs_raw.filter(p => !p.vault).map(p => p.address)).call();
+                infos = await this.web3.bentohelper.getPairs(this.address, this.pairs_raw.filter(p => !p.vault).map(p => p.address)).call();
                 for (var i in infos) {
                     objAssign(this.pairs_raw[i], rpcToObj(infos[i]));
+                    this.pairs_raw[i].asset = app.assetManager.add({ address: infos[i].tokenAsset });
+                    this.pairs_raw[i].collateral = app.assetManager.add({ address: infos[i].tokenCollateral });
+                    console.log("ROW", this.pairs_raw[i], infos[i]);
                 }
+                await app.assetManager.getTokenInfo();
             },
             create: async function () {
                 let division = "1" + "0".repeat(Number(18n + this.assetToken.decimals - this.collateralToken.decimals));
-                this.oracleInit = await this.manager.web3.compoundoracle.getInitData(this.collateralToken.compoundSymbol, this.assetToken.compoundSymbol, division).call();
-                await this.manager.web3.vault.deploy(pairtemplate, this.collateralToken.address, this.assetToken.address, this.manager.web3.compoundoracle.address, this.oracleInit).send({ from: this.address });
+                this.oracleInit = await this.web3.compoundoracle.getInitData(this.collateralToken.compoundSymbol, this.assetToken.compoundSymbol, division).call();
+                await this.web3.vault.deploy(pairtemplate, this.collateralToken.address, this.assetToken.address, this.manager.web3.compoundoracle.address, this.oracleInit).send({ from: this.address });
             }
         }
     }

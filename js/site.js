@@ -2,7 +2,7 @@ Decimal.config({ precision: 36 })
 Decimal.config({ toExpNeg: -1000 })
 Decimal.config({ toExpPos: 1000 })
 Decimal.prototype.toInt = function (decimals) {
-    return BigInt(this.times(new Decimal("10").pow(decimals)).todp(0));
+    return BigInt(this.times(new Decimal("10").pow(new Decimal(decimals.toString()))).todp(0));
 }
 
 BigInt.prototype.toDec = function (divisor) {
