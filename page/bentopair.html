@@ -100,7 +100,7 @@
                 return -this.pair.interestPerBlock * 2372500n;
             },
             netAPR: function () {
-                return (this.pair.userAssetFraction * this.supplyAPR + this.pair.userBorrowFraction * this.borrowAPR) / (this.pair.userAssetFraction + this.pair.userBorrowFraction);
+                return (this.pair.userAssetFraction * this.supplyAPR + this.pair.userBorrowFraction * this.borrowAPR) / (this.pair.userAssetFraction + this.pair.userBorrowFraction + 1);
             }
         },
         mounted: async function () {
