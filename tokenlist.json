@@ -5554,6 +5554,14 @@
     },
     {
         "chainId": 3,
+        "address": "0xcbbde19c1a79c18f07576792e96a912eab8c4060",
+        "name": "Wrapped Ether",
+        "symbol": "WETH",
+        "decimals": 18,
+        "compoundSymbol": "ETH"
+    },
+    {
+        "chainId": 3,
         "address": "0x81db9c598b3ebbdc92426422fc0a1d06e77195ec",
         "name": "SushiToken",
         "symbol": "SUSHI",
