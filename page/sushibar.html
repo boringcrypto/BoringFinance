@@ -73,7 +73,7 @@
                             <table class="w-100 mb-3">
                                 <thead>
                                     <th>Direction</th>
-                                    <th class="text-right">Amount</th>
+                                    <th class="text-right">Amount (SUSHI)</th>
                                 </thead>
                                 <tbody>
                                     <tr v-for="transfer in transfersOrdered.slice(0, 25)">
@@ -143,7 +143,7 @@
                                 Thanks to these generous chefs we've enjoyed some great sushi!
                             </p>
                             <eventreader :manager='manager' address="0x795065dcc9f64b5614c407a6efdc400da6221fb0"
-                                :topics="['0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822', '0x0000000000000000000000006684977bbed67e101bb80fc07fccfba655c0a64f', '0x0000000000000000000000008798249c2E607446EfB7Ad49eC89dD1865Ff4272']"
+                                :topics="['0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822', '0x000000000000000000000000280ac711bb99de7c73fb70fb6de29846d5e4207f', '0x0000000000000000000000008798249c2E607446EfB7Ad49eC89dD1865Ff4272']"
                                 :handler='serving_handler' :output='serves' :abi='abis.pair' :synced='servings_synced'>
                                 <div class="text-center mb-3">
                                     <div class="spinner-border" role="status">
@@ -155,7 +155,7 @@
                                 <thead>
                                     <th>From</th>
                                     <th>Pool</th>
-                                    <th class="text-right">Amount</th>
+                                    <th class="text-right">Amount (SUSHI)</th>
                                 </thead>
                                 <tbody>
                                     <tr v-for="serve in servesOrdered">
@@ -326,14 +326,14 @@
                         }
                     )
                     // If a log in the range exists, take it and break;
-                    if(sushi[0] && sushi[0].topics[1] != "0x0000000000000000000000006684977bbed67e101bb80fc07fccfba655c0a64f") { sushi = sushi[0]; break; }
+                    if(sushi[0] && sushi[0].topics[1] != "0x000000000000000000000000280ac711bb99de7c73fb70fb6de29846d5e4207f") { sushi = sushi[0]; break; }
                     // Increase the range and have another try
                     blockUp += 100; blockDown -= 100;
                 }
 
                 // Much easier when we already know a tx hash of a stake tx, just get the appropriate data from it
                 let xsushi = (await this.web3.eth.getTransactionReceipt(sushi.transactionHash)).logs[0].data;
-        
+
                 return Number(sushi.data) / Number(xsushi);
             },
             serving_handler: async function (log, web3, row, decoded) {
