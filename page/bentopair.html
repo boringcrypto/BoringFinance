@@ -5,7 +5,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">{{ pair.collateral.symbol }} > {{ pair.asset.symbol }}</h4>
-                        Borrow Pair - Oracle: {{ pair.oracleName }}
+                        Borrow Pair - Oracle: {{ pair.oracleName }}<br>
                     </div>
                 </div>
             </div>
@@ -16,7 +16,7 @@
                     <div class="card-body">
                         <h4 class="card-title">Collateral Balance
                             <small
-                                class="float-right">{{ pair.userCollateralAmount.print(pair.collateral.decimals, 4) }}
+                                class="float-right mt-1">{{ pair.userCollateralAmount.print(pair.collateral.decimals, 4) }}
                                 {{ pair.collateral.symbol }}</small></h4>
                         <div class="input-group mb-3">
                             <input class="form-control" type="number" v-model="addCollateralAmount"><br>
@@ -27,13 +27,22 @@
                             </div>
                         </div>
 
+                        <div class="input-group mb-3">
+                            <input class="form-control" type="number" v-model="removeCollateralAmount"><br>
+                            <div class="input-group-append">
+                                <span class="input-group-text" style="cursor: pointer;"
+                                    @click="removeCollateral(pair.userCollateralShare)">Max</span>
+                                <button type="button" class="btn btn-sm btn-primary"
+                                    @click="removeCollateral(collateralAmountToShare(collateralToInt(removeCollateralAmount)))">Remove</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-12 col-md-4">
                 <div class="card">
                     <div class="card-body">
-                        <h4 class="card-title">Asset Balance<small class="float-right">
+                        <h4 class="card-title">Asset Balance<small class="float-right mt-1">
                                 <span
                                     v-if="pair.userAssetAmount > 0n">{{ pair.userAssetAmount.print(pair.asset.decimals, 4) }}
                                     {{ pair.asset.symbol }}<br></span>
@@ -56,14 +65,46 @@
                                 <button type="button" class="btn btn-sm btn-primary" @click="addBorrow">Borrow</button>
                             </div>
                         </div>
+                        <small class="form-text text-muted">Max borrow:
+                            {{ maxBorrowAmount.print(pair.asset.decimals, 2) }}</small>
                     </div>
                 </div>
             </div>
             <div class="col-12 col-md-4">
                 <div class="card">
                     <div class="card-body">
-                        <h4 class="card-title">APR<small class="float-right">{{ this.netAPR.print(16, 2) }}%</small>
+                        <h4 class="card-title">APR<small
+                                class="float-right mt-1">{{ this.netAPR.print(16, 2) }}%</small>
                         </h4>
+                        <table class="w-100">
+                            <tr>
+                                <td>Utilization</td>
+                                <td class="text-right">{{ utilization.print(3,2) }}%</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3" v-if="pair.collateral.decimals">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <table class="w-100">
+                            <tr>
+                                <td>
+                                    <h4 class="mb-0">Borrow&nbsp;Power&nbsp;Used&nbsp;</h4>
+                                </td>
+                                <td class="w-100">
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar"
+                                            :style="'width: ' + userBorrowUsed + '%'" :aria-valuenow="userBorrowUsed"
+                                            aria-valuemin="0" aria-valuemax="100">{{ userBorrowUsed }}%</div>
+                                    </div>
+
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -78,6 +119,7 @@
                 addCollateralAmount: 0,
                 addSupplyAmount: 0,
                 addBorrowAmount: 0,
+                removeCollateralAmount: 0,
                 pair: {
                     asset: {},
                     collateral: {},
@@ -88,6 +130,12 @@
         computed: {
             collateralIsETH: function () { return this.pair.collateral.address == WETH; },
             assetIsETH: function () { return this.pair.asset.address == WETH; },
+            utilization: function () {
+                return this.pair.totalAssetShare == 0n ? 0n : 100000n * this.pair.totalBorrowShare / this.pair.totalAssetShare;
+            },
+            maxBorrowAmount: function () {
+                return this.pair.totalAssetAmount - this.pair.totalBorrowAmount;
+            },
             maxCollateralAmount: function () {
                 return this.pair.collateral.address == WETH ? app.ethBalance : this.pair.collateral.balance;
             },
@@ -95,13 +143,16 @@
                 return this.pair.asset.address == WETH ? app.ethBalance : this.pair.asset.balance;
             },
             supplyAPR: function () {
-                return this.pair.totalBorrowShare == 0n ? 0n : (this.pair.interestPerBlock * this.pair.totalBorrowShare * 2372500n / this.pair.totalAssetShare)
+                return this.pair.totalAssetShare == 0n ? 0n : (this.pair.interestPerBlock * this.pair.totalBorrowShare * 2372500n / this.pair.totalAssetShare)
             },
             borrowAPR: function () {
                 return -this.pair.interestPerBlock * 2372500n;
             },
             netAPR: function () {
                 return this.pair.userAssetFraction + this.pair.userBorrowFraction == 0n ? 0n : (this.pair.userAssetFraction * this.supplyAPR + this.pair.userBorrowFraction * this.borrowAPR) / (this.pair.userAssetFraction + this.pair.userBorrowFraction);
+            },
+            userBorrowUsed: function () {
+                return this.pair.userCollateralAmount == 0n ? 0n : ((this.pair.userBorrowAmount * this.pair.latestExchangeRate * 100n) / (this.pair.userCollateralAmount * 75n) / 10000000000000n).print(3, 2);
             }
         },
         mounted: async function () {
@@ -118,6 +169,27 @@
             console.log(this.pair)
         },
         methods: {
+            collateralToInt: function (field_input) {
+                return new Decimal(field_input).toInt(this.pair.collateral.decimals);
+            },
+            assetToInt: function (field_input) {
+                return new Decimal(field_input).toInt(this.pair.asset.decimals);
+            },
+            assetFractionToShare: function (fraction) {
+                return fraction * this.pair.totalAssetShare / this.pair.totalAssetFraction;
+            },
+            assetShareToFraction: function (share) {
+                return share * this.pair.totalAssetFraction / this.pair.totalAssetShare;
+            },
+            assetShareToAmount: function (share) {
+
+            },
+            assetAmountToShare: function (amount) {
+
+            },
+            collateralAmountToShare: function (amount) {
+                return amount * this.pair.totalCollateralShare / this.pair.totalCollateralAmount;
+            },
             addCollateral: async function () {
                 if (!this.pair.masterContractApproved) {
                     console.log("Approve mastercontract")
@@ -150,6 +222,9 @@
                 let amount = new Decimal(this.addBorrowAmount).toInt(this.pair.asset.decimals);
 
                 await this.pair.contract.borrow(amount, this.address).send({ from: this.address, value: (this.assetIsETH ? amount : 0n).toString() });
+            },
+            removeCollateral: async function (share) {
+                await this.pair.contract.removeCollateral(share, this.address).send({ from: this.address });
             }
         }
     }

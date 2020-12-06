@@ -87,7 +87,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">BentoBox Pairs</h4>
-                        <eventreader :manager='manager' address="0x42192Cc25e0feb6debbd5fB32180Ee706c80F322"
+                        <eventreader :manager='manager' address="0x066b83CE269aa9851704d30Ce7e838a8B772b340"
                             :topics="['0xd62166f3c2149208e51788b1401cc356bf5da1fc6c7886a32e18570f57d88b3b']"
                             :handler='pair_handler' :output='pairs_raw' :abi='abis.bentobox' :synced='pairs_synced'>
                             <div class="text-center mb-3">
@@ -118,7 +118,7 @@
                                     {{ pair.totalAssetAmount.print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}
                                 </td>
                                 <td class="text-right">
-                                    {{ pair.totalBorrowAmount.print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}
+                                    {{ (pair.totalAssetAmount == 0n ? 0n : 10000n * pair.totalBorrowAmount / pair.totalAssetAmount).print(2) }}%
                                 </td>
                                 <td class="text-right">
                                     {{ (pair.totalBorrowShare == 0n ? 0n : (pair.interestPerBlock * pair.totalBorrowShare * 2372500n / pair.totalAssetShare)).print(16, 2) }}%
@@ -198,7 +198,12 @@
                 collateralToken: null,
                 oracle: null,
                 oracleInit: "",
-                whitelistedOracles: [this.web3.peggedoracle.address.toLowerCase(), this.web3.compoundoracle.address.toLowerCase()]
+                whitelistedOracles: [
+                    this.web3.peggedoracle.address.toLowerCase(),
+                    this.web3.compoundoracle.address.toLowerCase(),
+                    this.web3.sushiswapslp0oracle.address.toLowerCase(),
+                    this.web3.sushiswapslp1oracle.address.toLowerCase()
+                ]
             }
         },
         asyncComputed: {
@@ -231,9 +236,10 @@
                 console.log(pair.address);
             },
             pair_handler: async function (log, web3, row, decoded) {
+                console.log(decoded);
                 objAssign(row, decoded);
                 row.address = decoded.clone_address;
-                if (decoded.masterContract == "0xdae20fa3487e3fe47de1e7ea973fc42b6cfe4737") {
+                if (decoded.masterContract == "0x2bc401e64be212e435339872208e7b07f5eb3eb6") {
                     let initData = web3.eth.abi.decodeParameters(abis.lendingpair.find(f => f.name == 'getInitData').inputs, decoded.data);
                     row.assetAddress = initData.asset_.toLowerCase();
                     row.collateralAddress = initData.collateral_.toLowerCase();
@@ -241,9 +247,12 @@
                     row.oracleData = initData.oracleData_;
                     row.asset = {};
                     row.collateral = {};
+                    console.log("ROW", row);
                 }
                 if (row.oracle == "0xb5C8A2d1C8d393Dace7b3C1D98f35d645A1cD1fc".toLowerCase()) { row.oracleName = "Pegged" };
                 if (row.oracle == "0xf1EFAf821B7FE3CCdFA1dC2b7c553B08BC53d707".toLowerCase()) { row.oracleName = "Compound" };
+                if (row.oracle == "0xFDf9eECBC041fa126290108b86527dBA7c8eFC3e".toLowerCase()) { row.oracleName = "SushiSwap" };
+                if (row.oracle == "0xAcf73db053bA1a1DF51bC3BC0BfcA6C2ada5cFeC".toLowerCase()) { row.oracleName = "SushiSwap" };
 
                 return this.whitelistedOracles.indexOf(row.oracle) >= 0 ? row : null;
             },
