@@ -6,6 +6,7 @@
                     <div class="card-body">
                         <h4 class="card-title">{{ pair.collateral.symbol }} > {{ pair.asset.symbol }}</h4>
                         Borrow Pair - Oracle: {{ pair.oracleName }}<br>
+                        Supply APR: {{ supplyAPR.print(16,2) }}% - Borrow APR: {{ borrowAPR.print(16,2) }}%
                     </div>
                 </div>
             </div>
@@ -67,13 +68,23 @@
                         </div>
                         <small class="form-text text-muted">Max borrow:
                             {{ maxBorrowAmount.print(pair.asset.decimals, 2) }}</small>
+
+                        <div class="input-group mb-3">
+                            <input class="form-control" type="number" v-model="removeAssetAmount"><br>
+                            <div class="input-group-append">
+                                <span class="input-group-text" style="cursor: pointer;"
+                                    @click="removeAsset(pair.userAssetFraction)">Max</span>
+                                <button type="button" class="btn btn-sm btn-primary"
+                                    @click="removeAsset(assetAmountToFraction(assetToInt(removeAssetAmount)))">Remove</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-12 col-md-4">
                 <div class="card">
                     <div class="card-body">
-                        <h4 class="card-title">APR<small
+                        <h4 class="card-title">Net APR<small
                                 class="float-right mt-1">{{ this.netAPR.print(16, 2) }}%</small>
                         </h4>
                         <table class="w-100">
@@ -96,7 +107,7 @@
                                     <h4 class="mb-0">Borrow&nbsp;Power&nbsp;Used&nbsp;</h4>
                                 </td>
                                 <td class="w-100">
-                                    <div class="progress">
+                                    <div class="progress" style="color: #eeeeee">
                                         <div class="progress-bar" role="progressbar"
                                             :style="'width: ' + userBorrowUsed + '%'" :aria-valuenow="userBorrowUsed"
                                             aria-valuemin="0" aria-valuemax="100">{{ userBorrowUsed }}%</div>
@@ -105,6 +116,15 @@
                                 </td>
                             </tr>
                         </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3" v-if="pair.collateral.decimals">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <button type="button" class="btn btn-sm btn-primary" @click="accrue">Accrue</button>
                     </div>
                 </div>
             </div>
@@ -120,6 +140,7 @@
                 addSupplyAmount: 0,
                 addBorrowAmount: 0,
                 removeCollateralAmount: 0,
+                removeAssetAmount: 0,
                 pair: {
                     asset: {},
                     collateral: {},
@@ -143,13 +164,13 @@
                 return this.pair.asset.address == WETH ? app.ethBalance : this.pair.asset.balance;
             },
             supplyAPR: function () {
-                return this.pair.totalAssetShare == 0n ? 0n : (this.pair.interestPerBlock * this.pair.totalBorrowShare * 2372500n / this.pair.totalAssetShare)
+                return this.pair.totalAssetShare == 0n ? 0n : (this.pair.interestPerBlock * this.pair.totalBorrowShare * 2372500n * 9n / this.pair.totalAssetShare / 10n)
             },
             borrowAPR: function () {
                 return -this.pair.interestPerBlock * 2372500n;
             },
             netAPR: function () {
-                return this.pair.userAssetFraction + this.pair.userBorrowFraction == 0n ? 0n : (this.pair.userAssetFraction * this.supplyAPR + this.pair.userBorrowFraction * this.borrowAPR) / (this.pair.userAssetFraction + this.pair.userBorrowFraction);
+                return this.pair.userAssetFraction + this.pair.userBorrowFraction == 0n ? 0n : ((this.pair.userAssetFraction * this.supplyAPR) + (this.pair.userBorrowFraction * this.borrowAPR)) / (this.pair.userAssetFraction + this.pair.userBorrowFraction);
             },
             userBorrowUsed: function () {
                 return this.pair.userCollateralAmount == 0n ? 0n : ((this.pair.userBorrowAmount * this.pair.latestExchangeRate * 100n) / (this.pair.userCollateralAmount * 75n) / 10000000000000n).print(3, 2);
@@ -163,6 +184,8 @@
             this.pair.collateral = app.assetManager.add({ address: this.pair.tokenCollateral });
             if (this.pair.oracle == "0xb5C8A2d1C8d393Dace7b3C1D98f35d645A1cD1fc") { this.pair.oracleName = "Pegged" };
             if (this.pair.oracle == "0xf1EFAf821B7FE3CCdFA1dC2b7c553B08BC53d707") { this.pair.oracleName = "Compound" };
+            if (this.pair.oracle == "0xFDf9eECBC041fa126290108b86527dBA7c8eFC3e") { this.pair.oracleName = "SushiSwap" };
+            if (this.pair.oracle == "0xAcf73db053bA1a1DF51bC3BC0BfcA6C2ada5cFeC") { this.pair.oracleName = "SushiSwap" };
             this.pair.contract = this.web3.contract("lendingpair", this.pair.pair).methods;
 
             await app.assetManager.getTokenInfo();
@@ -182,10 +205,16 @@
                 return share * this.pair.totalAssetFraction / this.pair.totalAssetShare;
             },
             assetShareToAmount: function (share) {
-
+                return share * this.pair.totalAssetAmount / this.pair.totalAssetShare;
             },
             assetAmountToShare: function (amount) {
-
+                return amount * this.pair.totalAssetShare / this.pair.totalAssetAmount;
+            },
+            assetAmountToFraction: function (amount) {
+                return this.assetShareToFraction(this.assetAmountToShare(amount));
+            },
+            collateralShareToAmount: function (share) {
+                return share * this.pair.totalCollateralAmount / this.pair.totalCollateralShare;
             },
             collateralAmountToShare: function (amount) {
                 return amount * this.pair.totalCollateralShare / this.pair.totalCollateralAmount;
@@ -199,7 +228,7 @@
                 let amount = new Decimal(this.addCollateralAmount).toInt(this.pair.collateral.decimals);
 
                 if (!this.collateralIsETH && this.pair.userCollateralAllowance < amount) {
-                    await this.web3.contract("erc20", this.pair.collateral.adress).methods.approve(this.pair.bentoBox, "115792089237316195423570985008687907853269984665640564039457584007913129639935").send({ from: this.address });
+                    await this.web3.contract("erc20", this.pair.collateral.address).methods.approve(this.pair.bentoBox, "115792089237316195423570985008687907853269984665640564039457584007913129639935").send({ from: this.address });
                 }
 
                 await this.pair.contract.addCollateral(amount).send({ from: this.address, value: (this.collateralIsETH ? amount : 0n).toString() });
@@ -225,6 +254,12 @@
             },
             removeCollateral: async function (share) {
                 await this.pair.contract.removeCollateral(share, this.address).send({ from: this.address });
+            },
+            removeAsset: async function (fraction) {
+                await this.pair.contract.removeAsset(fraction, this.address).send({ from: this.address });
+            },
+            accrue: async function () {
+                await this.pair.contract.accrue().send({ from: this.address });
             }
         }
     }

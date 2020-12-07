@@ -204,7 +204,7 @@ addContract("sushiswapslp0oracle", abis.sushiswapslporacle, { "0x3": "0xFDf9eECB
 addContract("sushiswapslp1oracle", abis.sushiswapslporacle, { "0x3": "0xAcf73db053bA1a1DF51bC3BC0BfcA6C2ada5cFeC" });
 const masterContract = "0x2bc401e64Be212E435339872208E7b07F5eB3Eb6";
 const sushiswapper = "0xc870551cbfE40D7Bb272273D156123E18924Bc68";
-const WETH = "0xc778417E063141139Fce010982780140Aa0cD5Ab";
+const WETH = "0xc778417E063141139Fce010982780140Aa0cD5Ab".toLowerCase();
 
 addContract("tokenInfo", abis.tokenInfo, { "0x1": "0x0254804A96beE6D5136F283998268Ed8ba8930B7", "0x3": "0xd9145CCE52D386f254917e481eB44e9943F39138" });
 addContract("poolnames", abis.poolnames, { "0x1": "0xb373a5def62A907696C0bBd22Dc512e2Fc8cfC7E", "0x3": "0x7685f4c573cE27C94F6aF70B330C29b9c41B8290" });
