@@ -195,7 +195,7 @@ addContract("chef", abis.chef, { "0x1": "0xc2EdaD668740f1aA35E4D8f227fB8E17dcA88
 addContract("factory", abis.factory, { "0x1": "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac", "0x3": "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f" });
 addContract("router", abis.router, { "0x1": "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F", "0x3": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D" });
 addContract("bar", abis.bar, { "0x1": "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272", "0x3": "" });
-addContract("maker", abis.maker, { "0x1": "0x280ac711bb99de7c73fb70fb6de29846d5e4207f", "0x3": "" });
+addContract("maker", abis.maker, { "0x1": "0x95C69C3220b31b843F1CF20bee5c53FcDE7fC12e", "0x3": "" });
 addContract("timelock", abis.timelock, { "0x1": "0x9a8541ddf3a932a9a922b607e9cf7301f1d47bd1" })
 addContract("bentobox", abis.bentobox, { "0x1": "0xFBBe6BD840aFfc96547854a1F821d797a8c662D9", "0x3": "0x066b83CE269aa9851704d30Ce7e838a8B772b340" });
 addContract("peggedoracle", abis.peggedoracle, { "0x1": "0x461386ec09FfDd372af72f1f278ff7a730E5b8D1", "0x3": "0xb5C8A2d1C8d393Dace7b3C1D98f35d645A1cD1fc" });
