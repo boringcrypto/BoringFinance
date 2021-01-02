@@ -173,7 +173,13 @@
                     this.sushiRate = (reserves._reserve1 * 1000000000000000000n / reserves._reserve0) * this.ethRate / 1000000000000000000n;
 
                     if (this.manager.address) {
-                        this.ethBalance = BigInt(await this.manager.web3.eth.getBalance(this.manager.address))
+                        if(this.manager.provider === "WalletConnect") {
+                            const multicall = this.manager.web3.contract("multicall", "0x5eb3fa2dfecdde21c950813c665e9364fa609bd2");
+                            this.ethBalance = BigInt(await multicall.methods.getEthBalance(this.manager.address).call());
+                        }
+                        else {
+                            this.ethBalance = BigInt(await this.manager.web3.eth.getBalance(this.manager.address));
+                        }
                     }
                 },
                 addCustomAddress: function (e) {
