@@ -405,7 +405,7 @@
             if (!this.currency) {
                 return;
             }
-            let pids = [...Array(45).keys()].filter(pid => pid != 29 && pid != 30 && pid != 33 && pid != 45);
+            let pids = [...Array(101).keys()].filter(pid => pid != 29 && pid != 30 && pid != 33 && pid != 45 && pid != 61 && pid != 62);
             var result = await this.web3.makerInfo.getPairs(pids, this.currency, "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac").call({ gas: 50000000 });
             this.eth_rate = BigInt(result[0]);
 
