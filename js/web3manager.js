@@ -109,7 +109,7 @@ class Web3Manager {
 
     async connectWC() {
         this.wcProvider = await new WalletConnectProvider.default({
-            infuraId: "3f78f4c272f34d399b8529f5cc84438f"
+            infuraId: "0b35757c1ff44e90" + "b2494118a98962dc"
         });
 
         this.wcProvider.on("disconnect", (code, reason) => {
