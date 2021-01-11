@@ -79,9 +79,9 @@
                 </div>
             </nav>
             <nav class="navbar bg-dark py-1">
-                <div v-if="ethRate" class="navbar-text my-auto p-0">ETH ${{ ethRate.print(6, 2) }}</div>&nbsp;
-                <div v-if="btcRate" class="navbar-text my-auto p-0">BTC ${{ btcRate.print(6, 2) }}</div>&nbsp;
-                <div v-if="sushiRate" class="navbar-text my-auto p-0">SUSHI ${{ sushiRate.print(6, 2) }}</div>
+                <div v-if="ethRate" class="navbar-text my-auto p-0" style="color: #eeeeee">ETH ${{ ethRate.print(6, 2) }}</div>&nbsp;
+                <div v-if="btcRate" class="navbar-text my-auto p-0" style="color: #eeeeee">BTC ${{ btcRate.print(6, 2) }}</div>&nbsp;
+                <div v-if="sushiRate" class="navbar-text my-auto p-0" style="color: #eeeeee">SUSHI ${{ sushiRate.print(6, 2) }}</div>
             </nav>
             <nav v-if="!manager.connected && manager.provider === 'WalletConnect'" class="navbar bg-dark py-1">
                 <p></p>

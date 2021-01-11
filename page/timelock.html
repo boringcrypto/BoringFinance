@@ -114,7 +114,8 @@
                         command.params.forEach(param => p[param.name] = param.value);
                     } catch { }
 
-                    if (typeof (p._pid) == "string") { p.poolname = await web3.poolnames.names(p._pid).call(); }
+                    // TODO: Construct a pool name
+                    //if (typeof (p._pid) == "string") { p.poolname = await web3.poolnames.names(p._pid).call(); }
 
                     if (decoded.signature == "set(uint256,uint256,bool)") {
                         row.description = `Set pool allocation for ${p.poolname} (${p._pid}) to ${p._allocPoint / 1000}`;
