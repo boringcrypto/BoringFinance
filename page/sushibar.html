@@ -111,6 +111,12 @@
                                     <th>Pool</th>
                                     <th class="text-right">Value</th>
                                     <th class="text-right">Your share</th>
+                                    <th class="text-right">
+                                        <button class="btn btn-sm btn-primary ml-3"
+                                            @click="convertAll()"
+                                            >Serve All!
+                                        </button>
+                                    </th>
                                 </thead>
                                 <tbody>
                                     <tr v-for="pair, i in pairsOrdered" v-if="i != 2">
@@ -366,6 +372,12 @@
             },
             convert: async function (token0, token1) {
                 await this.bar.convert(this.address, token0, token1);
+            },
+            convertAll: async function() {
+                const pairsAboveThousand = this.pairs.filter(pair => pair.totalValueInCurrency >= 1000000000) //above $1000
+                const tokens0 = pairsAboveThousand.map(pair => pair.token0)
+                const tokens1 = pairsAboveThousand.map(pair => pair.token1)
+                await this.bar.convertAll(this.address, tokens1, tokens0);
             }
         }
     }
@@ -455,6 +467,10 @@
 
         async convert(from, token0, token1) {
             await this.web3.maker.convert(token0, token1).send({ from: from });
+        }
+
+        async convertAll(from, tokens0, tokens1) {
+            await this.web3.maker.convertMultiple(tokens0, tokens1).send({ from: from})
         }
     }
 </script>
