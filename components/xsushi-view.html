@@ -2,17 +2,17 @@
     <div>
         <h3><i class="fas fa-cocktail"></i> SushiBar <span class="float-right">${{ total.print(6, 2) }}</span></h3>
         <table class="table w-100 mb-0">
-            <tr v-for="asset in assets" v-if="asset.balance > 0n && !asset.hide">
+            <tr v-if="app.xsushiBalance">
                 <td>xSUSHI</td>
                 <td class="text-right">
-                    <span v-if="asset.sushiStake">
-                        {{ asset.balance.print(18, 2) }}<br>
-                        <small>{{ asset.sushiStake.print(18, 2) }} SUSHI</small>
+                    <span v-if="balanceAsSushi">
+                        {{ app.xsushiBalance.print(18, 2) }}<br>
+                        <small>{{ balanceAsSushi.print(18, 2) }} SUSHI</small>
                     </span>
                 </td>
                 <td class="text-right">
                     <span v-if="asset.sushi.rate && app.ethRate">
-                        ${{ (asset.sushiStake * app.ethRate / asset.sushi.rate).print(6, 2) }}
+                        ${{ (balanceAsSushi * app.sushiRate).print(24, 2) }}
                     </span>
                 </td>
                 <td class="text-right">
@@ -30,6 +30,9 @@
                 return this.assets.length ? this.assets[0] : {
                     balance: 0n
                 }
+            },
+            balanceAsSushi: function() {
+                return app.sushiBarBalance * app.xsushiBalance / app.xsushiSupply
             },
             total: function () {
                 return this.assets[0].sushi.rate && this.app.ethRate ? this.assets[0].sushiStake * this.app.ethRate / this.assets[0].sushi.rate : 0n;
@@ -52,7 +55,7 @@
                 this.xsushi.hide = true;
                 this.assets.add({
                     address: "xsushi",
-                    balance: this.xsushi.balance,
+                    balance: app.xsushiBalance,
                     sushi: this.assets.add({ address: "0x6b3595068778dd592e39a122f4f5a5cf09c90fe2" }),
                     sushiStake: 0n,
                     view: 'xsushi',
@@ -65,13 +68,6 @@
         }
 
         async poll(address, assets) {
-            if (this.xsushi) {
-                assets[0].balance = this.xsushi.balance;
-                this.barSushi = BigInt(await this.assets.web3.sushi.balanceOf(this.assets.web3.bar.address).call());
-                this.totalXSushi = BigInt(await this.assets.web3.bar.totalSupply().call());
-
-                assets[0].sushiStake = this.barSushi * BigInt(this.xsushi.balance) / this.totalXSushi;
-            }
         }
     }
 </script>

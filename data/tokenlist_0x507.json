@@ -1,0 +1,6 @@
+[
+    { "address": "0xe73763DB808ecCDC0E36bC8E32510ED126910394", "name": "Wrapped DEV", "symbol": "WDEV", "decimals": "18" },
+    { "address": "0x292c703A980fbFce4708864Ae6E8C40584DAF323", "name": "TetherToken", "symbol": "USDT", "decimals": "6" },
+    { "address": "0x46889261314B3a511464814b60070266AB534453", "name": "Wrapped BTC", "symbol": "WBTC", "decimals": "8" },
+    { "address": "0x9656A6BDb2931899b4982281E70858E6ab029554", "name": "SushiToken", "symbol": "SUSHI", "decimals": "18" }
+]

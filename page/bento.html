@@ -1,185 +1,20 @@
 <template id="page_template">
     <div class="mt-3">
-        <h1>BentoBox Lending</h1>
-        <div v-if="manager.chainId!='0x3'" class="row">
+        <h1>BentoBox Vault</h1>
+        <div class="row">
             <div class="col-12 mb-3">
                 <div class="card">
                     <div class="card-body">
-                        <h4 class="card-title">BentoBox Testing</h4>
-                        Please switch to the Ropsten Testnet, then refresh the page.
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div v-else="" class="row">
-            <div class="col-12 mb-3">
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title">My Borrow Pairs</h4>
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Pair</th>
-                                    <th>Oracle</th>
-                                    <th class="text-right">Collateral</th>
-                                    <th class="text-right">Borrowed</th>
-                                    <th class="text-right">Borrow APR</th>
-                                </tr>
-                            </thead>
-                            <tr v-for="pair in pairs_raw"
-                                v-if="pair.latestExchangeRate && (pair.userBorrowFraction > 0n || pair.userCollateralShare > 0n)"
-                                @click="openPair(pair)" style="cursor: pointer;">
-                                <td>{{ pair.collateral.symbol }} > {{ pair.asset.symbol }}
-                                </td>
-                                <td>
-                                    {{ pair.oracleName }}
-                                </td>
-                                <td class="text-right">
-                                    {{ pair.userCollateralAmount.print(pair.collateral.decimals, 2) }}
-                                    {{ pair.collateral.symbol }}
-                                </td>
-                                <td class="text-right">
-                                    {{ pair.userBorrowAmount.print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}
-                                </td>
-                                <td class="text-right">
-                                    {{ (pair.interestPerBlock * 2372500n).print(16, 2) }}%
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 mb-3">
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title">My Supply Pairs</h4>
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Pair</th>
-                                    <th>Oracle</th>
-                                    <th class="text-right">Supplied</th>
-                                    <th class="text-right">Supply APR</th>
-                                </tr>
-                            </thead>
-                            <tr v-for="pair in pairs_raw" v-if="pair.latestExchangeRate && pair.userAssetFraction > 0n"
-                                @click="openPair(pair)" style="cursor: pointer;">
-                                <td>{{ pair.collateral.symbol }} > {{ pair.asset.symbol }}
-                                </td>
-                                <td>
-                                    {{ pair.oracleName }}
-                                </td>
-                                <td class="text-right">
-                                    {{ pair.userAssetAmount.print(pair.asset.decimals, 2) }}
-                                    {{ pair.asset.symbol }}
-                                </td>
-                                <td class="text-right">
-                                    {{ (pair.totalBorrowShare == 0n ? 0n : (pair.interestPerBlock * pair.totalBorrowShare * 2372500n / pair.totalAssetShare)).print(16, 2) }}%
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 mb-3">
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title">BentoBox Pairs</h4>
-                        <eventreader :manager='manager' address="0x066b83CE269aa9851704d30Ce7e838a8B772b340"
-                            :topics="['0xd62166f3c2149208e51788b1401cc356bf5da1fc6c7886a32e18570f57d88b3b']"
-                            :handler='pair_handler' :output='pairs_raw' :abi='abis.bentobox' :synced='pairs_synced'>
-                            <div class="text-center mb-3">
-                                <div class="spinner-border" role="status">
-                                    <span class="sr-only">Loading...</span>
-                                </div>
-                            </div>
-                        </eventreader>
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Pair</th>
-                                    <th>Oracle</th>
-                                    <th class="text-right">Supply</th>
-                                    <th class="text-right">Borrowed</th>
-                                    <th class="text-right">Supply APR</th>
-                                    <th class="text-right">Borrow APR</th>
-                                </tr>
-                            </thead>
-                            <tr v-for="pair in pairs_raw" v-if="pair.latestExchangeRate" @click="openPair(pair)"
-                                style="cursor: pointer;">
-                                <td>{{ pair.collateral.symbol }} > {{ pair.asset.symbol }}
-                                </td>
-                                <td>
-                                    {{ pair.oracleName }}
-                                </td>
-                                <td class="text-right">
-                                    {{ pair.totalAssetAmount.print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}
-                                </td>
-                                <td class="text-right">
-                                    {{ (pair.totalAssetAmount == 0n ? 0n : 10000n * pair.totalBorrowAmount / pair.totalAssetAmount).print(2) }}%
-                                </td>
-                                <td class="text-right">
-                                    {{ (pair.totalBorrowShare == 0n ? 0n : (pair.interestPerBlock * pair.totalBorrowShare * 2372500n / pair.totalAssetShare)).print(16, 2) }}%
-                                </td>
-                                <td class="text-right">
-                                    {{ (pair.interestPerBlock * 2372500n).print(16, 2) }}%
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 mb-3" v-if="false">
-                <div class="card">
-                    <div class="card-body">
-                        <h4>Create new pair</h4>
-                        <div class="row">
-                            <div class="col-12 col-md-4">
-                                <label for="assetToken">Asset Supply and Borrow</label>
-                                <select class="form-control" v-model="assetToken">
-                                    <option v-for="token in app.tokens" :value="token" v-if="token.compoundSymbol">
-                                        {{ token.symbol }} -
-                                        {{ token.name }}</option>
-                                </select>
-                            </div>
-                            <div class="col-12 col-md-4">
-                                <label for="collateralToken">Collateral</label>
-                                <select class="form-control" v-model="collateralToken">
-                                    <option v-for="token in app.tokens" :value="token" v-if="token.compoundSymbol">
-                                        {{ token.symbol }} -
-                                        {{ token.name }}</option>
-                                </select>
-                            </div>
-                            <div class="col-12 col-md-4">
-                                <label for="oracle">Oracle</label>
-                                <select class="form-control" v-model="oracle">
-                                    <option value="pegged">Pegged</option>
-                                    <option value="compound"
-                                        v-if="assetToken && collateralToken && assetToken.compoundSymbol && collateralToken.compoundSymbol">
-                                        Compound</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div v-if="oracle == 'compound' && assetToken && collateralToken && exchangeRate">
-                            Exchange Rate:
-                            {{ exchangeRate.print(collateralToken.decimals + 18n - assetToken.decimals, 4) }}
-                        </div>
-                        <button class="btn btn-primary mt-3" v-if="assetToken && collateralToken && oracle"
-                            @click="create">Create!</button>
                     </div>
                 </div>
             </div>
             <div class="col-12 mb-3">
                 <div class="card">
                     <div class="card-body">
-                        <h4>BentoBox Testing</h4>
-                        <p>Currently this only works on the Ropsten test network. To get some tokens to play with, use
-                            the Boring Faucet...</p>
+                        <h4>Faucet</h4>
+                        <p>To get some tokens to play with, use the faucet...</p>
                         <p>
-                            You'll receive 'fake' SUSHI, POLY, ZRX, USDC, REP, BAT, LINK, COMP, DAI, KNC, SAI, UNI,
-                            WBTC, WEENUS, XEENUS, YEENUS and ZEENUS tokens to play with.
+                            You'll receive a bunch of tokens to play with.
                         </p>
                         <button class="btn btn-primary mt-3" @click="drip">Gimme, gimme, gimme!</button>
                     </div>
@@ -190,89 +25,18 @@
 </template>
 <script>
     app.page = {
-        props: ['web3', 'manager', 'address', 'block'],
+        props: ["web3", "manager", "address", "block"],
         data: function () {
             return {
-                pairs_raw: [],
-                assetToken: null,
-                collateralToken: null,
-                oracle: null,
-                oracleInit: "",
-                whitelistedOracles: [
-                    this.web3.peggedoracle.address.toLowerCase(),
-                    this.web3.compoundoracle.address.toLowerCase(),
-                    this.web3.sushiswapslp0oracle.address.toLowerCase(),
-                    this.web3.sushiswapslp1oracle.address.toLowerCase()
-                ]
-            }
-        },
-        asyncComputed: {
-            exchangeRate: async function () {
-                if (this.oracle == "compound") {
-                    if (this.assetToken.compoundSymbol && this.collateralToken.compoundSymbol) {
-                        let division = "1" + "0".repeat(Number(18n + this.assetToken.decimals - this.collateralToken.decimals));
-                        let result = await this.web3.compoundoracle.test(this.collateralToken.compoundSymbol, this.assetToken.compoundSymbol, division).call();
-                    }
-                }
-            }
+            };
         },
         computed: {
-            pairs: function () {
-                let p = [];
-                for (let i in this.pairs_raw) {
-                    let fullPair = {};
-                    objAssign(fullPair, this.pairs_raw[i]);
-                    p.push(fullPair);
-                }
-                return p;
-            }
         },
         methods: {
             drip: async function () {
                 await this.web3.faucet.drip().send({ from: this.address });
             },
-            openPair: function (pair) {
-                app.$router.push('/bentopair/' + pair.address);
-                console.log(pair.address);
-            },
-            pair_handler: async function (log, web3, row, decoded) {
-                console.log(decoded);
-                objAssign(row, decoded);
-                row.address = decoded.clone_address;
-                if (decoded.masterContract == "0x2bc401e64be212e435339872208e7b07f5eb3eb6") {
-                    let initData = web3.eth.abi.decodeParameters(abis.lendingpair.find(f => f.name == 'getInitData').inputs, decoded.data);
-                    row.assetAddress = initData.asset_.toLowerCase();
-                    row.collateralAddress = initData.collateral_.toLowerCase();
-                    row.oracle = initData.oracle_.toLowerCase();
-                    row.oracleData = initData.oracleData_;
-                    row.asset = {};
-                    row.collateral = {};
-                    console.log("ROW", row);
-                }
-                if (row.oracle == "0xb5C8A2d1C8d393Dace7b3C1D98f35d645A1cD1fc".toLowerCase()) { row.oracleName = "Pegged" };
-                if (row.oracle == "0xf1EFAf821B7FE3CCdFA1dC2b7c553B08BC53d707".toLowerCase()) { row.oracleName = "Compound" };
-                if (row.oracle == "0xFDf9eECBC041fa126290108b86527dBA7c8eFC3e".toLowerCase()) { row.oracleName = "SushiSwap" };
-                if (row.oracle == "0xAcf73db053bA1a1DF51bC3BC0BfcA6C2ada5cFeC".toLowerCase()) { row.oracleName = "SushiSwap" };
-
-                return this.whitelistedOracles.indexOf(row.oracle) >= 0 ? row : null;
-            },
-            pairs_synced: async function () {
-                console.log('Updating')
-                infos = await this.web3.bentohelper.getPairs(this.address, this.pairs_raw.filter(p => !p.vault).map(p => p.address)).call();
-                for (var i in infos) {
-                    objAssign(this.pairs_raw[i], rpcToObj(infos[i]));
-                    this.pairs_raw[i].asset = app.assetManager.add({ address: infos[i].tokenAsset });
-                    this.pairs_raw[i].collateral = app.assetManager.add({ address: infos[i].tokenCollateral });
-                    console.log("ROW", this.pairs_raw[i], infos[i]);
-                }
-                await app.assetManager.getTokenInfo();
-            },
-            create: async function () {
-                let division = "1" + "0".repeat(Number(18n + this.assetToken.decimals - this.collateralToken.decimals));
-                this.oracleInit = await this.web3.compoundoracle.getInitData(this.collateralToken.compoundSymbol, this.assetToken.compoundSymbol, division).call();
-                await this.web3.vault.deploy(pairtemplate, this.collateralToken.address, this.assetToken.address, this.manager.web3.compoundoracle.address, this.oracleInit).send({ from: this.address });
-            }
-        }
-    }
+        },
+    };
     page_done();
 </script>

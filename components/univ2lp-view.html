@@ -94,43 +94,24 @@
         }
 
         async init() {
-            this.factory = rpcToObj((await this.assets.web3.dashboard.getFactoryInfo(["0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f"]).call())[0]);
-            this.poolsInfo = await this.assets.web3.dashboard2.getPools([]).call();
         }
 
         async find(address, allAssets) {
-            let stepsize = 3333n;
-            for (let b = 0n; b <= this.factory.allPairsLength / stepsize; b++) {
-                let pairs = await this.assets.web3.dashboard.findPairs(address, this.factory.factory, b * stepsize, bigIntMin(this.factory.allPairsLength, (b + 1n) * stepsize)).call();
-                for (let i in pairs) {
-                    this.assets.add({
-                        name: null,
-                        symbol: null,
-                        address: pairs[i].token + "_univ2lp",
-                        token0asset: this.assets.add({ address: pairs[i].token0 }),
-                        token1asset: this.assets.add({ address: pairs[i].token1 }),
-                        decimals: 18,
-                        factory: this.factory,
-                        view: 'univ2lp',
-                        handler: this
-                    });
-                }
-            }
         }
 
         async info(assets) {
-            for (let i in assets) {
+            /*for (let i in assets) {
                 let asset = assets[i];
                 asset.name = asset.token0asset.name + "-" + asset.token1asset.name + " UniSwap LP";
                 asset.symbol = asset.token0asset.symbol + "-" + asset.token1asset.symbol;
-            }
+            }*/
         }
 
         async poll(address, assets) {
-            let balances = await this.assets.web3.dashboard2.getPairsFull(address, assets.filter(a => !a.staked).map(a => a.address.slice(0, 42))).call();
+            /*let balances = await this.assets.web3.dashboard2.getPairsFull(address, assets.filter(a => !a.staked).map(a => a.address.slice(0, 42))).call();
             for (let i in balances) {
                 objAssign(this.assets.get(balances[i].token + "_univ2lp"), rpcToObj(balances[i]));
-            }
+            }*/
         }
     }
 </script>

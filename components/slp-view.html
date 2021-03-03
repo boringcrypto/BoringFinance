@@ -8,7 +8,7 @@
                 <th class="text-right">Balance</th>
                 <th class="text-right">Value</th>
             </thead>
-            <template v-for="asset in assetsUnstaked">
+            <template v-for="asset in assets" v-if="asset.balance != 0n">
                 <tr style="cursor: pointer;" data-toggle="collapse" :data-target="'.slpunstaked' + asset.address">
                     <td>{{ asset.symbol }}</td>
                     <td class="text-right">
@@ -21,7 +21,7 @@
                     </td>
                     <td class="text-right">
                         <span
-                            v-if="app.ethRate && asset.token0asset.rate && !asset.token0asset.hide_value && asset.token1asset.rate && !asset.token1asset.hide_value">
+                            v-if="app.ethRate && asset.token0asset && asset.token0asset.rate && !asset.token0asset.hide_value && asset.token1asset.rate && !asset.token1asset.hide_value">
                             ${{ (((asset.balance * asset.reserve0 / asset.totalSupply) * app.ethRate / asset.token0asset.rate) + ((asset.balance * asset.reserve1 / asset.totalSupply) * app.ethRate / asset.token1asset.rate)).print(6, 2) }}
                         </span>
                     </td>
@@ -42,67 +42,10 @@
                 </tr>
             </template>
         </table>
-
-        <h5>SushiSwap Staked Assets</h5>
-        <p>
-            Total pending SUSHI: {{ totalPending.print(18, 2) }} (${{ (totalPending * app.sushiRate).print(24, 2) }})
-        </p>
-        <table class="table w-100 mb-0">
-            <thead>
-                <th>Assets</th>
-                <th class="text-right">Balance</th>
-                <th class="text-right">Value</th>
-            </thead>
-
-            <template v-for="asset in assetsStaked">
-                <tr style="cursor: pointer;" data-toggle="collapse" :data-target="'.slpstaked' + asset.address">
-                    <td>{{ asset.symbol }}<br />
-                        <br />
-                        <span class="badge badge-primary" v-if='asset.allocPoint'>Reward:
-                            {{ asset.allocPoint.print(3, 2) }}x</span>
-                        <span class="badge badge-warning" v-else=''>No rewards!</span>
-                    </td>
-                    <td class="text-right">
-                        <span v-if="asset.totalSupply">
-                            {{ (asset.balance * asset.reserve0 / asset.lpTotalSupply).print(asset.token0asset.decimals, 2) }}
-                            {{ asset.token0asset.symbol }}<br />
-                            {{ (asset.balance * asset.reserve1 / asset.lpTotalSupply).print(asset.token1asset.decimals, 2) }}
-                            {{ asset.token1asset.symbol }}<br />
-                            <small>{{ asset.pending.print(18,3) }} SUSHI</small>
-                        </span>
-                    </td>
-                    <td class="text-right">
-                        <span
-                            v-if="app.ethRate && asset.token0rate && !asset.token0asset.hide_value && asset.token1rate && !asset.token1asset.hide_value">
-                            ${{ (((asset.balance * asset.reserve0 / asset.lpTotalSupply) * app.ethRate / asset.token0rate) + ((asset.balance * asset.reserve1 / asset.lpTotalSupply) * app.ethRate / asset.token1rate)).print(6, 2) }}<br />
-                            <br />
-                            <small>${{ (asset.pending * app.sushiRate).print(24, 2) }}</small>
-                        </span>
-                    </td>
-                </tr>
-                <tr :class="'collapse slpstaked' + asset.address">
-                    <td colspan="4">
-                        <div :class="'slpstaked' + asset.address">
-                            <button type="button" class="btn btn-sm btn-primary mb-3"
-                                @click='harvest(asset.pid)'>Harvest</button><br>
-                            <div class="input-group mb-3">
-                                <input class="form-control" type="number" v-model="unstakeAmount"><br>
-                                <div class="input-group-append">
-                                    <span class="input-group-text" style="cursor: pointer;"
-                                        @click="unstakeAmount = asset.balance.toDec(18)">Max</span>
-                                </div>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-primary"
-                                @click='unstake(asset.pid)'>Unstake</button>
-                        </div>
-                    </td>
-                </tr>
-            </template>
-        </table>
     </div>
 </template>
 <script>
-    addComponent('slp', {
+    addComponent('SLPHandler', {
         props: ["assets", "app", "web3", "address"],
         data: function () {
             return {
@@ -121,103 +64,35 @@
         computed: {
             total: function () {
                 let total = 0n;
-                for (let i in this.assets) {
+                /*for (let i in this.assets) {
                     let asset = this.assets[i];
-                    if (asset.staked) {
-                        if (this.app.ethRate && asset.token0rate && !asset.token0asset.hide_value && asset.token1rate && !asset.token1asset.hide_value) {
-                            total += ((asset.balance * asset.reserve0 / asset.lpTotalSupply) * this.app.ethRate / asset.token0rate) + ((asset.balance * asset.reserve1 / asset.lpTotalSupply) * this.app.ethRate / asset.token1rate);
-                        }
-                        if (asset.pending) {
-                            total += asset.pending * this.app.sushiRate / 1000000000000000000n;
-                        }
+                    if (this.app.ethRate && asset.token0asset.rate && !asset.token0asset.hide_value && asset.token1asset.rate && !asset.token1asset.hide_value && asset.balance) {
+                        total += ((asset.balance * asset.reserve0 / asset.totalSupply) * this.app.ethRate / asset.token0asset.rate) + ((asset.balance * asset.reserve1 / asset.totalSupply) * this.app.ethRate / asset.token1asset.rate);
                     }
-                    else {
-                        if (this.app.ethRate && asset.token0asset.rate && !asset.token0asset.hide_value && asset.token1asset.rate && !asset.token1asset.hide_value && asset.balance) {
-                            total += ((asset.balance * asset.reserve0 / asset.totalSupply) * this.app.ethRate / asset.token0asset.rate) + ((asset.balance * asset.reserve1 / asset.totalSupply) * this.app.ethRate / asset.token1asset.rate);
-                        }
-                    }
-                }
+                }*/
                 return total;
-            },
-            assetsStaked: function () { return this.assets.filter(a => a.balance > 0n && !a.hide && a.staked) },
-            assetsUnstaked: function () { return this.assets.filter(a => a.balance > 0n && !a.hide && !a.staked) },
-            totalPending: function () { return this.assetsStaked.map(a => a.pending).sum(0n) }
+            }
         }
     });
 
     class SLPHandler {
         constructor(assets) {
-            this.assets = assets;
+            this.assets = assets
+            this.farms = []
+            this.pids = []
         }
 
         async init() {
-            this.factory = rpcToObj((await this.assets.web3.dashboard.getFactoryInfo([this.assets.chainId == "0x1" ? "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac" : "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f"]).call())[0]);
-            this.poolsInfo = await this.assets.web3.dashboard2.getPools([]).call();
         }
 
         async find(address, allAssets) {
-            let stepsize = 3333n;
-            for (let b = 0n; b <= this.factory.allPairsLength / stepsize; b++) {
-                let pairs = await this.assets.web3.dashboard.findPairs(address, this.factory.factory, b * stepsize, bigIntMin(this.factory.allPairsLength, (b + 1n) * stepsize)).call();
-                for (let i in pairs) {
-                    this.assets.add({
-                        name: null,
-                        symbol: null,
-                        address: pairs[i].token + "_slp",
-                        token0asset: this.assets.add({ address: pairs[i].token0 }),
-                        token1asset: this.assets.add({ address: pairs[i].token1 }),
-                        decimals: 18,
-                        factory: this.factory,
-                        view: 'slp',
-                        handler: this
-                    });
-                }
-            }
-
-            let pids = [];
-            for (let i = 0; i < Number(this.poolsInfo[0].poolLength); i++) {
-                if ([29, 30, 45].indexOf(i) < 0) {
-                    pids.push(i);
-                }
-            }
-
-            let pools = await this.assets.web3.dashboard2.findPools(address, pids).call();
-            for (let i in pools) {
-                let pool = pools[i];
-                this.assets.add({
-                    pid: pool.pid,
-                    allocPoint: BigInt(pool.allocPoint),
-                    address: pool.pid + "_pid_staked",
-                    name: null,
-                    symbol: null,
-                    decimals: null,
-                    lpToken: this.assets.add({ address: pool.lpToken, hide: true }),
-                    token0asset: this.assets.add({ address: pool.token0 }),
-                    token1asset: this.assets.add({ address: pool.token1 }),
-                    view: 'slp',
-                    staked: true,
-                    handler: this
-                })
-            }
         }
 
         async info(assets) {
-            for (let i in assets) {
-                let asset = assets[i];
-                asset.name = asset.token0asset.name + "-" + asset.token1asset.name + " SushiSwap SLP";
-                asset.symbol = asset.token0asset.symbol + "-" + asset.token1asset.symbol;
-            }
         }
 
         async poll(address, assets) {
-            let balances = await this.assets.web3.dashboard2.getPairsFull(address, assets.filter(a => !a.staked).map(a => a.address.slice(0, 42))).call();
-            for (let i in balances) {
-                objAssign(this.assets.get(balances[i].token + "_slp"), rpcToObj(balances[i]));
-            }
-            let pools = await this.assets.web3.dashboard2.pollPools(address, assets.filter(a => a.staked).map(a => a.pid)).call();
-            for (let i in pools) {
-                objAssign(this.assets.get(pools[i].pid + "_pid_staked"), rpcToObj(pools[i]));
-            }
+            console.log("Polling SLP", address, assets)
         }
     }
 </script>

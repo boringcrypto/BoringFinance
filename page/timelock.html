@@ -6,16 +6,19 @@
                     <div class="card-body">
                         <h4 class="card-title">Timelock</h4>
                         <p>
-                            Once the time passes these commands CAN be executed. The exact time is will be executed
-                            will
-                            depend also on the availability of the team. 3 out of 5 teammembers have to be
-                            available.
+                            Once the time passes these commands CAN be executed. The exact time is will be executed will depend also on the
+                            availability of the team. 3 out of 5 teammembers have to be available.
                         </p>
 
                         <web3 :manager="manager" :poll="poll"></web3>
-                        <eventreader :manager='manager' address="0x9a8541ddf3a932a9a922b607e9cf7301f1d47bd1"
+                        <eventreader
+                            :manager="manager"
+                            address="0x9a8541ddf3a932a9a922b607e9cf7301f1d47bd1"
                             :topics="['0x76e2796dc3a81d57b0e8504b647febcbeeb5f4af818e164f11eef8131a6a763f']"
-                            :handler='transaction_handler' :output='transactions' :abi='abis.timelock'>
+                            :handler="transaction_handler"
+                            :output="transactions"
+                            :abi="abis.timelock"
+                        >
                             <div class="text-center mb-3">
                                 <div class="spinner-border" role="status">
                                     <span class="sr-only">Loading...</span>
@@ -24,21 +27,24 @@
                         </eventreader>
 
                         <div v-for="transaction in txs">
-                            <a class="btn btn-primary float-right" data-toggle="collapse"
-                                :href="'#txinfo-' + transaction.txid" role="button" aria-expanded="false"
-                                aria-controls="collapseExample">
+                            <a
+                                class="btn btn-primary float-right"
+                                data-toggle="collapse"
+                                :href="'#txinfo-' + transaction.txid"
+                                role="button"
+                                aria-expanded="false"
+                                aria-controls="collapseExample"
+                            >
                                 More
                             </a>
-                            <p>
-                            <h5>{{ transaction.description || 'Cannot decode' }}<span
-                                    v-if="transaction.status == 'queued'">
-                                    (QUEUED)</span></h5>
-                            <small>Block {{ transaction.block }} - Unlocks at
-                                {{ new Date(transaction.log.events[5].value * 1000).toLocaleString() }}</small><br />
+                            <h5>{{ transaction.description || 'Cannot decode' }}<span v-if="transaction.status == 'queued'"> (QUEUED)</span></h5>
+                            <small
+                                >Block {{ transaction.block }} - Unlocks at {{ new Date(transaction.log.events[5].value * 1000).toLocaleString()
+                                }}</small
+                            ><br />
                             <span v-if="explanations[transaction.txid]">{{ explanations[transaction.txid] }}</span>
-                            </p>
                             <div class="collapse" :id="'txinfo-' + transaction.txid">
-                                <table class=" table table-bordered table-sm">
+                                <table class="table table-bordered table-sm">
                                     <tr v-for="param in transaction.params">
                                         <td class="w-25">
                                             <small>{{ param.name }}</small>
@@ -61,18 +67,15 @@
                                 </table>
 
                                 <p>
-                                    executeTimeLock("{{ transaction.log.events[1].value }}",
-                                    {{ transaction.log.events[2].value }},
-                                    "{{ transaction.log.events[3].value }}",
-                                    "{{ transaction.log.events[4].value }}",
-                                    {{ transaction.log.events[5].value }})
+                                    executeTimeLock("{{ transaction.log.events[1].value }}", {{ transaction.log.events[2].value }}, "{{
+                                    transaction.log.events[3].value }}", "{{ transaction.log.events[4].value }}", {{
+                                    transaction.log.events[5].value }})
                                 </p>
                             </div>
                         </div>
                         <p>
-                            Loading the commands in the TimeLock first the first time can take a while. Currently
-                            only
-                            showing commands that haven't been excuted yet.
+                            Loading the commands in the TimeLock first the first time can take a while. Currently only showing commands that
+                            haven't been excuted yet.
                         </p>
                     </div>
                 </div>
@@ -82,24 +85,30 @@
 </template>
 <script>
     app.page = {
-        props: ['manager', 'address'],
+        props: ["manager", "address"],
         data: function () {
             return {
                 transactions: [],
                 explanations: {
-                    "0xddd2412079361ed63af56b2d6c2b81e91c98db371dc17dfbd11b7d1d98b7d328": "To lock up 2/3rd of the SUSHI minted it is sent to a DUMMY pool that has the pool reward allocation set to be exactly 2/3rd of the total. These tokens will be available to be harvested by the main multisig, so they can later be distributed correctly.",
-                    "0xab31c3859127c475d5d5f60c4f4b608e9a3726230a5d63c22fc1b4c6c25e0919": "To lock up 2/3rd of the SUSHI minted it is sent to this DUMMY pool. The tokens of this pool are held by the main multi-sig. Because of ordering, this pool will be created AFTER the renBTC-WBTC pool.",
-                    "0xd019c4811bbec7e7c14403d2d330d02a0c24c45607f975b90086e9d953b8aa58": "This is the last of the 'Menu of the Week' pools to be created. The others may become available earlier, see below.",
-                    "0x56b64ddca0da5c95d812e15b31baf2014eb019ebd322d8f85f0b542b52112067": "This pool isn't a real pool. It's a dummy pool to help get the 138k UNI locked into the MasterChef contract out. Rewards are obviously set to 0.",
-                    "0x45e551e2d681a8adead1019ba8b9e006ecb3e2eddad1bd33a3e04c8a1c28266d": "This updates the migrator to the UniMigrator, whose only purpose is to transfer the UNI out of the MasterChef contract.",
-                    "0x14bebf246af39906c2ba7016c03912d2c4ad020bd2216f2b0c34321375388eb7": "This executes the migration on the dummy pool for UNI to unlock the UNI and take it out of the MasterChef contract."
-                }
-            }
+                    "0xddd2412079361ed63af56b2d6c2b81e91c98db371dc17dfbd11b7d1d98b7d328":
+                        "To lock up 2/3rd of the SUSHI minted it is sent to a DUMMY pool that has the pool reward allocation set to be exactly 2/3rd of the total. These tokens will be available to be harvested by the main multisig, so they can later be distributed correctly.",
+                    "0xab31c3859127c475d5d5f60c4f4b608e9a3726230a5d63c22fc1b4c6c25e0919":
+                        "To lock up 2/3rd of the SUSHI minted it is sent to this DUMMY pool. The tokens of this pool are held by the main multi-sig. Because of ordering, this pool will be created AFTER the renBTC-WBTC pool.",
+                    "0xd019c4811bbec7e7c14403d2d330d02a0c24c45607f975b90086e9d953b8aa58":
+                        "This is the last of the 'Menu of the Week' pools to be created. The others may become available earlier, see below.",
+                    "0x56b64ddca0da5c95d812e15b31baf2014eb019ebd322d8f85f0b542b52112067":
+                        "This pool isn't a real pool. It's a dummy pool to help get the 138k UNI locked into the MasterChef contract out. Rewards are obviously set to 0.",
+                    "0x45e551e2d681a8adead1019ba8b9e006ecb3e2eddad1bd33a3e04c8a1c28266d":
+                        "This updates the migrator to the UniMigrator, whose only purpose is to transfer the UNI out of the MasterChef contract.",
+                    "0x14bebf246af39906c2ba7016c03912d2c4ad020bd2216f2b0c34321375388eb7":
+                        "This executes the migration on the dummy pool for UNI to unlock the UNI and take it out of the MasterChef contract.",
+                },
+            };
         },
         computed: {
             txs: function () {
                 return this.transactions.sort((a, b) => b.block - a.block);
-            }
+            },
         },
         methods: {
             transaction_handler: async function (log, web3, row, decoded) {
@@ -107,12 +116,14 @@
 
                 // Decode Masterchef events
                 if (decoded.target == "0xc2edad668740f1aa35e4d8f227fb8e17dca888cd") {
-                    let p = {}
+                    let p = {};
                     try {
-                        let command = web3.decode.chef.decodeMethod(web3.utils.keccak256(decoded.signature).substr(0, 10) + (decoded.data ? decoded.data.substr(2) : ""));
+                        let command = web3.decode.chef.decodeMethod(
+                            web3.utils.keccak256(decoded.signature).substr(0, 10) + (decoded.data ? decoded.data.substr(2) : "")
+                        );
                         row.params = command.params;
-                        command.params.forEach(param => p[param.name] = param.value);
-                    } catch { }
+                        command.params.forEach((param) => (p[param.name] = param.value));
+                    } catch {}
 
                     // TODO: Construct a pool name
                     //if (typeof (p._pid) == "string") { p.poolname = await web3.poolnames.names(p._pid).call(); }
@@ -121,35 +132,32 @@
                         row.description = `Set pool allocation for ${p.poolname} (${p._pid}) to ${p._allocPoint / 1000}`;
                     } else if (decoded.signature == "add(uint256,address,bool)") {
                         try {
-                            let pair_info = await web3.dashboard.getPairsFull(this.address, [p._lpToken]).call();
+                        /*    let pair_info = await web3.dashboard.getPairsFull(this.address, [p._lpToken]).call();
                             let token_info = await web3.dashboard.getTokenInfo([pair_info[0].token0, pair_info[0].token1]).call();
-                            row.description = `Add pool ${token_info[0].symbol}/${token_info[1].symbol} with allocation of ${p._allocPoint / 1000}`;
-                        }
-                        catch {
+                            row.description = `Add pool ${token_info[0].symbol}/${token_info[1].symbol} with allocation of ${
+                                p._allocPoint / 1000
+                            }`;*/
+                        } catch {
                             row.description = `Add pool ${p._lpToken} with allocation of ${p._allocPoint / 1000}`;
                         }
-
                     } else if (decoded.signature == "setMigrator(address)") {
-                        row.description = `Change migrator to ${p._migrator}`
+                        row.description = `Change migrator to ${p._migrator}`;
                     } else if (decoded.signature == "migrate(uint256)") {
-                        row.description = `Migrate pool ${p.poolname} (${p._pid})`
+                        row.description = `Migrate pool ${p.poolname} (${p._pid})`;
                     } else if (decoded.signature == "massUpdatePools()") {
-                        row.description = `massUpdatePools`
+                        row.description = `massUpdatePools`;
                     } else {
-                        row.description = `Unknown command`
+                        row.description = `Unknown command`;
                     }
-                    row.status = 'unknown';
+                    row.status = "unknown";
                     if (await web3.timelock.queuedTransactions(row.txid).call()) {
-                        row.status = 'queued';
-                    };
-
+                        row.status = "queued";
+                    }
                 }
                 return row;
             },
-            poll: async function () {
-
-            }
-        }
-    }
+            poll: async function () {},
+        },
+    };
     page_done();
 </script>

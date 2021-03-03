@@ -1,0 +1,67 @@
+- Get list of tokens
+- Scan for balances (normal and Bento)
+- Process tokens with balance - add new tokens where needed
+- Retrieve info
+
+Index
+- Sushi Price
+- BTC Price
+- ETH Price
+- ETH Balance
+
+Home - Dashboard
+
+-- Tokens with balance --
+Different scan lists - deep scans - any found tokens with balance saved in storage for address
+Start with basic list for now
+
+* Wallet
+[ ] Logo - Token - Balance - BentoBox Balance - USD Value
+Actions:
+- Add/Remove BentoBox
+- Send
+
+* SLP Tokens
+[ ] Logo-Logo - Token-Token - Balance - BentoBox Balance - USD Value
+Actions:
+- Add/Remove BentoBox
+
+* LP Tokens
+[ ] Logo-Logo - Token-Token - Balance - BentoBox Balance - USD Value
+Actions:
+- Add/Remove BentoBox
+
+* SushiBar (xSUSHI)
+[ ] xSUSHI balance - BentoBox Balance - SUSHI equivalent - USD Value
+Actions
+- Go to SushiBar
+
+Multiple item actions: Add to BentoBox, Remove from BentoBox, Approve for BentoBox, Unapprove for BentoBox
+-- 
+
+* Sushi MasterChef Staked
+- Pool - Pending SUSHI - Balance - USD Value
+
+
+* Vested Sushi
+- Pending SUSHI at lockup start
+- Current pending SUSHI
+- Harvested since lockup
+- Estimated in lockup
+
+BentoBox
+* Wallet
+- Logo(s) - Symbol - Approval - Balance (Shares) - Strategy
+- Strategy status (pending/enabled - targetPercentage - currentPercentage - pending profit?)
+
+BentoBox Token
+
+* Approved Protocols
+- Name
+
+* Available Protocols
+[ ] - Name - URL
+Action: Approve checked
+
+* Owner
+- Show the owner of the BentoBox - multisig? members? EOA? Who?

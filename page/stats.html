@@ -4,15 +4,13 @@
             <div class="col-12 mb-3">
                 <div class="card">
                     <div class="card-body">
-                        <h4 class="card-title">Stats</h4>
-                        <div v-if="status.loading" class="text-center mb-3">
-                            <div class="spinner-border" role="status">
-                            </div>
-                            <span>Loading... {{ users.length }}</span>
-                        </div>
-                        <div v-else="">
-                            <span v-for="user in users">
-                                {{ user }}<br />
+                        <h4 class="card-title">Info</h4>
+                            <span v-for="pair in pairs">
+                                {{ pair }},<br>
+                            </span>
+
+                            <span v-for="token in tokens">
+                                {{ token }},<br>
                             </span>
                         </div>
                     </div>
@@ -23,44 +21,98 @@
 </template>
 <script>
     app.page = {
-        props: ['manager', 'address', 'block'],
+        props: ["manager", "address", "block", "web3"],
         data: function () {
             return {
-                status: { loading: true },
-                users: []
-            }
+                pairs: [],
+                tokens: []
+            };
         },
         mounted: async function () {
-            await this.init();
+            await this.load();
         },
-        watch: {
-            'api': async function () {
-                await this.init();
-            },
-            'block': async function () {
-                await this.update()
-            }
-        },
-        computed: {
-        },
+        computed: {},
         methods: {
-            init: async function () {
-                if (this.manager) {
-                    await this.update();
+            getPairs: async function(factory) {
+                const total = await this.web3.contract("factory", factory).methods.allPairsLength().call();
+                for(let i = 24; i <= Math.floor(total / 1000); i++) {
+                    let start = (i * 1000)
+                    let end = start + 1000
+                    if (end > total) { end = total };
+                    let pairs = rpcToObj(await this.web3.temp.getPairs(factory, start, end).call())
+                    console.log("Loaded")
+                    for(let j=0; j < 1000; j++) {
+                        let pair = pairs[j]
+                        let id = i * 1000 + j
+                        if (id < total && id > 24100) {
+                            let mints = 0
+                            try {
+                                mints = (await this.web3.eth.getPastLogs({
+                                    address: pair.token,
+                                    topics: ["0x4c209b5fc8ad50758f13e2e1088ba56a560dff690a1c6fef26394f4c03821c4f"],
+                                    fromBlock: 0
+                                })).length
+                            } catch(e) {
+                                if (e.message != "query timeout exceeded" && e.message != "query returned more than 10000 results") {
+                                    throw(e)
+                                }
+                                mints = 10000
+                            }
+                            this.pairs.push({
+                                id: id,
+                                address: pair.token,
+                                token0: pair.token0,
+                                token1: pair.token1,
+                                totalSupply: Number(pair.totalSupply),
+                                mints: mints
+                            })
+                            console.log(id, pair.token, mints)
+                        }
+                    }
                 }
             },
-            update: async function () {
-                if (!this.userMonitor) {
-                    this.userMonitor = new LogMonitor(this.manager, '0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd',
-                        ['0x90890809c654f11d6e72a28fa60149770a0d11ec6c92319d6ceb2bb0a4ea1a15'],
-                        async (log) => {
-                            let user = "0x" + log.topics[1].slice(26) + "-" + BigInt(log.topics[2]).toString();
-                            return this.users.indexOf(user) < 0 ? user : null;
-                        }, this.users, 2, this.status, 5000
-                    );
-                }
-            }
-        }
-    }
+            load: async function () {
+                //await this.getPairs("0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac")
+                //await this.getPairs("0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f")
+                const lpTokens = (await $.ajax("data/lp-list.json"))
+                const slpTokens = (await $.ajax("data/slp-list.json"))
+                const lpAddresses = lpTokens.map(lp => lp.address.toLowerCase());
+                const slpAddresses = slpTokens.map(slp => slp.address.toLowerCase());
+                const tokenAddresses = new Set(
+                    [...slpTokens.filter(a => a.totalSupply > 1000 && a.mints > 25).concat(lpTokens.filter(a => a.totalSupply > 1000 && a.mints > 1000)).map(a => a.token0), 
+                    ...slpTokens.filter(a => a.totalSupply > 1000 && a.mints > 25).concat(lpTokens.filter(a => a.totalSupply > 1000 && a.mints > 1000)).map(a => a.token1)]
+                        .filter(t => !lpAddresses.includes(t.toLowerCase()) && !slpAddresses.includes(t.toLowerCase())))                
+                window.tokenInfo = await this.web3.boringhelper.getTokenInfo([...tokenAddresses]).call()
+                this.tokens = window.tokenInfo.map(t => {
+                    return {
+                        "address": t.token,
+                        "name": t.name,
+                        "symbol": t.symbol,
+                        "decimals": t.decimals
+                    }
+                })
+
+                this.tokens.push(...lpTokens.filter(a => a.totalSupply > 1000 && a.mints > 1000).map(t => {
+                    return {
+                        "address": t.address,
+                        "name": "Uniswap V2",
+                        "symbol": "UNI-V2",
+                        "decimals": 18,
+                        "handler": "UniV2LPHandler"
+                    }
+                }))
+
+                this.tokens.push(...slpTokens.filter(a => a.totalSupply > 1000 && a.mints > 25).map(t => {
+                    return {
+                        "address": t.address,
+                        "name": "SushiSwap LP Token",
+                        "symbol": "SLP",
+                        "decimals": 18,
+                        "handler": "SLPHandler"
+                    }
+                }))
+            },
+        },
+    };
     page_done();
 </script>

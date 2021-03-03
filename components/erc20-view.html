@@ -7,33 +7,100 @@
                     <th v-if="manager.chainId=='0x1'" colspan=2>Assets</th>
                     <th v-else="">Assets</th>
                     <th class="text-right d-none d-sm-table-cell">Balance</th>
+                    <th class="text-right d-none d-sm-table-cell">BentoBox</th>
+                    <th></th>
                     <th class="text-right">Value</th>
                 </tr>
             </thead>
-            <template v-for="asset in assetsOrdered" v-if="asset.balance > 0n && !asset.hide">
+            <template v-for="asset in assetsOrdered" v-if="(asset.balance > 0n || asset.bentoBalance > 0n) && !asset.hide">
                 <tr style="cursor: pointer;" data-toggle="collapse" :data-target="'.erc20' + asset.address">
                     <td v-if="manager.chainId=='0x1'" class="py-2 px-0" style="width: 28px"><img class="rounded"
-                            :src="logo_url(asset)" style="width: 28px; height: 28px;">
+                            :src="logo_url(asset)" style="width: 28px; height: 28px;" onerror="this.style.display='none'"/>
                     </td>
                     <td>{{ asset.symbol }}</td>
                     <td class="text-right d-none d-sm-table-cell">
-                        <span v-if="typeof(asset.decimals) == 'bigint'">
-                            {{ asset.balance.print(asset.decimals, 2) }}
+                        <span v-if="asset.balance && typeof(asset.decimals) == 'bigint'">
+                            {{ asset.balance.print(asset.decimals, 0) }}
+                        </span>
+                    </td>
+                    <td class="text-right d-none d-sm-table-cell">
+                        <span v-if="asset.bentoBalance && typeof(asset.decimals) == 'bigint' && asset.bentoAmount">
+                            {{ asset.bentoUserAmount.print(asset.decimals, 0) }}
+                        </span>
+                    </td>
+                    <td>                                   
+                        <span v-if="asset.bentoAllowance > 100000000000000000000000000000000000000000000000000000000000000000000000000000n || asset.address == '0x0000000000000000000000000000000000000000'">
+                            <i style="color: green" class="fas fa-check"></i>
+                        </span>
+                        <span v-else-if="asset.bentoAllowance > 0n">
+                            <i style="color: orange" class="fas fa-ruler"></i>
+                        </span>
+                        <span v-else-if="asset.bentoAllowance === 0n">
+                            <i style="color: lightcoral" class="fas fa-circle"></i>
                         </span>
                     </td>
                     <td class="text-right">
                         <span v-if="asset.rate && app.ethRate && !asset.hide_value">
-                            ${{ (asset.balance * app.ethRate / asset.rate).print(6, 2) }}
+                            ${{ asset.usdValue.print(6, 2) }}
                             <span class="d-inline d-sm-none"><br><small
                                     v-if="typeof(asset.decimals) == 'bigint'">{{ asset.balance.print(asset.decimals, 2) }}</small></span>
                         </span>
                     </td>
                 </tr>
                 <tr :class="'collapse erc20' + asset.address">
-                    <td colspan="4">
+                    <td colspan="6">
                         <div :class="'erc20' + asset.address">
-                            <button type="button" class="btn btn-sm btn-primary">Swap</button>
-                        </div>
+                            <h4>{{ asset.name }} ({{ asset.symbol }}) <a v-if="!asset.isNative" :href="'https://etherscan.io/token/' + asset.address" target="_blank"><i class="fas fa-external-link-alt"></i></a></h4>
+                            <span v-if="asset.balance">
+                                <h5>Deposit to BentoBox</h5>
+                                <p>You have {{ asset.balance.print(asset.decimals, 0) }} {{ asset.symbol }} outside the BentoBox.</p>
+                                <div class="input-group mb-3" style="max-width: 350px;">
+                                    <input class="form-control" type="number" v-model="depositAmount">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text" style="cursor: pointer;" @click="depositAmount = asset.balance.toDec(asset.decimals)">Max</span>
+                                    </div>
+                                    <button v-if="asset.bentoAllowance < Decimal(depositAmount).toInt(asset.decimals)" type="button" class="btn btn-sm btn-primary ml-2" @click='approveAll(asset)'>Approve</button>
+                                    <button v-else="" type="button" class="btn btn-sm btn-primary ml-2" @click='deposit(asset)'>Deposit</button>
+                                </div>
+                            </span>
+                            <span v-if="asset.bentoBalance">
+                                <h5>Withdraw from BentoBox</h5>
+                                <p>You have {{ asset.bentoUserAmount.print(asset.decimals, 0) }} {{ asset.symbol }} in the BentoBox.</p>
+                                <div class="input-group mb-3" style="max-width: 350px;">
+                                    <input class="form-control" type="number" v-model="withdrawAmount">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text" style="cursor: pointer;" @click="withdrawAmount = asset.bentoUserAmount.toDec(asset.decimals)">Max</span>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-primary ml-2" @click='withdraw(asset)'>Withdraw</button>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-primary mb-3" @click='withdrawAll(asset)'>Withdraw All</button>
+                                <div v-if="asset.address == '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'" class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" v-model="withdrawAsWETH" id="withdrawAsWETH">
+                                    <label class="form-check-label" for="withdrawAsWETH">
+                                        Withdraw as WETH (default is ETH)
+                                    </label>
+                                </div>                                                                
+                            </span>
+                            <div v-if="asset.address != '0x0000000000000000000000000000000000000000'">
+                                <h5>Approve to BentoBox</h5>
+                                <span v-if="asset.bentoAllowance > 100000000000000000000000000000000000000000000000000000000000000000000000000000n">
+                                    <p><i style="color: green" class="fas fa-check"></i> You have approved all your {{ asset.symbol }} to the BentoBox.</p>
+                                </span>
+                                <span v-else-if="asset.bentoAllowance > 0n">
+                                    <p><i style="color: orange" class="fas fa-ruler"></i> You have approved {{ asset.bentoAllowance.print(asset.decimals, 0) }} {{ asset.symbol }} to the BentoBox.</p>
+                                </span>
+                                <span v-else-if="asset.bentoAllowance === 0n">
+                                    <p><i style="color: lightcoral" class="fas fa-circle"></i> You have not approved {{ asset.symbol }} to the BentoBox.</p>
+                                </span>
+
+                                <div class="input-group mb-3" style="max-width: 350px;">
+                                    <input class="form-control" type="number" v-model="approveAmount">
+                                    <button type="button" class="btn btn-sm btn-primary ml-2" @click='approve(asset, Decimal(approveAmount).toInt(asset.decimals))'>Approve</button>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-primary" @click='approveAll(asset)'>Approve All</button>
+                                <button type="button" class="btn btn-sm btn-primary" @click='unapprove(asset)'>Unapprove</button>
+                            </div>
+                    </div>
                     </td>
                 </tr>
             </template>
@@ -41,27 +108,78 @@
     </div>
 </template>
 <script>
-    addComponent('erc20', {
-        props: ["assets", "app", "manager"],
+    addComponent('ERC20Handler', {
+        props: ["assets", "app", "manager", "web3", "address"],
+        data: function () {
+            return {
+                depositAmount: 0,
+                withdrawAmount: 0,
+                approveAmount: 0,
+                withdrawAsWETH: false
+            };
+        },        
         computed: {
             assetsOrdered: function () {
-                let withValue = this.assets.filter(a => a.rate && !a.hide_value).sort((a, b) => Number((b.balance * 1000000000000000000n / b.rate) - (a.balance * 1000000000000000000n / a.rate)));
-                let noValue = this.assets.filter(a => !a.rate || a.hide_value);
+                if (!app.ethRate) { return [] };
+                let assets = this.assets.map(a => {
+                    a.bentoUserAmount = a.bentoBalance ? (a.bentoBalance || 0n) * (a.bentoAmount || 0n) / a.bentoShare : 0n
+                    a.usdValue = a.rate ? ((a.bentoBalance || 0n) + (a.balance || 0n)) * (app.ethRate || 0n) / a.rate : 0n
+                    a.isNative = a.address == ETHEREUM_ADDRESS
+                    return a;
+                });
+                let withValue = this.assets.filter(a => a.usdValue && !a.hide_value).sort((a, b) => Number(b.usdValue - a.usdValue));
+                let noValue = this.assets.filter(a => !a.usdValue || a.hide_value);
 
-                return withValue.concat(noValue);
+                return withValue.concat(noValue)
             },
             total: function () {
                 let total = 0n;
-                for (i in this.assets) {
-                    if (this.assets[i].rate && this.app.ethRate && !this.assets[i].hide_value)
-                        total += (this.assets[i].balance * this.app.ethRate / this.assets[i].rate)
+                for (i in this.assetsOrdered) {
+                    if (this.assets[i].rate && this.app.ethRate && !this.assets[i].hide_value) {
+                        total += ((this.assets[i].balance + this.assets[i].bentoUserAmount) * this.app.ethRate / this.assets[i].rate)
+                    }
                 }
                 return total;
             }
         },
         methods: {
             logo_url: function (asset) {
-                return 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/' + Web3.utils.toChecksumAddress(asset.address) + '/logo.png';
+                return asset.address == ETHEREUM_ADDRESS 
+                    ? 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png'
+                    : 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/' + Web3.utils.toChecksumAddress(asset.address) + '/logo.png';
+            },
+            approve: async function (asset, amount) {
+                await this.web3
+                    .contract("erc20", asset.address)
+                    .methods.approve(this.web3.bentobox.address, amount)
+                    .send({ from: this.address });
+            },
+            approveAll: async function (asset) {
+                await this.approve(asset, "115792089237316195423570985008687907853269984665640564039457584007913129639935")
+            },
+            unapprove: async function (asset) {
+                await this.approve(asset, 0)
+            },
+            deposit: async function (asset) {
+                const amount = Decimal(this.depositAmount).toInt(asset.decimals);
+                this.web3.bentobox
+                    .deposit(asset.address, this.address, this.address, amount, 0n)
+                    .send({ from: this.address, value: Number(asset.address == ETHEREUM_ADDRESS ? amount : 0n) });
+            },
+            withdraw: async function (asset) {
+                this.web3.bentobox
+                    .withdraw(
+                        asset.address == '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2' && !this.withdrawAsWETH ? ETHEREUM_ADDRESS : asset.address, 
+                        this.address, this.address, 
+                        Decimal(this.withdrawAmount).toInt(asset.decimals), 0n)
+                    .send({ from: this.address });
+            },
+            withdrawAll: async function (asset) {
+                this.web3.bentobox
+                    .withdraw(
+                        asset.address == '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2' && !this.withdrawAsWETH ? ETHEREUM_ADDRESS : asset.address, 
+                        this.address, this.address, 0n, asset.bentoBalance)
+                    .send({ from: this.address });
             }
         }
     });
@@ -74,7 +192,7 @@
         async init() { };
 
         async find(address, allAssets) {
-            let balances = await this.assets.web3.dashboard.findBalances(address, allAssets.map(t => t.address)).call();
+/*            let balances = await this.assets.web3.boringhelper.findBalances(address, allAssets.map(t => t.address)).call();
             for (var i in balances) {
                 if (BigInt(balances[i].balance) > 0n) {
                     let asset = {};
@@ -89,24 +207,26 @@
                     });
                     this.assets.add(asset);
                 }
-            }
+            }*/
         }
 
         async info(assets) {
-            assets = assets.filter(a => !a.name || !a.symbol || (typeof (a.decimals) != "bigint"));
-            let infos = await this.assets.web3.dashboard.getTokenInfo(assets.map(t => t.address)).call();
-            for (var i in infos) {
-                objAssign(this.assets.get(infos[i].token), rpcToObj(infos[i]));
-            }
+            /*assets = assets.filter(a => !a.name || !a.symbol || (typeof (a.decimals) != "bigint"));
+            if (assets.length)
+            {
+                let infos = await this.assets.web3.boringhelper.getTokenInfo(assets.map(t => t.address)).call();
+                for (var i in infos) {
+                    objAssign(this.assets.get(infos[i].token), rpcToObj(infos[i]));
+                }
+            }*/
         }
 
         async poll(address, assets) {
-            console.log("Polling ERC20")
-            let balances = await this.assets.web3.dashboard.getBalances(
-                address, assets.map(t => t.address),
-                "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",   // Uniswap (for now), should add to tokenlist.
-                "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"    // Use WETH as currency for rate
+            /*console.log("Polling ERC20")
+            let balances = await this.assets.web3.boringhelper.getBalances(
+                address, assets.map(t => t.address)
             ).call();
+            console.log("ERC20 balances updated")
 
             for (var i in balances) {
                 let asset = this.assets.get(balances[i].token);
@@ -114,7 +234,7 @@
                 if (asset.address == "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2") {
                     asset.rate = 1000000000000000000n;
                 }
-            }
+            }*/
         }
     }
 </script>

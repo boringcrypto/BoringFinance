@@ -1,0 +1,11 @@
+{
+    "scripts": {
+        "test": "hardhat test",
+        "format": "prettier --write contracts/**/*.sol *.js *.json js/**/*.js test/**/*.js *.html page/*.html",
+        "pretty-quick": "pretty-quick",
+        "coverage": "hardhat coverage"
+    },
+    "devDependencies": {
+        "@sushiswap/hardhat-framework": "sushiswap/hardhat-framework"
+    }
+}

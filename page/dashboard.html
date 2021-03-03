@@ -1,17 +1,28 @@
 <template id="page_template">
     <div class="mt-3">
         <div class="row">
-            <div class="col-12 mb-5 mx-auto" style="max-width: 720px" v-for="group in groupedAssets">
-                <div :is="group.view" :assets="group.items" :app="app" :manager="manager" :address="address"
-                    :web3="web3" :key="group.view">
-                </div>
+            <div class="col-12 mb-5 mx-auto" style="max-width: 720px" v-for="(items, handler) in groupedAssets">
+                <div
+                    :is="handler"
+                    :assets="items"
+                    :app="app"
+                    :manager="manager"
+                    :address="address"
+                    :web3="web3"
+                    :key="handler"
+                ></div>
             </div>
             <div class="col-12 mx-auto" style="max-width: 720px">
                 <h3>Vested Sushi</h3>
-                <web3 :manager='manager' :poll='poll'></web3>
-                <eventreader :manager='manager' address="0x6b3595068778dd592e39a122f4f5a5cf09c90fe2"
+                <web3 :manager="manager" :poll="poll"></web3>
+                <eventreader
+                    :manager="manager"
+                    address="0x6b3595068778dd592e39a122f4f5a5cf09c90fe2"
                     :topics="['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', '0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd', address]"
-                    :handler='harvest_handler' :output='harvests' :abi='abis.sushi'>
+                    :handler="harvest_handler"
+                    :output="harvests"
+                    :abi="abis.sushi"
+                >
                     <div class="text-center mb-3">
                         <div class="spinner-border" role="status">
                             <span class="sr-only">Loading...</span>
@@ -19,14 +30,13 @@
                     </div>
                 </eventreader>
                 <div class="jumbotron">
-                    This is experimental, these number may not be correct.<br>
-                    <br>
-                    Your pending SUSHI at lockup start: {{ pendingSushiAtStart.print(18, 4) }}<br>
-                    Your currently pending SUSHI: {{ pendingSushi.print(18, 4) }}<br>
-                    Your harvested SUSHI since lockup: {{ harvestedSushi.print(18, 4) }}<br>
-                    <br>
-                    Estimated in lockup:
-                    {{ ((pendingSushi - pendingSushiAtStart + harvestedSushi) * 2n).print(18, 4) }}
+                    This is experimental, these number may not be correct.<br />
+                    <br />
+                    Your pending SUSHI at lockup start: {{ pendingSushiAtStart.print(18, 4) }}<br />
+                    Your currently pending SUSHI: {{ app.pendingSushi.print(18, 4) }}<br />
+                    Your harvested SUSHI since lockup: {{ harvestedSushi.print(18, 4) }}<br />
+                    <br />
+                    Estimated in lockup: {{ ((app.pendingSushi - pendingSushiAtStart + harvestedSushi) * 2n).print(18, 4) }}
                 </div>
             </div>
         </div>
@@ -34,49 +44,44 @@
 </template>
 <script>
     app.page = {
-        props: ['manager', 'web3', 'address'],
+        props: ["manager", "web3", "address", "assets"],
         data: function () {
             return {
                 harvests: [],
-                pendingSushi: 0n,
-                pendingSushiAtStart: 0n
-            }
+                pendingSushiAtStart: 0n,
+            };
         },
         computed: {
-            assets: function () {
-                return app.assets;
-            },
             groupedAssets: function () {
-                let groups = {};
-                for (let i in this.assets) {
-                    if (!groups[this.assets[i].view]) {
-                        groups[this.assets[i].view] = { view: this.assets[i].view, items: [] };
-                    }
-                    groups[this.assets[i].view].items.push(this.assets[i]);
-                }
+                const groups = {};
+                this.assets.forEach(asset => {
+                    (groups[asset.handler] = groups[asset.handler] || []).push(asset);
+                })
                 return groups;
             },
             harvestedSushi: function () {
                 return this.harvests.sum(0n);
-            }
+            },
         },
         methods: {
             harvest_handler: function (log, web3, row, decoded) {
                 if (row.block >= 10959148) {
-                    return decoded.value;
+                    return BigInt(decoded.value);
                 }
             },
             poll: async function () {
-                if (!this.addresslist) { this.addresslist = await $.ajax('addresslist-vesting.json') };
-                let info = this.addresslist.find(a => a.address === this.address);
+                if (!this.addresslist) {
+                    this.addresslist = await $.ajax("data/addresslist-vesting.json");
+                }
+                let info = this.addresslist.find((a) => a.address === this.address);
                 this.pendingSushiAtStart = info ? BigInt(info.sushi) : 0n;
 
-                let numberOfPools = await this.web3.chef.poolLength().call();
+                /*let numberOfPools = await this.web3.chef.poolLength().call();
                 let pids = [...Array(parseInt(numberOfPools)).keys()];
-                let result = await this.web3.pending.getPendingSushi(this.address, pids).call();
-                this.pendingSushi = result[1].map(p => BigInt(p.pendingSushi)).sum(0n);
-            }
-        }
+                let result = await this.web3.boringHelper.getPendingSushi(this.address, pids).call();
+                this.pendingSushi = result[1].map((p) => BigInt(p.pendingSushi)).sum(0n);*/
+            },
+        },
     };
     page_done();
 </script>

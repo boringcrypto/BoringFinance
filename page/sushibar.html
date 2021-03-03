@@ -1,29 +1,26 @@
 <template id="page_template">
     <div class="mt-3">
-        <web3 :manager='manager' :init='init' :poll='poll'></web3>
-        <div v-if="bar" style="min-height: 100%;">
+        <web3 :manager="manager" :init="init" :poll="poll"></web3>
+        <div v-if="bar" style="min-height: 100%">
             <div class="row">
                 <div class="col-12 col-md-6 col-lg-4 mb-3">
                     <div class="card">
                         <div class="card-body">
                             <h3 class="card-title">In the bar</h3>
                             <p>
-                                SUSHI in the bar: {{ bar.barSushi.print(18, 0) }}<br>
-                                Your SUSHI stake: {{ bar.sushiStake.print(18, 0) }}<br>
-                                <br>
-                                Your xSUSHI: {{ bar.xsushi.print(18, 0) }}
+                                SUSHI in the bar: {{ app.sushiBarBalance.print(18, 0) }}<br />
+                                Your SUSHI stake: {{ bar.sushiStake.print(18, 0) }}<br />
+                                <br />
+                                Your xSUSHI: {{ app.xsushiBalance.print(18, 0) }}
                             </p>
                             <div class="input-group mb-3">
-                                <input class="form-control" type="number" v-model="leaveAmount"
-                                    placeholder="xSUSHI"><br>
+                                <input class="form-control" type="number" v-model="leaveAmount" placeholder="xSUSHI" /><br />
                                 <div class="input-group-append">
-                                    <span class="input-group-text" style="cursor: pointer;"
-                                        @click="leaveAmount = bar.xsushi.toDec(18)">Max</span>
+                                    <span class="input-group-text" style="cursor: pointer" @click="leaveAmount = app.xsushiBalance.toDec(18)">Max</span>
                                 </div>
                             </div>
 
-                            <button class="btn btn-primary float-right" @click="bar.leave(leaveWei)">Leave the
-                                bar</button>
+                            <button class="btn btn-primary float-right" @click="bar.leave(leaveWei)">Leave the bar</button>
                         </div>
                     </div>
                 </div>
@@ -31,20 +28,21 @@
                     <div class="card">
                         <div class="card-body">
                             <h3 class="card-title">Outside</h3>
-                            <p>
-                                Your SUSHI: {{ bar.sushi.print(18, 0) }}<br>
-                            </p>
+                            <p>Your SUSHI: {{ app.sushiBalance.print(18, 0) }}<br /></p>
                             <div class="input-group mb-3">
-                                <input class="form-control" type="number" v-model="enterAmount" placeholder="SUSHI"><br>
+                                <input class="form-control" type="number" v-model="enterAmount" placeholder="SUSHI" /><br />
                                 <div class="input-group-append">
-                                    <span class="input-group-text" style="cursor: pointer;"
-                                        @click="enterAmount = bar.sushi.toDec(18)">Max</span>
+                                    <span class="input-group-text" style="cursor: pointer" @click="enterAmount = bar.sushi.toDec(18)">Max</span>
                                 </div>
                             </div>
-                            <button v-if="!bar.allowance || bar.allowance < enterAmount"
-                                class="btn btn-primary float-right" @click="bar.allow()">Allow</button>
-                            <button v-else="" class="btn btn-primary float-right" @click="bar.enter(enterWei)">Enter the
-                                bar</button>
+                            <button
+                                v-if="!app.sushiBarAllowance || app.sushiBarAllowance < enterAmount"
+                                class="btn btn-primary float-right"
+                                @click="bar.allow()"
+                            >
+                                Allow
+                            </button>
+                            <button v-else="" class="btn btn-primary float-right" @click="bar.enter(enterWei)">Enter the bar</button>
                         </div>
                     </div>
                 </div>
@@ -52,22 +50,42 @@
                     <div class="card">
                         <div class="card-body">
                             <h3 class="card-title">Your Transfers</h3>
-                            <eventreader :manager='manager' address="0x6b3595068778dd592e39a122f4f5a5cf09c90fe2"
+                            <eventreader
+                                :manager="manager"
+                                address="0x6b3595068778dd592e39a122f4f5a5cf09c90fe2"
                                 :topics="['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', manager.address, '0x0000000000000000000000008798249c2e607446efb7ad49ec89dd1865ff4272']"
-                                :handler='transfer_handler' :output='transfers' :abi='abis.sushi'>
+                                :handler="transfer_handler"
+                                :output="transfers"
+                                :abi="abis.sushi"
+                            >
                             </eventreader>
-                            <eventreader :manager='manager' address="0x6b3595068778dd592e39a122f4f5a5cf09c90fe2"
+                            <eventreader
+                                :manager="manager"
+                                address="0x6b3595068778dd592e39a122f4f5a5cf09c90fe2"
                                 :topics="['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', '0x0000000000000000000000008798249c2e607446efb7ad49ec89dd1865ff4272', manager.address]"
-                                :handler='transfer_handler' :output='transfers' :abi='abis.sushi'>
+                                :handler="transfer_handler"
+                                :output="transfers"
+                                :abi="abis.sushi"
+                            >
                             </eventreader>
 
-                            <eventreader :manager='manager' address="0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272"
+                            <eventreader
+                                :manager="manager"
+                                address="0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272"
                                 :topics="['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', null, manager.address]"
-                                :handler='directTransfer_handler' :output='directTransfers' :abi='abis.sushi'>
+                                :handler="directTransfer_handler"
+                                :output="directTransfers"
+                                :abi="abis.sushi"
+                            >
                             </eventreader>
-                            <eventreader :manager='manager' address="0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272"
+                            <eventreader
+                                :manager="manager"
+                                address="0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272"
                                 :topics="['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', manager.address]"
-                                :handler='directTransfer_handler' :output='directTransfers' :abi='abis.sushi'>
+                                :handler="directTransfer_handler"
+                                :output="directTransfers"
+                                :abi="abis.sushi"
+                            >
                             </eventreader>
 
                             <table class="w-100 mb-3">
@@ -77,12 +95,8 @@
                                 </thead>
                                 <tbody>
                                     <tr v-for="transfer in transfersOrdered.slice(0, 25)">
-                                        <td>
-                                            {{ transfer.direction }}
-                                        </td>
-                                        <td class="text-right">
-                                            {{ transfer.amount.print(18, 2) }}
-                                        </td>
+                                        <td>{{ transfer.direction }}</td>
+                                        <td class="text-right">{{ transfer.amount.print(18, 2) }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -101,10 +115,9 @@
                         <div class="card-body">
                             <h3 class="card-title">What's cooking in the Kitchen?</h3>
                             <p>
-                                Here's what's currently waiting in the Kitchen. It's not quite yours until someone
-                                serves it up. There's a total of ${{ totalKitchen.print(6, 2) }} waiting to be served.
-                                Your
-                                share of that is ${{ totalUserShare.print(6, 2) }} if it was all served now.
+                                Here's what's currently waiting in the Kitchen. It's not quite yours until someone serves it up. There's a total
+                                of ${{ totalKitchen.print(6, 2) }} waiting to be served. Your share of that is ${{ totalUserShare.print(6, 2) }}
+                                if it was all served now.
                             </p>
                             <table class="w-100 mb-3">
                                 <thead>
@@ -115,23 +128,17 @@
                                 <tbody>
                                     <tr v-for="pair, i in pairsOrdered" v-if="i != 2">
                                         <td class="pr-3">{{ pair.name }}</td>
+                                        <td class="text-right">${{ pair.totalValueInCurrency.print(6, 2) }}</td>
+                                        <td class="text-right">${{ userShare(pair).print(6, 2) }}</td>
                                         <td class="text-right">
-                                            ${{ pair.totalValueInCurrency.print(6, 2) }}
-                                        </td>
-                                        <td class="text-right">
-                                            ${{ userShare(pair).print(6, 2) }}
-                                        </td>
-                                        <td class="text-right">
-                                            <button class="btn btn-sm btn-primary ml-3"
-                                                @click="convert(pair.token0, pair.token1)">Serve it
-                                                up!</button>
+                                            <button class="btn btn-sm btn-primary ml-3" @click="convert(pair.token0, pair.token1)">
+                                                Serve it up!
+                                            </button>
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
-                            <p class="mb-0">
-                                If you serve it, it will go to the bar, but you'll have to share it with everyone...
-                            </p>
+                            <p class="mb-0">If you serve it, it will go to the bar, but you'll have to share it with everyone...</p>
                         </div>
                     </div>
                 </div>
@@ -139,12 +146,16 @@
                     <div class="card">
                         <div class="card-body">
                             <h3 class="card-title">Who's serving?</h3>
-                            <p>
-                                Thanks to these generous chefs we've enjoyed some great sushi!
-                            </p>
-                            <eventreader :manager='manager' address="0x795065dcc9f64b5614c407a6efdc400da6221fb0"
+                            <p>Thanks to these generous chefs we've enjoyed some great sushi!</p>
+                            <eventreader
+                                :manager="manager"
+                                address="0x795065dcc9f64b5614c407a6efdc400da6221fb0"
                                 :topics="['0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822', '0x000000000000000000000000E11fc0B43ab98Eb91e9836129d1ee7c3Bc95df50', '0x0000000000000000000000008798249c2E607446EfB7Ad49eC89dD1865Ff4272']"
-                                :handler='serving_handler' :output='serves' :abi='abis.pair' :synced='servings_synced'>
+                                :handler="serving_handler"
+                                :output="serves"
+                                :abi="abis.pair"
+                                :synced="servings_synced"
+                            >
                                 <div class="text-center mb-3">
                                     <div class="spinner-border" role="status">
                                         <span class="sr-only">Loading...</span>
@@ -156,23 +167,20 @@
                                     <th>From</th>
                                     <th>Pool</th>
                                     <th class="text-right">Amount (SUSHI)</th>
+                                    <th class="text-right">Time</th>
                                 </thead>
                                 <tbody>
                                     <tr v-for="serve in servesOrdered">
                                         <td :title="serve.from">
-                                            <a :href="'https://etherscan.io/tx/' + serve.txid">
-                                                {{ serve.from }}
-                                            </a>
+                                            <a :href="'https://etherscan.io/tx/' + serve.txid"> {{ serve.from }} </a>
                                         </td>
                                         <td>{{ pairNames[serve.pair] }}</td>
-                                        <td class="text-right" v-if="serve.amount">{{ serve.amount.print(18, 2) }}</td>
+                                        <td class="text-right" v-if="serve.amount">{{ serve.amount.print(18, 0) }}</td>
+                                        <td class="text-right">{{ ago(time - (Number(block) - Number(serve.block)) * 15000) }}</td>
                                     </tr>
                                 </tbody>
                             </table>
-                            <p class="mb-0">
-                                If you setup a <a href="https://app.ens.domains/">reverse ENS</a>, your name will be
-                                listed here.
-                            </p>
+                            <p class="mb-0">If you setup a <a href="https://app.ens.domains/">reverse ENS</a>, your name will be listed here.</p>
                         </div>
                     </div>
                 </div>
@@ -181,17 +189,13 @@
                         <div class="card-body">
                             <h3 class="card-title">What is this?</h3>
                             <p class="mb-0">
-                                Everytime someone trades on SushiSwap, 0.05% will go to the Kitchen. Anyone can be
-                                kind and serve it up. This will turn it into yummy SUSHI delivering it to everyone
-                                in the bar. So everyone will have a little more SUSHI.<br>
-                                <br>
-                                When your stake enters the SushiBar, you get xSUSHI for your SUSHI. You will keep the
-                                same
-                                amount of xSUSHI. Everytime someone serves up delicious SUSHI, your xSUSHI will be worth
-                                a little more SUSHI.<br>
-                                <br>
-                                If you leave the bar now, you'll get around {{ bar.sushiStake.print(18, 4) }}
-                                SUSHI.
+                                Everytime someone trades on SushiSwap, 0.05% will go to the Kitchen. Anyone can be kind and serve it up. This
+                                will turn it into yummy SUSHI delivering it to everyone in the bar. So everyone will have a little more SUSHI.<br />
+                                <br />
+                                When your stake enters the SushiBar, you get xSUSHI for your SUSHI. You will keep the same amount of xSUSHI.
+                                Everytime someone serves up delicious SUSHI, your xSUSHI will be worth a little more SUSHI.<br />
+                                <br />
+                                If you leave the bar now, you'll get around {{ bar.sushiStake.print(18, 4) }} SUSHI.
                             </p>
                         </div>
                     </div>
@@ -202,7 +206,7 @@
 </template>
 <script>
     app.page = {
-        props: ['manager', 'address', 'web3', 'block', 'time'],
+        props: ["manager", "address", "web3", "block", "time"],
         data: function () {
             return {
                 bar: null,
@@ -213,8 +217,8 @@
                 TWAbalance: 0n,
                 yearlyROI: 0n,
                 enterAmount: 0,
-                leaveAmount: 0
-            }
+                leaveAmount: 0,
+            };
         },
         computed: {
             totalKitchen: function () {
@@ -236,17 +240,19 @@
                 return total;
             },
             transfersOrdered: function () {
-                if (this.transfers.concat(this.directTransfers).length == 0 || !this.block) { return []; };
+                if (this.transfers.concat(this.directTransfers).length == 0 || !this.block) {
+                    return [];
+                }
                 let rows = [];
-                let sorted = (this.transfers.concat(this.directTransfers)).sort((a, b) => a.block - b.block);
+                let sorted = this.transfers.concat(this.directTransfers).sort((a, b) => a.block - b.block);
                 let blockbalance = 0n;
                 for (var i in sorted) {
                     rows.push({
                         block: sorted[i].block,
                         direction: sorted[i].direction,
                         amount: BigInt(sorted[i].amount),
-                        balance: (i == 0 ? 0n : rows[i - 1].balance) + BigInt(sorted[i].amount)
-                    })
+                        balance: (i == 0 ? 0n : rows[i - 1].balance) + BigInt(sorted[i].amount),
+                    });
                     if (i > 0) {
                         blockbalance += BigInt(rows[i].block - rows[i - 1].block) * rows[i - 1].balance;
                     }
@@ -255,16 +261,16 @@
 
                 let totalBlocks = BigInt(this.block - rows[0].block);
                 this.TWAbalance = blockbalance / totalBlocks;
-                this.dailyReturn = (this.bar.sushiStake - this.balance) / totalBlocks * 6440n;
-                this.dailyROI = this.dailyReturn * 1000000000000000000n / this.TWAbalance;
+                this.dailyReturn = ((this.bar.sushiStake - this.balance) / totalBlocks) * 6440n;
+                this.dailyROI = (this.dailyReturn * 1000000000000000000n) / this.TWAbalance;
                 this.yearlyROI = this.dailyROI * 365n;
 
                 return rows.reverse();
             },
             balance: function () {
                 let output = 0n;
-                output += this.transfers.map(t => t.amount).sum(0n);
-                output += this.directTransfers.map(t => t.amount).sum(0n);
+                output += this.transfers.map((t) => t.amount).sum(0n);
+                output += this.directTransfers.map((t) => t.amount).sum(0n);
                 return output;
             },
             servesOrdered: function () {
@@ -285,50 +291,63 @@
             },
             leaveWei: function () {
                 return new Decimal(this.leaveAmount).toInt(18);
-            }
+            },
         },
         methods: {
+            ago: function(t, short) {
+                return ago(t, short)
+            },
             transfer_handler: async function (log, web3, row, decoded) {
                 return {
                     direction: decoded.to == "0x8798249c2e607446efb7ad49ec89dd1865ff4272" ? "in" : "out",
                     block: row.block,
-                    amount: decoded.to == "0x8798249c2e607446efb7ad49ec89dd1865ff4272" ? decoded.value : decoded.value * -1n
-                }
+                    amount: decoded.to == "0x8798249c2e607446efb7ad49ec89dd1865ff4272" ? decoded.value : decoded.value * -1n,
+                };
             },
             directTransfer_handler: async function (log, web3, row, decoded) {
-                if(decoded.from === "0x0000000000000000000000000000000000000000" || decoded.to === "0x0000000000000000000000000000000000000000") {return;}
-                let amount = BigInt(Math.trunc(await this.getApproximateSushiXsushiRate(row.block)*10000000000)) * BigInt(decoded.value) / 10000000000n;
+                if (
+                    decoded.from === "0x0000000000000000000000000000000000000000" ||
+                    decoded.to === "0x0000000000000000000000000000000000000000"
+                ) {
+                    return;
+                }
+                let amount =
+                    (BigInt(Math.trunc((await this.getApproximateSushiXsushiRate(row.block)) * 10000000000)) * BigInt(decoded.value)) /
+                    10000000000n;
                 return {
                     direction: decoded.from == this.address.toLowerCase() ? "direct out" : "direct in",
                     block: row.block,
                     amount: decoded.from == this.address.toLowerCase() ? amount * -1n : amount,
-                }
+                };
             },
             getApproximateSushiXsushiRate: async function (block) {
-                let blockUp = parseInt(block)+100; // A hundred block above the block we're searching around
-                let blockDown = parseInt(block)-100; // A hundred block below the block we're searching around
+                let blockUp = parseInt(block) + 100; // A hundred block above the block we're searching around
+                let blockDown = parseInt(block) - 100; // A hundred block below the block we're searching around
                 // Gives us a 200 block initial searching range
 
                 let sushi;
                 // Loop until the end of time... or well, until broken out of
-                while(true) {
+                while (true) {
                     // Get stake logs for the chosen range
                     // First topic is the function - transfer, second would be the source address but we don't care, the third is the destination address - the xSushi token contract
-                    sushi = await this.web3.eth.getPastLogs(
-                        {
-                            fromBlock: blockDown,
-                            toBlock: blockUp,
-                            address: '0x6b3595068778dd592e39a122f4f5a5cf09c90fe2',
-                            topics: ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
-                                    null,
-                                    '0x0000000000000000000000008798249c2e607446efb7ad49ec89dd1865ff4272'
-                                ]
-                        }
-                    )
+                    sushi = await this.web3.eth.getPastLogs({
+                        fromBlock: blockDown,
+                        toBlock: blockUp,
+                        address: "0x6b3595068778dd592e39a122f4f5a5cf09c90fe2",
+                        topics: [
+                            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                            null,
+                            "0x0000000000000000000000008798249c2e607446efb7ad49ec89dd1865ff4272",
+                        ],
+                    });
                     // If a log in the range exists, take it and break;
-                    if(sushi[0] && sushi[0].topics[1] != "0x000000000000000000000000280ac711bb99de7c73fb70fb6de29846d5e4207f") { sushi = sushi[0]; break; }
+                    if (sushi[0] && sushi[0].topics[1] != "0x000000000000000000000000280ac711bb99de7c73fb70fb6de29846d5e4207f") {
+                        sushi = sushi[0];
+                        break;
+                    }
                     // Increase the range and have another try
-                    blockUp += 100; blockDown -= 100;
+                    blockUp += 100;
+                    blockDown -= 100;
                 }
 
                 // Much easier when we already know a tx hash of a stake tx, just get the appropriate data from it
@@ -341,15 +360,25 @@
                 return row;
             },
             servings_synced: async function () {
-                this.servesOrdered.filter(s => !s.amount).forEach(async row => {
-                    let tx = await this.web3.eth.getTransactionReceipt(row.txid);
-                    row.from = await this.web3.ens.reverse(tx.from);
-                    let logsData = this.web3.decode.pair.decodeLogs(tx.logs);
-                    row.amount = logsData.filter(l => l && l.name == "Transfer" &&
-                        l.address == "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2" &&
-                        l.events[1].value == "0x8798249c2e607446efb7ad49ec89dd1865ff4272").map(l => BigInt(l.events[2].value)).sum(0n);
-                    row.pair = logsData.filter(l => l && l.name == "Burn")[0].address;
-                });
+                this.servesOrdered
+                    .filter((s) => !s.amount)
+                    .forEach(async (row) => {
+                        let tx = await this.web3.eth.getTransactionReceipt(row.txid);
+                        console.log(tx)
+                        row.from = await this.web3.ens.reverse(tx.from);
+                        let logsData = this.web3.decode.pair.decodeLogs(tx.logs);
+                        row.amount = logsData
+                            .filter(
+                                (l) =>
+                                    l &&
+                                    l.name == "Transfer" &&
+                                    l.address == "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2" &&
+                                    l.events[1].value == "0x8798249c2e607446efb7ad49ec89dd1865ff4272"
+                            )
+                            .map((l) => BigInt(l.events[2].value))
+                            .sum(0n);
+                        row.pair = logsData.filter((l) => l && l.name == "Burn")[0].address;
+                    });
             },
             init: async function () {
                 if (this.manager && !this.bar) {
@@ -362,13 +391,13 @@
                 this.pairs = this.bar.makerPairs;
             },
             userShare: function (pair) {
-                return (pair.totalValueInCurrency * this.bar.poolShare / BigInt("1000000000000000000"));
+                return (pair.totalValueInCurrency * this.bar.poolShare) / BigInt("1000000000000000000");
             },
             convert: async function (token0, token1) {
                 await this.bar.convert(this.address, token0, token1);
-            }
-        }
-    }
+            },
+        },
+    };
     page_done();
 
     class SushiBar extends Web3Component {
@@ -377,36 +406,29 @@
 
             this.makerPairs = [];
             this.eth_rate = 0n;
-            this.sushi = 0n;
-            this.barSushi = 0n;
-            this.xsushi = 0n;
-            this.totalXSushi = 0n;
-            this.allowance = 0n;
             this.poolShare = 0n;
             this.sushiStake = 0n;
         }
 
         ETHtoCurrency(value) {
-            return value * this.eth_rate / BigInt("1000000000000000000");
+            return (value * this.eth_rate) / BigInt("1000000000000000000");
         }
 
         async poll() {
-            this.sushi = BigInt(await this.web3.sushi.balanceOf(this.address).call());
-            this.barSushi = BigInt(await this.web3.sushi.balanceOf(this.web3.bar.address).call());
-            this.xsushi = BigInt(await this.web3.bar.balanceOf(this.address).call());
-            this.totalXSushi = BigInt(await this.web3.bar.totalSupply().call());
-            this.allowance = BigInt(await this.web3.sushi.allowance(this.address, this.web3.bar.address).call());
-
-            this.poolShare = this.xsushi * BigInt("1000000000000000000") / this.totalXSushi;
-            this.sushiStake = this.barSushi * this.xsushi / this.totalXSushi;
+            if (app.xsushiSupply) {
+                this.poolShare = (app.xsushiBalance * BigInt("1000000000000000000")) / app.xsushiSupply;
+                this.sushiStake = (app.sushiBarBalance * app.xsushiBalance) / app.xsushiSupply;
+            }
         }
 
         async getMakerInfo() {
-            if (!this.currency) {
+            /*if (!this.currency) {
                 return;
             }
-            let pids = [...Array(101).keys()].filter(pid => pid != 29 && pid != 30 && pid != 33 && pid != 45 && pid != 61 && pid != 62);
-            var result = await this.web3.makerInfo.getPairs(pids, this.currency, "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac").call({ gas: 50000000 });
+            let pids = [...Array(101).keys()].filter((pid) => pid != 29 && pid != 30 && pid != 33 && pid != 45 && pid != 61 && pid != 62);
+            var result = await this.web3.boringhelper
+                .getPairs(pids, this.currency, "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac")
+                .call({ gas: 50000000 });
             this.eth_rate = BigInt(result[0]);
 
             for (var i in result[1]) {
@@ -424,11 +446,11 @@
                 pair.token1symbol = result[1][i].token1symbol;
 
                 pair.name = pair.token0symbol + "-" + pair.token1symbol;
-                pair.shareOfPool = pair.totalSupply ? pair.balance * BigInt("1000000000000000000") / pair.totalSupply : 0n;
-                pair.totalToken0 = pair.reserve0 * pair.shareOfPool / BigInt("1000000000000000000");
-                pair.totalToken1 = pair.reserve1 * pair.shareOfPool / BigInt("1000000000000000000");
-                pair.valueToken0 = pair.token0rate ? pair.totalToken0 * BigInt("1000000000000000000") / pair.token0rate : 0n;
-                pair.valueToken1 = pair.token1rate ? pair.totalToken1 * BigInt("1000000000000000000") / pair.token1rate : 0n;
+                pair.shareOfPool = pair.totalSupply ? (pair.balance * BigInt("1000000000000000000")) / pair.totalSupply : 0n;
+                pair.totalToken0 = (pair.reserve0 * pair.shareOfPool) / BigInt("1000000000000000000");
+                pair.totalToken1 = (pair.reserve1 * pair.shareOfPool) / BigInt("1000000000000000000");
+                pair.valueToken0 = pair.token0rate ? (pair.totalToken0 * BigInt("1000000000000000000")) / pair.token0rate : 0n;
+                pair.valueToken1 = pair.token1rate ? (pair.totalToken1 * BigInt("1000000000000000000")) / pair.token1rate : 0n;
                 pair.valueToken0InCurrency = this.ETHtoCurrency(pair.valueToken0);
                 pair.valueToken1InCurrency = this.ETHtoCurrency(pair.valueToken1);
                 pair.totalValueInCurrency = pair.valueToken0InCurrency + pair.valueToken1InCurrency;
@@ -438,11 +460,13 @@
                 } else {
                     this.makerPairs[i] = pair;
                 }
-            }
+            }*/
         }
 
         async allow() {
-            await this.web3.sushi.approve(this.web3.bar.address, 1000000000000000000000000000000000000n).send({ from: this.address, gas: 60000 });
+            await this.web3.sushi
+                .approve(this.web3.bar.address, 1000000000000000000000000000000000000n)
+                .send({ from: this.address, gas: 60000 });
         }
 
         async enter(amount) {
