@@ -33,7 +33,7 @@ Object.defineProperty(Array.prototype, "sum", {
     },
 })
 
-function ago(nd, s) {
+function ago(time, nd, s) {
     const o = {
         second: 1000,
         minute: 60 * 1000,
@@ -58,8 +58,9 @@ function ago(nd, s) {
         if (Math.round(ts) < o[i]) return pl(ii || 'm', Math.round(ts / (o[ii] || 1)))
         ii = i
     }
-    return pl(i, r(ts / o[i]))
+    return pl(i, Math.round(ts / o[i]))
 }
+Vue.prototype.ago = ago
 
 let loaded_pages = {}
 

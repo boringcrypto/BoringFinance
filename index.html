@@ -78,8 +78,9 @@
             <div class="sticky-top">
                 <nav class="navbar navbar-light bg-light">
                     <router-link class="nav-link" to="/"><i class="fas fa-home"></i></router-link>
-                    <router-link class="nav-link" to="/bento">Bento</router-link>
-                    <router-link v-if="manager.chainId == '0x1'" class="nav-link" to="/sushibar">Bar</router-link>
+                    <router-link class="nav-link" to="/kashi">Kashi</router-link>
+                    <router-link class="nav-link" to="/feeds">Feeds</router-link>
+                    <router-link v-if="manager.web3 && manager.web3.bar.address" class="nav-link" to="/sushibar">Bar</router-link>
                     <router-link class="nav-link" to="/farms">Farms</router-link>
                     <router-link v-if="manager.chainId == '0x1'" class="nav-link" to="/timelock">Lock</router-link>
                     <div class="ml-auto"></div>
@@ -169,6 +170,7 @@
                     },
                     assetManager: null,
                     assets: [],
+                    bentoBoxOwner: "",
                     ethBalance: 0n,
                     ethRate: 0n,
                     btcRate: 0n,
@@ -206,11 +208,6 @@
                         this.manager.connectWC();
                     },
                     init: async function () {
-                        console.log("pairs", await this.manager.web3.factory.allPairsLength().call())
-                        console.log("pairs", await this.manager.web3.factory.allPairs(0).call())
-                        console.log("pairs", await this.manager.web3.contract("pair", "0xDeA60a095697Ee0397f42eFDC17479d68f174b90").methods.token1().call())
-                        // 0xd222a876B303dAe4F8e2099ba3B26ECB5A1b8521
-                        // 0xe73763DB808ecCDC0E36bC8E32510ED126910394
                         this.assetManager = await new AssetManager(this.manager, this.assets).init();
                     },
                     poll: async function () {
@@ -254,11 +251,12 @@
             createApp();
 
             await load_page("/", "dashboard");
-            await load_page("/bento", "bento");
+            await load_page("/kashi", "kashi");
             await load_page("/bentopair/:address", "bentopair");
             await load_page("/sushibar", "sushibar");
             await load_page("/timelock", "timelock");
             await load_page("/farms", "farms");
+            await load_page("/feeds", "feeds");
             await load_page("/stats", "stats");
         });
 
@@ -326,6 +324,7 @@
             async init() {
                 console.log("Loading assets...", this.chainId)
                 this.empty();
+                app.bentoBoxOwner = rpcToObj(await this.web3.bentobox.owner().call())
                 await this.find();
                 console.log(this.options.native_token)
                 this.addAsset(this.options.native_token)
@@ -409,7 +408,7 @@
             for (var i in balances) {
                 let asset = this.assets.get(balances[i].token);
                 objAssign(asset, rpcToObj(balances[i]));
-                if (asset.address == "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2") {
+                if (asset.address == this.manager.wrappedNative) {
                     asset.rate = 1000000000000000000n;
                 }                
                 await this._handlerMap["ERC20Handler"].info(this.assets.filter((a) => a.handler == this._handlerMap["ERC20Handler"]));

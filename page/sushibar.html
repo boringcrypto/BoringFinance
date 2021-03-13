@@ -20,7 +20,7 @@
                                 </div>
                             </div>
 
-                            <button class="btn btn-primary float-right" @click="bar.leave(leaveWei)">Leave the bar</button>
+                            <button class="btn btn-primary float-right" @click="bar.leave(leaveWei)" :disabled="!leaveAmount">Leave the bar</button>
                         </div>
                     </div>
                 </div>
@@ -42,11 +42,11 @@
                             >
                                 Allow
                             </button>
-                            <button v-else="" class="btn btn-primary float-right" @click="bar.enter(enterWei)">Enter the bar</button>
+                            <button v-else="" class="btn btn-primary float-right" @click="bar.enter(enterWei)" :disabled="!enterAmount">Enter the bar</button>
                         </div>
                     </div>
                 </div>
-                <div class="col-12 col-md-6 col-lg-4 mb-3">
+                <div class="col-12 col-md-6 col-lg-4 mb-3" v-if="false">
                     <div class="card">
                         <div class="card-body">
                             <h3 class="card-title">Your Transfers</h3>
@@ -109,7 +109,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <div class="row" v-if="false">
                 <div class="col-12 col-lg-6 mb-3">
                     <div class="card">
                         <div class="card-body">
@@ -142,7 +142,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-12 col-lg-6 mb-3">
+                <div class="col-12 col-lg-6 mb-3" v-if="false">
                     <div class="card">
                         <div class="card-body">
                             <h3 class="card-title">Who's serving?</h3>
@@ -176,7 +176,7 @@
                                         </td>
                                         <td>{{ pairNames[serve.pair] }}</td>
                                         <td class="text-right" v-if="serve.amount">{{ serve.amount.print(18, 0) }}</td>
-                                        <td class="text-right">{{ ago(time - (Number(block) - Number(serve.block)) * 15000) }}</td>
+                                        <td class="text-right">{{ ago(time, time - (Number(block) - Number(serve.block)) * 15000) }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -240,6 +240,7 @@
                 return total;
             },
             transfersOrdered: function () {
+                return []
                 if (this.transfers.concat(this.directTransfers).length == 0 || !this.block) {
                     return [];
                 }
@@ -294,9 +295,6 @@
             },
         },
         methods: {
-            ago: function(t, short) {
-                return ago(t, short)
-            },
             transfer_handler: async function (log, web3, row, decoded) {
                 return {
                     direction: decoded.to == "0x8798249c2e607446efb7ad49ec89dd1865ff4272" ? "in" : "out",
@@ -465,16 +463,20 @@
 
         async allow() {
             await this.web3.sushi
-                .approve(this.web3.bar.address, 1000000000000000000000000000000000000n)
-                .send({ from: this.address, gas: 60000 });
+                .approve(this.web3.bar.address, "115792089237316195423570985008687907853269984665640564039457584007913129639935")
+                .send({ from: this.address });
         }
 
         async enter(amount) {
-            await this.web3.bar.enter(amount).send({ from: this.address, gas: 100000 });
+            await this.web3.bar.enter(amount).send({ from: this.address });
+        }
+
+        async donate(amount) {
+            await this.web3.sushi.transfer(this.web3.bar.address, amount).send({ from: this.address });
         }
 
         async leave(amount) {
-            await this.web3.bar.leave(amount).send({ from: this.address, gas: 200000 });
+            await this.web3.bar.leave(amount).send({ from: this.address });
         }
 
         async convert(from, token0, token1) {

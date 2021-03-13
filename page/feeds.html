@@ -1,0 +1,112 @@
+<template id="page_template">
+    <div class="mt-3">
+        <web3 :manager="manager" :poll="poll"></web3>
+
+        <h3>Token Feeds (Salary/Vesting)</h1>
+        <div class="row" v-for="feed, i in feeds" v-if="feed.tokenAsset.decimals">
+            <div class="col-12 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div>
+                            <h5>Salary {{ i }} for {{ feed.recipient }}</h5>
+                            <span v-if="feed.tokenAsset.bentoShare">
+                                Total: {{ (feed.shares * feed.tokenAsset.bentoAmount / feed.tokenAsset.bentoShare).print(feed.tokenAsset.decimals, 0) }} {{ feed.tokenAsset.symbol }} ({{ feed.shares.print(feed.tokenAsset.decimals) }} shares)<br>
+                                Available: {{ (feed.available * feed.tokenAsset.bentoAmount / feed.tokenAsset.bentoShare).print(feed.tokenAsset.decimals, 0) }} {{ feed.tokenAsset.symbol }} ({{ feed.available.print(feed.tokenAsset.decimals) }} shares)<br>
+                                End: {{ ago(time, Number(feed.endTimestamp * 1000n)) }}
+                            </span>
+                        </div>
+                        <div v-if="feed.recipient.toLowerCase() == address.toLowerCase()">
+                            <button type="button" class="btn btn-sm btn-primary" @click='withdraw(i)'>Withdraw</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="tokenSelect">Token</label>
+                            <select class="form-control" id="tokenSelect" v-model="token">
+                                <option v-for="asset in assets" :value="asset">{{ asset.symbol }}</option>
+                            </select>
+                        </div>   
+                        <div v-if="token">
+                            <div class="form-group">
+                                <label>Recipient</label>
+                                <input class="form-control" type="text" v-model="recipient">
+                            </div>                            
+                            <div class="form-group">
+                                <label>Vesting in minutes</label>
+                                <input class="form-control" type="number" v-model="minutes">
+                            </div>                            
+                            <div class="form-group">
+                                <label>Amount</label>
+                                <input class="form-control" type="number" v-model="amount">
+                            </div>
+                            <button type="button" class="btn btn-sm btn-primary" @click='create'>Create Salary</button>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-primary mt-3" @click='approve'>Approve Feeds to BentoBox</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<script>
+    app.page = {
+        props: ["web3", "manager", "address", "block", "assets", "time"],
+        data: function () {
+            return {
+                recipient: "",
+                token: "",
+                minutes: 0,
+                amount: 0,
+                feeds: [],
+            };
+        },
+        computed: {
+        },
+        methods: {
+            poll: async function () {
+                const feeds = rpcToObj(await this.web3.salary.allSalaries().call())
+                for (let i = 0; i < feeds.length; i++) {
+                    if (i >= this.feeds.length) {
+                        feeds[i].tokenAsset = app.assetManager.addAsset({ address: feeds[i].token })
+                        feeds[i].available = BigInt(await this.web3.salary.available(i).call());
+                        this.feeds.push(feeds[i])
+                    } else {
+                        objAssign(this.feeds[i], feeds[i])
+                        this.feeds[i].available = BigInt(await this.web3.salary.available(i).call());
+                    }
+                }
+                window.feeds = this.feeds
+            },
+            approve: async function () {
+                await this.web3.bentobox
+                    .setMasterContractApproval(this.address, this.web3.salary.address, true, 0, "0x", "0x")
+                    .send({ from: this.address });
+            },
+            create: async function (recipient) {
+                await this.web3.salary
+                    .create(
+                        this.recipient,
+                        this.token.address,
+                        BigInt(this.time) / 1000n,
+                        (BigInt(this.time) / 1000n) + (60n * BigInt(this.minutes)),
+                        0, // No cliff
+                        0, // BentoBox
+                        Decimal(this.amount).toInt(this.token.decimals)
+                    )
+                    .send({ from: this.address });
+            },
+            withdraw: async function (salary_id) {
+                await this.web3.salary
+                    .withdraw(salary_id, this.address, true)
+                    .send({ from: this.address });
+            }
+        },
+    };
+    page_done();
+</script>

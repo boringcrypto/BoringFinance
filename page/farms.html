@@ -110,9 +110,9 @@
             sortedFarms: function() {
                 return [...this.farms].filter(farm => [29n, 45n].indexOf(farm.pid) == -1).sort((a, b) => Number(b.allocPoint) - Number(a.allocPoint)).map(farm => {
                     if (farm.isPair && farm.token0asset && farm.token1asset && (farm.token0asset.rate || farm.token1asset.rate)) {
-                        if (farm.token0asset.address.toLowerCase() == "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2") {
+                        if (farm.token0asset.address.toLowerCase() == this.manager.wrappedNative) {
                             farm.tvl = farm.reserve0 * app.ethRate * 2n
-                        } else if (farm.token1asset.address.toLowerCase() == "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2") {
+                        } else if (farm.token1asset.address.toLowerCase() == this.manager.wrappedNative) {
                             farm.tvl = farm.reserve1 * app.ethRate * 2n
                         } else if (farm.token0asset.address.toLowerCase() == "0xdac17f958d2ee523a2206206994597c13d831ec7") {
                             farm.tvl = farm.reserve0 * 1000000000000000000n * 2n

@@ -33,7 +33,7 @@ rpcToObj = function (rpc_obj, obj) {
     if (!obj) {
         obj = {}
     }
-    if (Array.isArray(rpc_obj)) {
+    if (typeof(rpc_obj) == "object") {
         if (Object.keys(rpc_obj).length && isNaN(Object.keys(rpc_obj)[Object.keys(rpc_obj).length - 1])) {
             for (let i in rpc_obj) {
                 if (isNaN(i)) {
@@ -96,6 +96,7 @@ function addContract(name, abi, addresses) {
                 }
             )
         },
+        configurable: true,
     })
 }
 
@@ -189,6 +190,7 @@ async function signERC2612Permit(web3, token, owner, spender, value, deadline, n
 addContract("sushi", abis.sushi, {
     "0x1": "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2",
     "0x3": "0x07be118a973287c1CaA58AE0c2443a2f37CC06FC",
+    "0x507": "0x9656A6BDb2931899b4982281E70858E6ab029554"
 })
 addContract("chef", abis.chef, {
     "0x1": "0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd",
@@ -207,6 +209,7 @@ addContract("router", abis.router, {
 addContract("bar", abis.bar, {
     "0x1": "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272",
     "0x3": "0xD1c50c6597f0800c6669B17a678c52ED477E4Bd3",
+    "0x507": "0x0A3dF871E8c696c6d303207360Fa6AB08f0Ed01F"
 })
 addContract("maker", abis.maker, {
     "0x1": "0xE11fc0B43ab98Eb91e9836129d1ee7c3Bc95df50",
@@ -215,34 +218,50 @@ addContract("maker", abis.maker, {
 addContract("bentobox", abis.bentobox, {
     "0x1": "0xB5891167796722331b7ea7824F036b3Bdcb4531C",
     "0x3": "0xB5891167796722331b7ea7824F036b3Bdcb4531C",
-    "0x507": "0x2933e966A792F7CB8a04BB909CB3b6AB77b2e36A"
+    "0x507": "0xFD3a166cE22f42AA1aa2d9dfF4dF824856A7bD7C"
 })
 
 addContract("timelock", abis.timelock, {
     "0x1": "0x9a8541ddf3a932a9a922b607e9cf7301f1d47bd1",
 })
 
+addContract("kashipair", abis.kashipair, { 
+    "0x3": "0x009e9cFaD18132D9fB258984196191BdB6D58CFF"
+});
+
+addContract("peggedoracle", abis.peggedoracle, {
+    "0x3": "0x1E8B2C9aA29360Bf0B7B385Cc82073000Af9BAAf",
+})
+
 addContract("faucet", abis.faucet, { "0x3": "0xe62661131645fcdf45b17910e490ea845201e819" });
 addContract("boringhelper", abis.boringhelper, { 
     "0x1": "0x5Fd6CE3a5139c63244FC94563854ed21e5a4498c",
-    "0x507": "0xfF7236C10cA9A2880B3DD00bAb07AB59E2F282e4"
+    "0x3": "0xab771E34b3A5D95da17321388f6c532A39E3bEAb",
+    "0x507": "0x2A81a0b32392400B53D1173212f5955617F8A36A"
 });
 abis.boringhelper2 = [{"inputs":[{"internalType":"contract IMasterChef","name":"chef_","type":"address"},{"internalType":"address","name":"maker_","type":"address"},{"internalType":"contract IERC20","name":"sushi_","type":"address"},{"internalType":"contract IERC20","name":"WETH_","type":"address"},{"internalType":"contract IERC20","name":"WBTC_","type":"address"},{"internalType":"contract IFactory","name":"sushiFactory_","type":"address"},{"internalType":"contract IFactory","name":"uniV2Factory_","type":"address"},{"internalType":"contract IERC20","name":"bar_","type":"address"},{"internalType":"contract IBentoBox","name":"bentoBox_","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[],"name":"WBTC","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"WETH","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"bar","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"bentoBox","outputs":[{"internalType":"contract IBentoBox","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"chef","outputs":[{"internalType":"contract IMasterChef","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"who","type":"address"},{"internalType":"address[]","name":"addresses","type":"address[]"}],"name":"findBalances","outputs":[{"components":[{"internalType":"contract IERC20","name":"token","type":"address"},{"internalType":"uint256","name":"balance","type":"uint256"},{"internalType":"uint256","name":"bentoBalance","type":"uint256"}],"internalType":"struct BoringHelper.Balance[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"who","type":"address"},{"internalType":"contract IERC20[]","name":"addresses","type":"address[]"}],"name":"getBalances","outputs":[{"components":[{"internalType":"contract IERC20","name":"token","type":"address"},{"internalType":"uint256","name":"balance","type":"uint256"},{"internalType":"uint256","name":"bentoBalance","type":"uint256"},{"internalType":"uint256","name":"bentoAllowance","type":"uint256"},{"internalType":"uint256","name":"rate","type":"uint256"}],"internalType":"struct BoringHelper.BalanceFull[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"contract IERC20","name":"token","type":"address"}],"name":"getETHRate","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"maker","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"sushi","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"sushiFactory","outputs":[{"internalType":"contract IFactory","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"uniV2Factory","outputs":[{"internalType":"contract IFactory","name":"","type":"address"}],"stateMutability":"view","type":"function"}]
 addContract("boringhelper2", abis.boringhelper2, { 
     "0x1": "0xCc6904e98425e7c94f1dfe23bCc9be8F12540F08",
-    "0x507": "0xfF7236C10cA9A2880B3DD00bAb07AB59E2F282e4"
+    "0x3": "0xab771E34b3A5D95da17321388f6c532A39E3bEAb",
+    "0x507": "0x2A81a0b32392400B53D1173212f5955617F8A36A"
 });
 abis.boringhelper3 = [{"inputs":[{"internalType":"contract IERC20","name":"WETH_","type":"address"},{"internalType":"contract IFactory","name":"sushiFactory_","type":"address"},{"internalType":"contract IFactory","name":"uniV2Factory_","type":"address"},{"internalType":"contract IBentoBox","name":"bentoBox_","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[],"name":"WETH","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"bentoBox","outputs":[{"internalType":"contract IBentoBox","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"who","type":"address"},{"internalType":"contract IERC20[]","name":"addresses","type":"address[]"}],"name":"getBalances","outputs":[{"components":[{"internalType":"contract IERC20","name":"token","type":"address"},{"internalType":"uint256","name":"balance","type":"uint256"},{"internalType":"uint256","name":"bentoBalance","type":"uint256"},{"internalType":"uint256","name":"bentoAllowance","type":"uint256"},{"internalType":"uint128","name":"bentoAmount","type":"uint128"},{"internalType":"uint128","name":"bentoShare","type":"uint128"},{"internalType":"uint256","name":"rate","type":"uint256"}],"internalType":"struct BoringHelper.BalanceFull[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"contract IERC20","name":"token","type":"address"}],"name":"getETHRate","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"sushiFactory","outputs":[{"internalType":"contract IFactory","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"uniV2Factory","outputs":[{"internalType":"contract IFactory","name":"","type":"address"}],"stateMutability":"view","type":"function"}]
 addContract("boringhelper3", abis.boringhelper3, { 
     "0x1": "0xf35305995917B675cFf5c0402eF3A8F16ea6D636",
-    "0x507": "0xfF7236C10cA9A2880B3DD00bAb07AB59E2F282e4"
+    "0x3": "0xab771E34b3A5D95da17321388f6c532A39E3bEAb",
+    "0x507": "0x2A81a0b32392400B53D1173212f5955617F8A36A"
+});
+
+addContract("salary", abis.salary, { 
+    "0x507": "0xF0635e49Dd9dDeE706A34259befFEBf6466c6eAD"
 });
 
 settings = {
     "0x1": {
         chainName: "Ethereum",
         native_token: { "address": ETHEREUM_ADDRESS, "name": "Ethereum", "symbol": "ETH", "decimals": 18n, "rate": 1000000000000000000n },
-        currency: "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        currency: "0xdac17f958d2ee523a2206206994597c13d831ec7",
+        wrappedNative: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
     },
     "0x3": {
         chainName: "Ropsten",
@@ -252,7 +271,8 @@ settings = {
     "0x507": {
         chainName: "Moonbeam Alpha",
         native_token: { "address": ETHEREUM_ADDRESS, "name": "Moonbeam Alphanet", "symbol": "DEV", "decimals": 18n, "rate": 1000000000000000000n },
-        currency: "0x292c703A980fbFce4708864Ae6E8C40584DAF323"
+        currency: "0x292c703A980fbFce4708864Ae6E8C40584DAF323",
+        wrappedNative: "0xe73763db808eccdc0e36bc8e32510ed126910394"
     }
 }
 

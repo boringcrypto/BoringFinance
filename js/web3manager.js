@@ -49,7 +49,7 @@ class Web3Manager {
                 chainId = "0x1"
 
                 $.getJSON( "/deployments/localhost/BoringHelper.json", function( data ) {
-                    addContract("boringHelper", data.abi, {"0x1": data.address })
+                    addContract("boringhelper", data.abi, {"0x1": data.address })
                 });                
             }
             self.chainId = chainId
