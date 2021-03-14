@@ -186,10 +186,11 @@
                     xsushiSupply: 0n,
                     sushiBarAllowance: 0n,
                     pendingSushi: 0n,
+                    timestamp: 0n
                 },
                 mounted: function () {
-                    this.time = Date.now();
-                    setInterval(() => (this.time = Date.now()), 1000);
+                    this.time = BigInt(Date.now());
+                    setInterval(() => (this.time = BigInt(Date.now())), 1000);
 
                     this.manager = new Web3Manager();
                 },
@@ -235,6 +236,7 @@
                         this.sushiBarAllowance = info.sushiBarAllowance
 
                         this.pendingSushi = info.pendingSushi
+                        this.timestamp = info.blockTimeStamp
 
                         await this.assetManager.poll();
                     },
@@ -281,6 +283,7 @@
             }
 
             async tokenList(full) {
+                console.log("Tokenlist")
                 const name = "tokenlist_" + this.chainId + (full ? "_full" : "")
                 const lookup_name = "tokenlist_" + this.chainId + "_lookup"
                 if (!this[name]) {
@@ -319,6 +322,8 @@
                     asset.handler = asset.handler || "ERC20Handler"
                     asset.balance = asset.balance || 0n
                     asset.bentoBalance = asset.bentoBalance || 0n
+                    asset.bentoAmounte = asset.bentoAmount || 0n
+                    asset.bentoShare = asset.bentoShare || 0n
                     asset.hide_value = asset.hide_value || false
                     asset.rate = asset.rate || 0n
                     asset.decimals = BigInt(asset.decimals || 0n)

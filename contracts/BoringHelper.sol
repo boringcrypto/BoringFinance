@@ -370,6 +370,7 @@ contract BoringHelper is Ownable {
         uint256 sushiRate;
         uint256 btcRate;
         uint256 pendingSushi;
+        uint256 blockTimeStamp;
     }
 
     function getUIInfo(
@@ -416,6 +417,7 @@ contract BoringHelper is Ownable {
             }
             info.pendingSushi = pendingSushi;
         }
+        info.blockTimeStamp = block.timestamp;
 
         return info;
     }
@@ -481,9 +483,7 @@ contract BoringHelper is Ownable {
             balances[i].balance = token.balanceOf(who);
             balances[i].bentoAllowance = token.allowance(who, address(bentoBox));
             balances[i].bentoBalance = bentoBox.balanceOf(token, who);
-            if (balances[i].bentoBalance != 0) {
-                (balances[i].bentoAmount, balances[i].bentoShare) = bentoBox.totals(token);
-            }
+            (balances[i].bentoAmount, balances[i].bentoShare) = bentoBox.totals(token);
             balances[i].rate = getETHRate(token);
         }
 

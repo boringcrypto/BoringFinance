@@ -34,6 +34,7 @@ Object.defineProperty(Array.prototype, "sum", {
 })
 
 function ago(time, nd, s) {
+    time = Number(time)
     const o = {
         second: 1000,
         minute: 60 * 1000,
