@@ -169,8 +169,8 @@
             assetsOrdered: function () {
                 if (!app.ethRate) { return [] };
                 let assets = this.assets.map(a => {
-                    a.bentoUserAmount = a.bentoBalance ? (a.bentoBalance || 0n) * (a.bentoAmount || 0n) / a.bentoShare : 0n
-                    a.usdValue = a.rate ? ((a.bentoBalance || 0n) + (a.balance || 0n)) * (app.ethRate || 0n) / a.rate : 0n
+                    a.bentoUserAmount = a.bentoShare > 0n ? (a.bentoBalance || 0n) * (a.bentoAmount || 0n) / a.bentoShare : 0n
+                    a.usdValue = a.rate > 0n ? ((a.bentoBalance || 0n) + (a.balance || 0n)) * (app.ethRate || 0n) / a.rate : 0n
                     a.isNative = a.address == ETHEREUM_ADDRESS
                     return a;
                 });
@@ -182,7 +182,7 @@
             total: function () {
                 let total = 0n;
                 for (i in this.assetsOrdered) {
-                    if (this.assets[i].rate && this.app.ethRate && !this.assets[i].hide_value) {
+                    if (this.assets[i].rate > 0n && this.app.ethRate > 0n && !this.assets[i].hide_value) {
                         total += ((this.assets[i].balance + this.assets[i].bentoUserAmount) * this.app.ethRate / this.assets[i].rate)
                     }
                 }

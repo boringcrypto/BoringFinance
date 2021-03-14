@@ -15,5 +15,6 @@
     { "name": "Weenus", "address": "0x101848d5c5bbca18e6b4431eedf6b95e9adf82fa", "symbol": "WEENUS", "decimals": 18 },
     { "name": "Zeenus", "address": "0xc84f8b669ccb91c86ab2b38060362b9956f2de52", "symbol": "ZEENUS", "decimals": 0 },
     { "name": "Yeenus", "address": "0xf6ff95d53e08c9660dc7820fd5a775484f77183a", "symbol": "YEENUS", "decimals": 8 },
-    { "name": "Xeenus", "address": "0x7e0480ca9fd50eb7a3855cf53c347a1b4d6a2ff5", "symbol": "XEENUS", "decimals": 18 }
+    { "name": "Xeenus", "address": "0x7e0480ca9fd50eb7a3855cf53c347a1b4d6a2ff5", "symbol": "XEENUS", "decimals": 18 },
+    { "name": "Polymath", "address": "0x96a62428509002a7ae5f6ad29e4750d852a3f3d7", "symbol": "POLY", "decimals": 18 }
 ]

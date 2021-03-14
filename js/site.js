@@ -21,9 +21,9 @@ BigInt.prototype.print = function (divisor, decimalPlaces) {
     let x = new Decimal(this.toString())
     x = x.dividedBy(powDivisor)
     if (x.decimalPlaces() - x.precision() > decimalPlaces - 4) {
-        return new Intl.NumberFormat().format(x.toSignificantDigits(4).toFixed())
+        return new Intl.NumberFormat('default', {maximumFractionDigits: 18}).format(x.toSignificantDigits(4).toFixed())
     } else {
-        return new Intl.NumberFormat().format(x.toFixed(decimalPlaces))
+        return new Intl.NumberFormat('default', {maximumFractionDigits: 18}).format(x.toFixed(decimalPlaces))
     }
 }
 

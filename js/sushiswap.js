@@ -46,7 +46,7 @@ rpcToObj = function (rpc_obj, obj) {
                             typeof rpc_obj[i] == "boolean" ||
                             (typeof rpc_obj[i] == "string" && rpc_obj[i].startsWith("0x")) ||
                             typeof rpc_obj[i] == "object"
-                                ? rpc_obj[i]
+                                ? rpcToObj(rpc_obj[i])
                                 : BigInt(rpc_obj[i])
                     } catch (e) {
                         console.log("rpcToObj error", rpc_obj[i], typeof rpc_obj[i])
@@ -230,25 +230,26 @@ addContract("kashipair", abis.kashipair, {
 });
 
 addContract("peggedoracle", abis.peggedoracle, {
-    "0x3": "0x1E8B2C9aA29360Bf0B7B385Cc82073000Af9BAAf",
+    "0x1": "0x4C19068BE73EB00A42432D3FE7da952815BB0485",
+    "0x3": "0x1E8B2C9aA29360Bf0B7B385Cc82073000Af9BAAf"
 })
 
 addContract("faucet", abis.faucet, { "0x3": "0xe62661131645fcdf45b17910e490ea845201e819" });
 addContract("boringhelper", abis.boringhelper, { 
     "0x1": "0x5Fd6CE3a5139c63244FC94563854ed21e5a4498c",
-    "0x3": "0xab771E34b3A5D95da17321388f6c532A39E3bEAb",
+    "0x3": "0xe176dE2E2A5e95453F177613377f2c182B1fF107",
     "0x507": "0x2A81a0b32392400B53D1173212f5955617F8A36A"
 });
 abis.boringhelper2 = [{"inputs":[{"internalType":"contract IMasterChef","name":"chef_","type":"address"},{"internalType":"address","name":"maker_","type":"address"},{"internalType":"contract IERC20","name":"sushi_","type":"address"},{"internalType":"contract IERC20","name":"WETH_","type":"address"},{"internalType":"contract IERC20","name":"WBTC_","type":"address"},{"internalType":"contract IFactory","name":"sushiFactory_","type":"address"},{"internalType":"contract IFactory","name":"uniV2Factory_","type":"address"},{"internalType":"contract IERC20","name":"bar_","type":"address"},{"internalType":"contract IBentoBox","name":"bentoBox_","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[],"name":"WBTC","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"WETH","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"bar","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"bentoBox","outputs":[{"internalType":"contract IBentoBox","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"chef","outputs":[{"internalType":"contract IMasterChef","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"who","type":"address"},{"internalType":"address[]","name":"addresses","type":"address[]"}],"name":"findBalances","outputs":[{"components":[{"internalType":"contract IERC20","name":"token","type":"address"},{"internalType":"uint256","name":"balance","type":"uint256"},{"internalType":"uint256","name":"bentoBalance","type":"uint256"}],"internalType":"struct BoringHelper.Balance[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"who","type":"address"},{"internalType":"contract IERC20[]","name":"addresses","type":"address[]"}],"name":"getBalances","outputs":[{"components":[{"internalType":"contract IERC20","name":"token","type":"address"},{"internalType":"uint256","name":"balance","type":"uint256"},{"internalType":"uint256","name":"bentoBalance","type":"uint256"},{"internalType":"uint256","name":"bentoAllowance","type":"uint256"},{"internalType":"uint256","name":"rate","type":"uint256"}],"internalType":"struct BoringHelper.BalanceFull[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"contract IERC20","name":"token","type":"address"}],"name":"getETHRate","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"maker","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"sushi","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"sushiFactory","outputs":[{"internalType":"contract IFactory","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"uniV2Factory","outputs":[{"internalType":"contract IFactory","name":"","type":"address"}],"stateMutability":"view","type":"function"}]
 addContract("boringhelper2", abis.boringhelper2, { 
     "0x1": "0xCc6904e98425e7c94f1dfe23bCc9be8F12540F08",
-    "0x3": "0xab771E34b3A5D95da17321388f6c532A39E3bEAb",
+    "0x3": "0xe176dE2E2A5e95453F177613377f2c182B1fF107",
     "0x507": "0x2A81a0b32392400B53D1173212f5955617F8A36A"
 });
 abis.boringhelper3 = [{"inputs":[{"internalType":"contract IERC20","name":"WETH_","type":"address"},{"internalType":"contract IFactory","name":"sushiFactory_","type":"address"},{"internalType":"contract IFactory","name":"uniV2Factory_","type":"address"},{"internalType":"contract IBentoBox","name":"bentoBox_","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[],"name":"WETH","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"bentoBox","outputs":[{"internalType":"contract IBentoBox","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"who","type":"address"},{"internalType":"contract IERC20[]","name":"addresses","type":"address[]"}],"name":"getBalances","outputs":[{"components":[{"internalType":"contract IERC20","name":"token","type":"address"},{"internalType":"uint256","name":"balance","type":"uint256"},{"internalType":"uint256","name":"bentoBalance","type":"uint256"},{"internalType":"uint256","name":"bentoAllowance","type":"uint256"},{"internalType":"uint128","name":"bentoAmount","type":"uint128"},{"internalType":"uint128","name":"bentoShare","type":"uint128"},{"internalType":"uint256","name":"rate","type":"uint256"}],"internalType":"struct BoringHelper.BalanceFull[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"contract IERC20","name":"token","type":"address"}],"name":"getETHRate","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"sushiFactory","outputs":[{"internalType":"contract IFactory","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"uniV2Factory","outputs":[{"internalType":"contract IFactory","name":"","type":"address"}],"stateMutability":"view","type":"function"}]
 addContract("boringhelper3", abis.boringhelper3, { 
     "0x1": "0xf35305995917B675cFf5c0402eF3A8F16ea6D636",
-    "0x3": "0xab771E34b3A5D95da17321388f6c532A39E3bEAb",
+    "0x3": "0xe176dE2E2A5e95453F177613377f2c182B1fF107",
     "0x507": "0x2A81a0b32392400B53D1173212f5955617F8A36A"
 });
 

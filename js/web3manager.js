@@ -36,7 +36,7 @@ class Web3Manager {
             }
         } else {
             console.log("No Ethereum provider found")
-            this.provider = "None"
+            this.provider = ""
         }
     }
 

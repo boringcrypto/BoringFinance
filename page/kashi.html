@@ -5,6 +5,76 @@
             <div class="col-12 mb-3">
                 <div class="card">
                     <div class="card-body">
+                        <h4>Pairs</h4>
+                        <table class="table w-100 mb-0">
+                            <thead>
+                                <th>Collateral</th>
+                                <th>Asset</th>
+                                <th>Oracle</th>
+                                <th class="text-right">Rate</th>
+                                <th class="text-right">Supply APR</th>
+                                <th class="text-right">Borrow APR</th>
+                            </thead>
+                            <template v-for="pair in pairsChecked" v-if="pair.checked">
+                                <tr style="cursor: pointer;" data-toggle="collapse" :data-target="'.kashi' + pair.address">
+                                    <td v-if="pair.collateral">{{ pair.collateral.symbol }}</td>
+                                    <td v-if="pair.asset">{{ pair.asset.symbol }}</td>
+                                    <td>{{ pair.oracleName }}</td>
+                                    <td class="text-right">{{ pair.oracleExchangeRate.print(pair.collateral.decimals + 18n - pair.asset.decimals, 1) }}</td>
+                                    <td class="text-right"></td>
+                                    <td class="text-right">{{ pair.interestPerYear.print(18, 2) }}%</td>
+                                </tr>
+                                <tr :class="'collapse kashi' + pair.address" style="background-color: #eeeeee">
+                                    <td colspan="6">
+                                        <div :class="'mx-3 mb-3 kashi' + pair.address">
+                                            Total collateral: {{ pair.totalCollateralAmount.print(pair.collateral.decimals) }} {{ pair.collateral.symbol }}
+                                            Total assets: {{ pair.totalAsset.elastic.print(pair.asset.decimals) }} {{ pair.asset.symbol }} shares
+                                        </div>
+                                        <div v-if="pair.userBentoCollateralAmount" class="mx-3">
+                                            <h5 class="card-title">Add Collateral</h5>
+                                            <p>You have {{ pair.userBentoCollateralAmount.print(pair.collateral.decimals, 0) }} {{ pair.collateral.symbol }} in the BentoBox.</p>
+                                            <div class="input-group" style="max-width: 350px;">
+                                                <input class="form-control" type="number" v-model="addCollateralAmount">
+                                                <div class="input-group-append">
+                                                    <span class="input-group-text" style="cursor: pointer;" @click="addCollateralAmount = pair.userBentoCollateralAmount.toDec(pair.collateral.decimals)">Max</span>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-primary ml-2" @click='addCollateral(pair)' :disabled="!Number(addCollateralAmount)">Add Collateral</button>
+                                            </div>
+                                        </div>                                        
+                                        <div v-if="pair.userBentoAssetAmount" class="mx-3">
+                                            <h5 class="card-title">Add Supply</h5>
+                                            <p>You have {{ pair.userBentoAssetAmount.print(pair.asset.decimals, 0) }} {{ pair.asset.symbol }} in the BentoBox.</p>
+                                            <div class="input-group" style="max-width: 350px;">
+                                                <input class="form-control" type="number" v-model="addAssetAmount">
+                                                <div class="input-group-append">
+                                                    <span class="input-group-text" style="cursor: pointer;" @click="addAssetAmount = pair.userBentoAssetAmount.toDec(pair.asset.decimals)">Max</span>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-primary ml-2" @click='addAsset(pair)' :disabled="!Number(addAssetAmount)">Add Supply</button>
+                                            </div>
+                                        </div>                                        
+                                        <div v-if="pair.userBentoCollateralAmount" class="mx-3">
+                                            <h5 class="card-title">Borrow</h5>
+                                            <div class="input-group" style="max-width: 350px;">
+                                                <input class="form-control" type="number" v-model="borrowAmount">
+                                                <div class="input-group-append">
+                                                    <span class="input-group-text" style="cursor: pointer;" @click="borrowAmount = 0">Max</span>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-primary ml-2" @click='borrow(pair)' :disabled="!Number(borrowAmount)">Borrow</button>
+                                            </div>
+                                        </div>                                        
+                                    </td>
+                                </tr>
+                            </template>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 mb-3">
+                <div class="card">
+                    <div class="card-body">
                         <h4>Add Kashi Lending Pair</h4>
                         <div class="form-group">
                             <label for="collateralSelect">Collateral (long)</label>
@@ -37,27 +107,158 @@
                             You'll receive a bunch of tokens to play with.
                         </p>
                         <button class="btn btn-primary mt-3" @click="drip">Gimme, gimme, gimme!</button>
+
+                        <h4>Approve</h4>
+                        <button type="button" class="btn btn-sm btn-primary" @click='approve'>Approve Kashi Lending</button>                            
                     </div>
                 </div>
             </div>
         </div>
+
+        <eventreader
+            :manager="manager"
+            address="0xb5891167796722331b7ea7824f036b3bdcb4531c"
+            :topics="['0xd62166f3c2149208e51788b1401cc356bf5da1fc6c7886a32e18570f57d88b3b', '0x000000000000000000000000009e9cfad18132d9fb258984196191bdb6d58cff']"
+            :handler="pair_handler"
+            :output="pairs"
+            :abi="abis.bentobox"
+            :synced="pairs_synced"></eventreader>
     </div>
 </template>
 <script>
+    // Functions that need accrue to be called
+    const ACTION_ADD_ASSET = 1;
+    const ACTION_REPAY = 2;
+    const ACTION_REMOVE_ASSET = 3;
+    const ACTION_REMOVE_COLLATERAL = 4;
+    const ACTION_BORROW = 5;
+    const ACTION_GET_REPAY_SHARE = 6;
+    const ACTION_GET_REPAY_PART = 7;
+
+    // Functions that don't need accrue to be called
+    const ACTION_ADD_COLLATERAL = 10;
+
+    // Function on BentoBox
+    const ACTION_BENTO_DEPOSIT = 20;
+    const ACTION_BENTO_WITHDRAW = 21;
+    const ACTION_BENTO_TRANSFER = 22;
+    const ACTION_BENTO_TRANSFER_MULTIPLE = 23;
+    const ACTION_BENTO_SETAPPROVAL = 24;
+
+    // Any external call (except to BentoBox)
+    const ACTION_CALL = 30;
+
+    class KashiCooker {
+        constructor(pair, web3, userAddress) {
+            this.web3 = web3
+            this.pair = pair
+            this.address = userAddress
+            this.contract = this.web3.contract("kashipair", this.pair.address).methods
+
+            this.actions = []
+            this.values = []
+            this.datas = []
+        }
+
+        async addCollateral(amountInput) {
+            const amount = Decimal(amountInput).toInt(this.pair.collateral.decimals)
+            const share = await this.web3.bentobox.toShare(this.pair.collateral.address, amount, true).call()
+
+            this.actions.push(ACTION_ADD_COLLATERAL)
+            this.values.push(0)
+            this.datas.push(this.web3.eth.abi.encodeParameters(["int256", "address", "bool"], [share, this.address, false]))
+            return this
+        }
+
+        async depositCollateral(amountInput) {
+            // TODO: WETH
+            const amount = Decimal(amountInput).toInt(this.pair.collateral.decimals)
+
+            this.actions.push(ACTION_BENTO_DEPOSIT, ACTION_ADD_COLLATERAL)
+            this.values.push(0, 0)
+            this.datas.push(
+                this.web3.eth.abi.encodeParameters(["address", "address", "int256", "int256"], [this.pair.collateral.address, this.address, amount, 0]),
+                this.web3.eth.abi.encodeParameters(["int256", "address", "bool"], [-2, this.address, false])
+            )
+            return this
+        }
+
+        async cook() {
+            return this.contract.cook(
+                this.actions,
+                this.values,
+                this.datas
+            ).send({ from: this.address })
+        }
+    }
+
     app.page = {
         props: ["web3", "manager", "address", "block", "assets"],
         data: function () {
             return {
                 newCollateral: "",
                 newAsset: "",
-                rate: 1
+                rate: 1,
+                pairs: [],
+                addCollateralAmount: "",
+                addAssetAmount: "",
+                borrowAmount: ""
             };
         },
         mounted: async function() {
         },
         computed: {
+            pairsChecked: function() {
+                return this.pairs.filter(pair => pair.checked).map(pair => {
+                    return objAssign(pair, {
+                        totalCollateralAmount: pair.collateral.bentoShare ? pair.totalCollateralShare * pair.collateral.bentoAmount / pair.collateral.bentoShare : 0n,
+                        userBentoCollateralAmount: pair.collateral.bentoShare ? pair.collateral.bentoBalance * pair.collateral.bentoAmount / pair.collateral.bentoShare : 0n,
+                        userBentoAssetAmount: pair.asset.bentoShare ? pair.asset.bentoBalance * pair.asset.bentoAmount / pair.asset.bentoShare : 0n
+                    })
+                })
+            }
         },
         methods: {
+            pair_handler: async function(log, web3, row, decoded) {
+                let deployParams = web3.decode.kashipair.decodeMethod(
+                    "0x247fd03c" + (decoded.data ? decoded.data.substr(2) : "")
+                ).params;
+                let oracleName = ""
+                if (deployParams[2].value.toLowerCase() == this.web3.peggedoracle.address.toLowerCase()) {
+                    oracleName = "Pegged"
+                    oracleDescription = "The exchangeRate is fixed and will never change."
+                }
+                if (!oracleName) { return }
+
+                return {
+                    address: decoded.cloneAddress,
+                    collateralAddress: deployParams[0].value,
+                    assetAddress: deployParams[1].value,
+                    oracle: deployParams[2].value,
+                    oracleData: deployParams[3].value,
+                    oracleName: oracleName,
+                    oracleDescription: oracleDescription
+                }
+            },
+            pairs_synced: async function() {
+                this.pairs.forEach(pair => {
+                    objAssign(pair, {
+                        collateral: app.assetManager.addAsset({ address: pair.collateralAddress }),
+                        asset: app.assetManager.addAsset({ address: pair.assetAddress }),
+                    })
+                })
+                await this.poll()
+            },
+            poll: async function() {
+                const kashiInfo = rpcToObj(await this.web3.boringhelper.pollKashiPairs(this.address, this.pairs.map(pair => pair.address)).call());
+                kashiInfo.forEach((pair, i) => objAssign(this.pairs[i], pair))
+                this.pairs.forEach(pair => {
+                    objAssign(pair, {
+                        interestPerYear: pair.accrueInfo.interestPerSecond * 60n * 60n * 24n * 365n,
+                        checked: true
+                    })
+                })
+            },
             create: async function () {
                 console.log("CREATE")
                 const exchangeRate = Decimal(this.rate).toInt(this.newCollateral.decimals + 18n - this.newAsset.decimals)
@@ -69,6 +270,27 @@
             drip: async function () {
                 await this.web3.faucet.drip().send({ from: this.address });
             },
+            addCollateral: async function (pair) {
+                const cooker = new KashiCooker(pair, this.web3, this.address)
+                await cooker.addCollateral(this.addCollateralAmount)
+                await cooker.cook()
+                
+                /*const amount = Decimal(this.addCollateralAmount).toInt(pair.collateral.decimals)
+                const share = await this.web3.bentobox.toShare(pair.collateral.address, amount, true).call()
+                await this.web3.contract("kashipair", pair.address).methods.addCollateral(this.address, false, share).send({ from: this.address })*/
+            },
+            addAsset: async function (pair) {
+                const amount = Decimal(this.addAssetAmount).toInt(pair.asset.decimals)
+                const share = await this.web3.bentobox.toShare(pair.asset.address, amount, true).call()
+                await this.web3.contract("kashipair", pair.address).methods.addAsset(this.address, false, share).send({ from: this.address })
+            },
+            borrow: async function (pair) {
+                const amount = Decimal(this.borrowAmount).toInt(pair.asset.decimals)
+                await this.web3.contract("kashipair", pair.address).methods.borrow(this.address, amount).send({ from: this.address })
+            },
+            approve: async function () {
+                await this.web3.bentobox.setMasterContractApproval(this.address, this.web3.kashipair.address, true, 0, "0x", "0x").send({ from: this.address })
+            }
         },
     };
     page_done();

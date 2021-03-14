@@ -122,9 +122,14 @@
                 </nav>
             </div>
             <div class="container-fluid">
-                <div class="text-center mt-3" v-if="!manager.address || manager.provider === 'None'">
+                <div class="text-center mt-3" v-if="!manager.address && manager.provider">
                     <button class="btn btn-lg btn-primary" @click="connect">Connect Metamask</button>
                     <button class="btn btn-lg btn-primary" @click="connectWC">Connect WalletConnect</button>
+                </div>
+                <div class="text-center mt-3" v-if="!manager.provider">
+                    <div class="alert alert-warning" role="alert">
+                        Web3 provider, such as MetaMask not found. You can install <a href="https://metamask.io/" target="_blank">MetaMask from here</a>.
+                    </div>
                 </div>
                 <router-view
                     v-if="assetManager && manager && manager.address"
@@ -208,7 +213,8 @@
                         this.manager.connectWC();
                     },
                     init: async function () {
-                        this.assetManager = await new AssetManager(this.manager, this.assets).init();
+                        this.assetManager = await new AssetManager(this.manager, this.assets);
+                        this.assetManager.init();
                     },
                     poll: async function () {
                         console.log(this.manager.currency)
@@ -218,7 +224,9 @@
                         this.btcRate = info.btcRate ? this.ethRate * 100000000n / info.btcRate : 0n
                         this.sushiRate = info.sushiRate ? this.ethRate * 1000000000000000000n / info.sushiRate : 0n
                         this.ethBalance = info.ethBalance
-                        this.assetManager.assetmap[ETHEREUM_ADDRESS].balance = info.ethBalance
+                        if (this.assetManager.assetmap[ETHEREUM_ADDRESS]) {
+                            this.assetManager.assetmap[ETHEREUM_ADDRESS].balance = info.ethBalance
+                        }
 
                         this.sushiBalance = info.sushiBalance
                         this.sushiBarBalance = info.sushiBarBalance
@@ -322,18 +330,21 @@
             }
 
             async init() {
-                console.log("Loading assets...", this.chainId)
-                this.empty();
-                app.bentoBoxOwner = rpcToObj(await this.web3.bentobox.owner().call())
-                await this.find();
-                console.log(this.options.native_token)
-                this.addAsset(this.options.native_token)
+                await this.tokenList()
+                if (this.address) {
+                    console.log("Loading assets...", this.chainId)
+                    this.empty();
+                    app.bentoBoxOwner = rpcToObj(await this.web3.bentobox.owner().call())
+                    await this.find();
+                    console.log(this.options.native_token)
+                    this.addAsset(this.options.native_token)
 
-                for (let i in this.handlers) {
-                    await this.handlers[i].init();
+                    for (let i in this.handlers) {
+                        await this.handlers[i].init();
+                    }
+
+                    await this.onAddress();
                 }
-
-                await this.onAddress();
 
                 return this;
             }
@@ -353,11 +364,13 @@
             }
 
             async poll() {
-                let balances = await this.web3.boringhelper3.getBalances(this.address, this.assets.map(a => a.address).filter(a => a != ETHEREUM_ADDRESS)).call()
-                balances.forEach(b => {
-                    let asset = this.assetmap[b.token.toLowerCase()];
-                    objAssign(asset, rpcToObj(b));
-                })
+                if (this.address) {
+                    let balances = await this.web3.boringhelper3.getBalances(this.address, this.assets.map(a => a.address).filter(a => a != ETHEREUM_ADDRESS)).call()
+                    balances.forEach(b => {
+                        let asset = this.assetmap[b.token.toLowerCase()];
+                        objAssign(asset, rpcToObj(b));
+                    })
+                }
 
                 return this;
             }
