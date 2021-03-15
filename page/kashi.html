@@ -36,6 +36,51 @@
                                             <button type="button" class="btn btn-sm btn-primary mt-3" @click="updateExchangeRate(pair)">Update Exchange Rate</button>
                                         </div>
                                         <div v-else="" :class="'mx-3 mb-3 kashi' + pair.address">
+                                            User assets total: {{ (pair.userAssetAmount + pair.userAssetAmountFromBorrows).print(pair.asset.decimals, 0) }} {{ pair.asset.symbol }}<br>
+                                            User collateral: {{ pair.userCollateralAmount.print(pair.asset.decimals, 0) }} {{ pair.collateral.symbol }}<br>
+                                            User borrowed: {{ pair.currentUserBorrowAmount.print(pair.asset.decimals, 0) }} {{ pair.asset.symbol }}<br>
+                                            Health: {{ pair.health.print(18, 2) }} ({{ pair.healthPercentage.print(16, 2) }}%)<br>
+
+                                            <div v-if="pair.userBentoCollateralAmount" class="mt-3">
+                                                <h5 class="card-title">Add Collateral</h5>
+                                                <p>You have {{ pair.userBentoCollateralAmount.print(pair.collateral.decimals, 0) }} {{ pair.collateral.symbol }} in the BentoBox.</p>
+                                                <div class="input-group" style="max-width: 350px;">
+                                                    <input class="form-control" type="number" v-model="pair.addCollateralAmount">
+                                                    <div class="input-group-append">
+                                                        <span class="input-group-text" style="cursor: pointer;" @click="pair.addCollateralAmount = pair.userBentoCollateralAmount.toDec(pair.collateral.decimals)">Max</span>
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-primary ml-2" @click='addCollateral(pair)' :disabled="!Number(pair.addCollateralAmount)">Add Collateral</button>
+                                                </div>
+                                            </div>                                        
+                                            <div v-if="pair.userBentoAssetAmount" class="mt-3">
+                                                <h5 class="card-title">Add Supply</h5>
+                                                <p>You have {{ pair.userBentoAssetAmount.print(pair.asset.decimals, 0) }} {{ pair.asset.symbol }} in the BentoBox.</p>
+                                                <div class="input-group" style="max-width: 350px;">
+                                                    <input class="form-control" type="number" v-model="pair.addAssetAmount">
+                                                    <div class="input-group-append">
+                                                        <span class="input-group-text" style="cursor: pointer;" @click="pair.addAssetAmount = pair.userBentoAssetAmount.toDec(pair.asset.decimals)">Max</span>
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-primary ml-2" @click='addAsset(pair)' :disabled="!Number(pair.addAssetAmount)">Add Supply</button>
+                                                </div>
+                                            </div>                                        
+                                            <div v-if="pair.userCollateralShare && pair.safeMaxBorrowableLeft > 0n" class="mt-3">
+                                                <h5 class="card-title">Borrow</h5>
+                                                <div class="input-group" style="max-width: 350px;">
+                                                    <input class="form-control" type="number" v-model="pair.borrowAmount">
+                                                    <div class="input-group-append">
+                                                        <span class="input-group-text" style="cursor: pointer;" @click="pair.borrowAmount = pair.safeMaxBorrowableLeftPossible.toDec(pair.asset.decimals)">Max</span>
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-primary ml-2" @click='borrow(pair)' :disabled="!Number(pair.borrowAmount)">Borrow</button><br>
+                                                </div>
+                                                <small id="passwordHelpBlock" class="form-text text-muted">
+                                                    Max: {{ pair.safeMaxBorrowableLeftPossible.print(pair.asset.decimals) }} 
+                                                    {{ pair.safeMaxBorrowableLeftPossible < pair.safeMaxBorrowableLeft ? '(limited by liquidity)' : '' }}
+                                                    -
+                                                    0.5% borrow fee applies.
+                                                </small>
+                                            </div>
+                                            
+                                            <h5 class="card-title mt-3">Testing Info</h5>
                                             TotalCollateral share: {{ pair.totalCollateralShare }}<br>
                                             TotalAsset ratio (share : fraction): {{ pair.totalAsset.elastic }} : {{ pair.totalAsset.base }}<br>
                                             TotalBorrow ratio (share : part): {{ pair.totalBorrow.elastic }} : {{ pair.totalBorrow.base }}<br>
@@ -47,12 +92,17 @@
                                             User assets fraction: {{ pair.userAssetFraction.print(pair.asset.decimals) }} {{ pair.asset.symbol }}<br>
                                             User assets share: {{ pair.userAssetShare.print(pair.asset.decimals) }} {{ pair.asset.symbol }}<br>
                                             <br>
-
-                                            User collateral: {{ pair.userCollateralAmount.print(pair.asset.decimals) }} {{ pair.collateral.symbol }}<br>
                                             User assets: {{ pair.userAssetAmount.print(pair.asset.decimals) }} {{ pair.asset.symbol }}<br>
                                             User assets from borrows: {{ pair.userAssetAmountFromBorrows.print(pair.asset.decimals) }} {{ pair.asset.symbol }}<br>
-                                            User assets total: {{ (pair.userAssetAmount + pair.userAssetAmountFromBorrows).print(pair.asset.decimals) }} {{ pair.asset.symbol }}<br>
-                                            User borrowed: {{ pair.currentUserBorrowAmount.print(pair.asset.decimals) }} {{ pair.asset.symbol }}<br>
+                                            <br>
+                                            User Solvency (oracle): {{ pair.userSolvencyRatioOracle.print(16, 2) }}%<br>
+                                            User Solvency (stored): {{ pair.userSolvencyRatioStored.print(16, 2) }}%<br>
+                                            <br>
+                                            Max borrowable (oracle): {{ (pair.maxBorrowableOracle - pair.currentUserBorrowAmount).print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}<br>
+                                            Max borrowable (stored): {{ (pair.maxBorrowableStored - pair.currentUserBorrowAmount).print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}<br>
+                                            Max borrowable (min): {{ (pair.maxBorrowable - pair.currentUserBorrowAmount).print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}<br>
+                                            Safe Max borrowable: {{ pair.safeMaxBorrowableLeft.print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}<br>
+                                            Safe Max borrowable and available: {{ pair.safeMaxBorrowableLeftPossible.print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}<br>
                                             <br>
                                             Fee fractions: {{ pair.accrueInfo.feesEarnedFraction }}<br>
                                             Fee shares: {{ pair.feeAssetShare }}<br>
@@ -60,39 +110,6 @@
                                             Fee assets from borrows: {{ pair.feeAssetAmountFromBorrows.print(pair.asset.decimals) }} {{ pair.asset.symbol }}<br>
                                             Fee assets accrued: {{ pair.feeAssetAmountAccrued.print(pair.asset.decimals) }} {{ pair.asset.symbol }}<br>
                                             Fee assets total: {{ (pair.feeAssetAmount + pair.feeAssetAmountFromBorrows + pair.feeAssetAmountAccrued).print(pair.asset.decimals) }} {{ pair.asset.symbol }}<br>
-
-                                            <div v-if="pair.userBentoCollateralAmount">
-                                                <h5 class="card-title">Add Collateral</h5>
-                                                <p>You have {{ pair.userBentoCollateralAmount.print(pair.collateral.decimals, 0) }} {{ pair.collateral.symbol }} in the BentoBox.</p>
-                                                <div class="input-group" style="max-width: 350px;">
-                                                    <input class="form-control" type="number" v-model="addCollateralAmount">
-                                                    <div class="input-group-append">
-                                                        <span class="input-group-text" style="cursor: pointer;" @click="addCollateralAmount = pair.userBentoCollateralAmount.toDec(pair.collateral.decimals)">Max</span>
-                                                    </div>
-                                                    <button type="button" class="btn btn-sm btn-primary ml-2" @click='addCollateral(pair)' :disabled="!Number(addCollateralAmount)">Add Collateral</button>
-                                                </div>
-                                            </div>                                        
-                                            <div v-if="pair.userBentoAssetAmount">
-                                                <h5 class="card-title">Add Supply</h5>
-                                                <p>You have {{ pair.userBentoAssetAmount.print(pair.asset.decimals, 0) }} {{ pair.asset.symbol }} in the BentoBox.</p>
-                                                <div class="input-group" style="max-width: 350px;">
-                                                    <input class="form-control" type="number" v-model="addAssetAmount">
-                                                    <div class="input-group-append">
-                                                        <span class="input-group-text" style="cursor: pointer;" @click="addAssetAmount = pair.userBentoAssetAmount.toDec(pair.asset.decimals)">Max</span>
-                                                    </div>
-                                                    <button type="button" class="btn btn-sm btn-primary ml-2" @click='addAsset(pair)' :disabled="!Number(addAssetAmount)">Add Supply</button>
-                                                </div>
-                                            </div>                                        
-                                            <div v-if="pair.userCollateralShare">
-                                                <h5 class="card-title">Borrow</h5>
-                                                <div class="input-group" style="max-width: 350px;">
-                                                    <input class="form-control" type="number" v-model="borrowAmount">
-                                                    <div class="input-group-append">
-                                                        <span class="input-group-text" style="cursor: pointer;" @click="borrowAmount = 0">Max</span>
-                                                    </div>
-                                                    <button type="button" class="btn btn-sm btn-primary ml-2" @click='borrow(pair)' :disabled="!Number(borrowAmount)">Borrow</button>
-                                                </div>
-                                            </div>                                        
                                         </div>
                                     </td>
                                 </tr>
@@ -226,7 +243,7 @@
     }
 
     function takeFee(amount) {
-        return amount * 10n / 11n
+        return amount * 9n / 10n
     }
 
     function toElastic(base, rebaseObj) {
@@ -245,9 +262,6 @@
                 newAsset: "",
                 rate: 1,
                 pairs: [],
-                addCollateralAmount: "",
-                addAssetAmount: "",
-                borrowAmount: ""
             };
         },
         mounted: async function() {
@@ -260,6 +274,7 @@
 
                         totalCollateralAmount:  pair.collateral.toAmount(pair.totalCollateralShare),
                         totalAssetAmount: pair.asset.toAmount(pair.totalAsset.elastic),
+                        totalBorrowableAmount: pair.totalAsset.elastic > 1000n ? pair.asset.toAmount(pair.totalAsset.elastic - 1000n) : 0n,
                         currentBorrowAmount: pair.totalBorrow.elastic + pair.accrue(pair.totalBorrow.elastic),
 
                         userBentoCollateralAmount: pair.collateral.toAmount(pair.collateral.bentoBalance),
@@ -278,14 +293,34 @@
                         userAssetAmountFromBorrows: rebase(pair.userAssetFraction, pair.totalAsset.base, pair.currentBorrowAmount),
                         currentUserBorrowAmount: pair.userBorrowAmount + takeFee(pair.accrue(pair.userBorrowAmount)),
 
+                        userSolvencyRatioOracle: pair.userCollateralAmount ? pair.userBorrowAmount * pair.oracleExchangeRate / pair.userCollateralAmount : 0n,
+                        userSolvencyRatioStored: pair.userCollateralAmount ? pair.userBorrowAmount * pair.currentExchangeRate / pair.userCollateralAmount : 0n,
+
+                        maxBorrowableOracle: pair.oracleExchangeRate ? (pair.userCollateralAmount * 75n / 100n) * 1000000000000000000n / pair.oracleExchangeRate : 0n,
+                        maxBorrowableStored: pair.currentExchangeRate ? (pair.userCollateralAmount * 75n / 100n) * 1000000000000000000n / pair.oracleExchangeRate : 0n,
+
                         feeAssetAmount: pair.asset.toAmount(pair.feeAssetShare),
                         feeAssetAmountFromBorrows: rebase(pair.accrueInfo.feesEarnedFraction, pair.totalAsset.base, pair.currentBorrowAmount),
-                        feeAssetAmountAccrued: pair.accrue(pair.totalBorrow.elastic) * 1n / 11n,
+                        feeAssetAmountAccrued: pair.accrue(pair.totalBorrow.elastic) * 1n / 10n,
                     })
 
-                    return objAssign(pair, {
-                        supplyAPR: takeFee(pair.interestPerYear * pair.utilization) / 1000000000000000000n
+                    objAssign(pair, {
+                        supplyAPR: takeFee(pair.interestPerYear * pair.utilization) / 1000000000000000000n,
+                        maxBorrowable: BigInt.min(pair.maxBorrowableOracle, pair.maxBorrowableStored)
                     })
+
+                    objAssign(pair, {
+                        safeMaxBorrowable: pair.maxBorrowable * 95n / 100n,
+                        healthPercentage: pair.maxBorrowable ? pair.currentUserBorrowAmount * 1000000000000000000n / pair.maxBorrowable : 0n,
+                        health: pair.currentUserBorrowAmount ? pair.maxBorrowable * 1000000000000000000n / pair.currentUserBorrowAmount : 0n
+                    })
+
+                    objAssign(pair, {
+                        safeMaxBorrowableLeft: pair.safeMaxBorrowable - pair.currentUserBorrowAmount,
+                        safeMaxBorrowableLeftPossible: BigInt.min(pair.safeMaxBorrowable - pair.currentUserBorrowAmount, pair.totalBorrowableAmount)
+                    })
+
+                    return pair
                 })
             }
         },
@@ -308,7 +343,10 @@
                     oracle: deployParams[2].value,
                     oracleData: deployParams[3].value,
                     oracleName: oracleName,
-                    oracleDescription: oracleDescription
+                    oracleDescription: oracleDescription,
+                    addCollateralAmount: "",
+                    addAssetAmount: "",
+                    borrowAmount: ""
                 }
             },
             pairs_synced: async function() {
@@ -350,20 +388,20 @@
             },
             addCollateral: async function (pair) {
                 const cooker = new KashiCooker(pair, this.web3, this.address)
-                await cooker.addCollateral(this.addCollateralAmount)
+                await cooker.addCollateral(pair.addCollateralAmount)
                 await cooker.cook()
                 
-                /*const amount = Decimal(this.addCollateralAmount).toInt(pair.collateral.decimals)
+                /*const amount = Decimal(pair.addCollateralAmount).toInt(pair.collateral.decimals)
                 const share = await this.web3.bentobox.toShare(pair.collateral.address, amount, true).call()
                 await this.web3.contract("kashipair", pair.address).methods.addCollateral(this.address, false, share).send({ from: this.address })*/
             },
             addAsset: async function (pair) {
-                const amount = Decimal(this.addAssetAmount).toInt(pair.asset.decimals)
+                const amount = Decimal(pair.addAssetAmount).toInt(pair.asset.decimals)
                 const share = await this.web3.bentobox.toShare(pair.asset.address, amount, true).call()
                 await this.web3.contract("kashipair", pair.address).methods.addAsset(this.address, false, share).send({ from: this.address })
             },
             borrow: async function (pair) {
-                const amount = Decimal(this.borrowAmount).toInt(pair.asset.decimals)
+                const amount = Decimal(pair.borrowAmount).toInt(pair.asset.decimals)
                 await this.web3.contract("kashipair", pair.address).methods.borrow(this.address, amount).send({ from: this.address })
             },
             approve: async function () {

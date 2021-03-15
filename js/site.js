@@ -7,6 +7,10 @@ Decimal.prototype.toInt = function (decimals) {
 Vue.prototype.window = window
 Vue.prototype.Decimal = Decimal
 
+BigInt.min = function(a, b) {
+    return a < b ? a : b
+}
+
 BigInt.prototype.toDec = function (divisor) {
     return new Decimal(this.toString()).dividedBy(new Decimal(10).toPower(divisor.toString()))
 }
