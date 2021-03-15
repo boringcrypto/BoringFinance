@@ -167,6 +167,7 @@
                     routes: [],
                 }),
                 data: {
+                    debug: false,
                     time: 0,
                     manager: {
                         block: 0n,
@@ -330,6 +331,7 @@
                     asset.toAmount = asset.toAmount || function(share) { 
                         return this.bentoShare ? share * this.bentoAmount / this.bentoShare : 0n 
                     }
+                    asset.loaded = !!asset.loaded
 
                     this.assets.push(asset);
                     this.assetmap[asset.address] = asset;
@@ -375,8 +377,9 @@
                 if (this.address) {
                     let balances = await this.web3.boringhelper3.getBalances(this.address, this.assets.map(a => a.address).filter(a => a != ETHEREUM_ADDRESS)).call()
                     balances.forEach(b => {
-                        let asset = this.assetmap[b.token.toLowerCase()];
-                        objAssign(asset, rpcToObj(b));
+                        let asset = this.assetmap[b.token.toLowerCase()]
+                        objAssign(asset, rpcToObj(b))
+                        asset.loaded = true
                     })
                 }
 
