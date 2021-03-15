@@ -322,11 +322,14 @@
                     asset.handler = asset.handler || "ERC20Handler"
                     asset.balance = asset.balance || 0n
                     asset.bentoBalance = asset.bentoBalance || 0n
-                    asset.bentoAmounte = asset.bentoAmount || 0n
+                    asset.bentoAmount = asset.bentoAmount || 0n
                     asset.bentoShare = asset.bentoShare || 0n
                     asset.hide_value = asset.hide_value || false
                     asset.rate = asset.rate || 0n
                     asset.decimals = BigInt(asset.decimals || 0n)
+                    asset.toAmount = asset.toAmount || function(share) { 
+                        return this.bentoShare ? share * this.bentoAmount / this.bentoShare : 0n 
+                    }
 
                     this.assets.push(asset);
                     this.assetmap[asset.address] = asset;

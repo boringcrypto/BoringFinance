@@ -33,6 +33,10 @@ Object.defineProperty(Array.prototype, "sum", {
     },
 })
 
+function rebase(value, from, to) {
+    return from ? value * to / from : 0n
+}
+
 function ago(time, nd, s) {
     time = Number(time)
     const o = {

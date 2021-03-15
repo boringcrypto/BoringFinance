@@ -12,6 +12,7 @@
                                 <th>Asset</th>
                                 <th>Oracle</th>
                                 <th class="text-right">Rate</th>
+                                <th class="text-right">Utilization</th>
                                 <th class="text-right">Supply APR</th>
                                 <th class="text-right">Borrow APR</th>
                             </thead>
@@ -20,13 +21,21 @@
                                     <td v-if="pair.collateral">{{ pair.collateral.symbol }}</td>
                                     <td v-if="pair.asset">{{ pair.asset.symbol }}</td>
                                     <td>{{ pair.oracleName }}</td>
-                                    <td class="text-right">{{ pair.oracleExchangeRate.print(pair.collateral.decimals + 18n - pair.asset.decimals, 1) }}</td>
-                                    <td class="text-right"></td>
-                                    <td class="text-right">{{ pair.interestPerYear.print(18, 2) }}%</td>
+                                    <td class="text-right">
+                                        {{ pair.oracleExchangeRate.print(pair.collateral.decimals + 18n - pair.asset.decimals, 1) }}<br>
+                                        {{ pair.currentExchangeRate.print(pair.collateral.decimals + 18n - pair.asset.decimals, 1) }}
+                                    </td>
+                                    <td class="text-right">{{ pair.utilization.print(16, 2) }}%</td>
+                                    <td class="text-right">{{ pair.supplyAPR.print(16, 2) }}%</td>
+                                    <td class="text-right">{{ pair.interestPerYear.print(16, 2) }}%</td>
                                 </tr>
                                 <tr :class="'collapse kashi' + pair.address" style="background-color: #eeeeee">
-                                    <td colspan="6">
-                                        <div :class="'mx-3 mb-3 kashi' + pair.address">
+                                    <td colspan="7">
+                                        <div v-if="!pair.currentExchangeRate" :class="'mx-3 kashi' + pair.address">
+                                            The exchange rate has not been initialized yet on this pair. Depending on the oracle you may have to update more than once with some time inbetween.<br>
+                                            <button type="button" class="btn btn-sm btn-primary mt-3" @click="updateExchangeRate(pair)">Update Exchange Rate</button>
+                                        </div>
+                                        <div v-else="" :class="'mx-3 mb-3 kashi' + pair.address">
                                             TotalCollateral share: {{ pair.totalCollateralShare }}<br>
                                             TotalAsset ratio (share : fraction): {{ pair.totalAsset.elastic }} : {{ pair.totalAsset.base }}<br>
                                             TotalBorrow ratio (share : part): {{ pair.totalBorrow.elastic }} : {{ pair.totalBorrow.base }}<br>
@@ -51,40 +60,40 @@
                                             Fee assets from borrows: {{ pair.feeAssetAmountFromBorrows.print(pair.asset.decimals) }} {{ pair.asset.symbol }}<br>
                                             Fee assets accrued: {{ pair.feeAssetAmountAccrued.print(pair.asset.decimals) }} {{ pair.asset.symbol }}<br>
                                             Fee assets total: {{ (pair.feeAssetAmount + pair.feeAssetAmountFromBorrows + pair.feeAssetAmountAccrued).print(pair.asset.decimals) }} {{ pair.asset.symbol }}<br>
-                                            
+
+                                            <div v-if="pair.userBentoCollateralAmount">
+                                                <h5 class="card-title">Add Collateral</h5>
+                                                <p>You have {{ pair.userBentoCollateralAmount.print(pair.collateral.decimals, 0) }} {{ pair.collateral.symbol }} in the BentoBox.</p>
+                                                <div class="input-group" style="max-width: 350px;">
+                                                    <input class="form-control" type="number" v-model="addCollateralAmount">
+                                                    <div class="input-group-append">
+                                                        <span class="input-group-text" style="cursor: pointer;" @click="addCollateralAmount = pair.userBentoCollateralAmount.toDec(pair.collateral.decimals)">Max</span>
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-primary ml-2" @click='addCollateral(pair)' :disabled="!Number(addCollateralAmount)">Add Collateral</button>
+                                                </div>
+                                            </div>                                        
+                                            <div v-if="pair.userBentoAssetAmount">
+                                                <h5 class="card-title">Add Supply</h5>
+                                                <p>You have {{ pair.userBentoAssetAmount.print(pair.asset.decimals, 0) }} {{ pair.asset.symbol }} in the BentoBox.</p>
+                                                <div class="input-group" style="max-width: 350px;">
+                                                    <input class="form-control" type="number" v-model="addAssetAmount">
+                                                    <div class="input-group-append">
+                                                        <span class="input-group-text" style="cursor: pointer;" @click="addAssetAmount = pair.userBentoAssetAmount.toDec(pair.asset.decimals)">Max</span>
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-primary ml-2" @click='addAsset(pair)' :disabled="!Number(addAssetAmount)">Add Supply</button>
+                                                </div>
+                                            </div>                                        
+                                            <div v-if="pair.userCollateralShare">
+                                                <h5 class="card-title">Borrow</h5>
+                                                <div class="input-group" style="max-width: 350px;">
+                                                    <input class="form-control" type="number" v-model="borrowAmount">
+                                                    <div class="input-group-append">
+                                                        <span class="input-group-text" style="cursor: pointer;" @click="borrowAmount = 0">Max</span>
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-primary ml-2" @click='borrow(pair)' :disabled="!Number(borrowAmount)">Borrow</button>
+                                                </div>
+                                            </div>                                        
                                         </div>
-                                        <div v-if="pair.userBentoCollateralAmount" class="mx-3">
-                                            <h5 class="card-title">Add Collateral</h5>
-                                            <p>You have {{ pair.userBentoCollateralAmount.print(pair.collateral.decimals, 0) }} {{ pair.collateral.symbol }} in the BentoBox.</p>
-                                            <div class="input-group" style="max-width: 350px;">
-                                                <input class="form-control" type="number" v-model="addCollateralAmount">
-                                                <div class="input-group-append">
-                                                    <span class="input-group-text" style="cursor: pointer;" @click="addCollateralAmount = pair.userBentoCollateralAmount.toDec(pair.collateral.decimals)">Max</span>
-                                                </div>
-                                                <button type="button" class="btn btn-sm btn-primary ml-2" @click='addCollateral(pair)' :disabled="!Number(addCollateralAmount)">Add Collateral</button>
-                                            </div>
-                                        </div>                                        
-                                        <div v-if="pair.userBentoAssetAmount" class="mx-3">
-                                            <h5 class="card-title">Add Supply</h5>
-                                            <p>You have {{ pair.userBentoAssetAmount.print(pair.asset.decimals, 0) }} {{ pair.asset.symbol }} in the BentoBox.</p>
-                                            <div class="input-group" style="max-width: 350px;">
-                                                <input class="form-control" type="number" v-model="addAssetAmount">
-                                                <div class="input-group-append">
-                                                    <span class="input-group-text" style="cursor: pointer;" @click="addAssetAmount = pair.userBentoAssetAmount.toDec(pair.asset.decimals)">Max</span>
-                                                </div>
-                                                <button type="button" class="btn btn-sm btn-primary ml-2" @click='addAsset(pair)' :disabled="!Number(addAssetAmount)">Add Supply</button>
-                                            </div>
-                                        </div>                                        
-                                        <div v-if="pair.userCollateralShare" class="mx-3">
-                                            <h5 class="card-title">Borrow</h5>
-                                            <div class="input-group" style="max-width: 350px;">
-                                                <input class="form-control" type="number" v-model="borrowAmount">
-                                                <div class="input-group-append">
-                                                    <span class="input-group-text" style="cursor: pointer;" @click="borrowAmount = 0">Max</span>
-                                                </div>
-                                                <button type="button" class="btn btn-sm btn-primary ml-2" @click='borrow(pair)' :disabled="!Number(borrowAmount)">Borrow</button>
-                                            </div>
-                                        </div>                                        
                                     </td>
                                 </tr>
                             </template>
@@ -220,6 +229,14 @@
         return amount * 10n / 11n
     }
 
+    function toElastic(base, rebaseObj) {
+        return rebase(base, rebaseObj.base, rebaseObj.elastic)
+    }
+
+    function toBase(base, rebaseObj) {
+        return rebase(base, rebaseObj.elastic, rebaseObj.base)
+    }
+
     app.page = {
         props: ["web3", "manager", "address", "block", "assets", "time"],
         data: function () {
@@ -239,28 +256,35 @@
             pairsChecked: function() {
                 return this.pairs.filter(pair => pair.checked && pair.collateral && pair.asset).map(pair => {
                     objAssign(pair, {
-                        totalCollateralAmount: pair.collateral.bentoShare ? pair.totalCollateralShare * pair.collateral.bentoAmount / pair.collateral.bentoShare : 0n,
-                        totalAssetAmount: pair.asset.bentoShare ? pair.totalAsset.elastic * pair.asset.bentoAmount / pair.asset.bentoShare : 0n,
-                        currentBorrowAmount: pair.totalBorrow.elastic + ((pair.totalBorrow.elastic * pair.accrueInfo.interestPerSecond * (app.time / 1000n - pair.accrueInfo.lastAccrued)) / 1000000000000000000n),
+                        interestPerYear: pair.accrueInfo.interestPerSecond * 60n * 60n * 24n * 365n,
 
-                        userBentoCollateralAmount: pair.collateral.bentoShare ? pair.collateral.bentoBalance * pair.collateral.bentoAmount / pair.collateral.bentoShare : 0n,
-                        userBentoAssetAmount: pair.asset.bentoShare ? pair.asset.bentoBalance * pair.asset.bentoAmount / pair.asset.bentoShare : 0n,
+                        totalCollateralAmount:  pair.collateral.toAmount(pair.totalCollateralShare),
+                        totalAssetAmount: pair.asset.toAmount(pair.totalAsset.elastic),
+                        currentBorrowAmount: pair.totalBorrow.elastic + pair.accrue(pair.totalBorrow.elastic),
 
-                        userCollateralAmount: pair.collateral.bentoShare ? pair.userCollateralShare * pair.collateral.bentoAmount / pair.collateral.bentoShare : 0n,
-                        userAssetShare: pair.totalAsset.base ? pair.userAssetFraction * pair.totalAsset.elastic / pair.totalAsset.base : 0n,
-                        userBorrowAmount: pair.totalBorrow.base ? pair.userBorrowPart * pair.totalBorrow.elastic / pair.totalBorrow.base : 0n,
+                        userBentoCollateralAmount: pair.collateral.toAmount(pair.collateral.bentoBalance),
+                        userBentoAssetAmount: pair.asset.toAmount(pair.asset.bentoBalance),
 
-                        feeAssetShare: pair.totalAsset.base ? pair.accrueInfo.feesEarnedFraction * pair.totalAsset.elastic / pair.totalAsset.base : 0n,
+                        userCollateralAmount: pair.collateral.toAmount(pair.userCollateralShare),
+                        userAssetShare: toElastic(pair.userAssetFraction, pair.totalAsset),
+                        userBorrowAmount: toElastic(pair.userBorrowPart, pair.totalBorrow),
+
+                        feeAssetShare: toElastic(pair.accrueInfo.feesEarnedFraction, pair.totalAsset),
+                    })
+
+                    objAssign(pair, {
+                        utilization: pair.currentBorrowAmount ? pair.currentBorrowAmount * 1000000000000000000n / (pair.totalAssetAmount + pair.currentBorrowAmount) : 0n,
+                        userAssetAmount: pair.asset.toAmount(pair.userAssetShare),
+                        userAssetAmountFromBorrows: rebase(pair.userAssetFraction, pair.totalAsset.base, pair.currentBorrowAmount),
+                        currentUserBorrowAmount: pair.userBorrowAmount + takeFee(pair.accrue(pair.userBorrowAmount)),
+
+                        feeAssetAmount: pair.asset.toAmount(pair.feeAssetShare),
+                        feeAssetAmountFromBorrows: rebase(pair.accrueInfo.feesEarnedFraction, pair.totalAsset.base, pair.currentBorrowAmount),
+                        feeAssetAmountAccrued: pair.accrue(pair.totalBorrow.elastic) * 1n / 11n,
                     })
 
                     return objAssign(pair, {
-                        userAssetAmount: pair.asset.bentoShare ? pair.userAssetShare * pair.asset.bentoAmount / pair.asset.bentoShare: 0n,
-                        userAssetAmountFromBorrows: pair.totalAsset.base ? pair.userAssetFraction * pair.currentBorrowAmount / pair.totalAsset.base : 0n,
-                        currentUserBorrowAmount: pair.userBorrowAmount + takeFee((pair.userBorrowAmount * pair.accrueInfo.interestPerSecond * (app.time / 1000n - pair.accrueInfo.lastAccrued)) / 1000000000000000000n),
-
-                        feeAssetAmount: pair.asset.bentoShare ? pair.feeAssetShare * pair.asset.bentoAmount / pair.asset.bentoShare: 0n,
-                        feeAssetAmountFromBorrows: pair.totalAsset.base ? pair.accrueInfo.feesEarnedFraction * pair.currentBorrowAmount / pair.totalAsset.base : 0n,
-                        feeAssetAmountAccrued: ((pair.totalBorrow.elastic * pair.accrueInfo.interestPerSecond * (app.time / 1000n - pair.accrueInfo.lastAccrued)) / 1000000000000000000n) * 1n / 11n,
+                        supplyAPR: takeFee(pair.interestPerYear * pair.utilization) / 1000000000000000000n
                     })
                 })
             }
@@ -292,9 +316,11 @@
                     objAssign(pair, {
                         collateral: app.assetManager.addAsset({ address: pair.collateralAddress }),
                         asset: app.assetManager.addAsset({ address: pair.assetAddress }),
+                        accrue: function(amount) {
+                            return ((amount * this.accrueInfo.interestPerSecond * (app.time / 1000n - this.accrueInfo.lastAccrued)) / 1000000000000000000n)
+                        }
                     })
                 })
-                //await app.assetManager.
                 await this.poll()
             },
             poll: async function() {
@@ -303,7 +329,6 @@
                     kashiInfo.forEach((pair, i) => objAssign(this.pairs[i], pair))
                     this.pairs.forEach(pair => {
                         objAssign(pair, {
-                            interestPerYear: pair.accrueInfo.interestPerSecond * 60n * 60n * 24n * 365n * 100n,
                             checked: true
                         })
                     })
@@ -318,7 +343,10 @@
                 await this.web3.bentobox.deploy(this.web3.kashipair.address, kashiData, true).send({ from: this.address })
             },
             drip: async function () {
-                await this.web3.faucet.drip().send({ from: this.address });
+                await this.web3.faucet.drip().send({ from: this.address })
+            },
+            updateExchangeRate: async function(pair) {
+                await this.web3.contract("kashipair", pair.address).methods.updateExchangeRate().send({ from: this.address })
             },
             addCollateral: async function (pair) {
                 const cooker = new KashiCooker(pair, this.web3, this.address)
