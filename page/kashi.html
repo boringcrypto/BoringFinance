@@ -25,7 +25,7 @@
                                             <td v-if="pair.asset">{{ pair.asset.symbol }}</td>
                                             <td>{{ pair.oracleName }}</td>
                                             <td class="text-right">
-                                                {{ pair.interestPerYear.print(16, 2) }}%
+                                                {{ pair.currentInterestPerYear.print(16, 2) }}%
                                                 <span v-if="pair.totalBorrow.base && pair.utilization < 700000000000000000n"><i class="fas fa-arrow-alt-circle-down"></i></span>
                                                 <span v-else-if="pair.totalBorrow.base && pair.utilization > 800000000000000000n"><i class="fas fa-arrow-alt-circle-up"></i></span>
                                                 <span v-else=""><i class="fas fa-minus-circle"></i></span>
@@ -46,7 +46,7 @@
                                                         </small>
                                                     </p>
 
-                                                    <div class="alert alert-danger" role="alert" v-if="pair.newHealth < 1150000000000000000n">
+                                                    <div class="alert alert-danger" role="alert" v-if="pair.newHealth && pair.newHealth < 1150000000000000000n">
                                                         <i class="fas fa-bomb"></i> You have borrowed a high amount against your collateral. A small change in price may cause you to get liquidated. It is recommended that you add more collateral or repay some of what you have borrowed.
                                                     </div>
 
@@ -176,7 +176,7 @@
                                                 {{ pair.currentExchangeRate.print(pair.collateral.decimals + 18n - pair.asset.decimals, 1) }}
                                             </td>
                                             <td class="text-right">{{ pair.utilization.print(16, 2) }}%</td>
-                                            <td class="text-right">{{ pair.supplyAPR.print(16, 2) }}%</td>
+                                            <td class="text-right">{{ pair.currentSupplyAPR.print(16, 2) }}%</td>
                                         </tr>
                                         <tr :class="'collapse kashiSupply' + pair.address" style="background-color: #eeeeee">
                                             <td colspan="7">
@@ -376,6 +376,17 @@
     // Any external call (except to BentoBox)
     const ACTION_CALL = 30;
 
+    const MINIMUM_TARGET_UTILIZATION = 700000000000000000n; // 70%
+    const MAXIMUM_TARGET_UTILIZATION = 800000000000000000n; // 80%
+    const UTILIZATION_PRECISION = 1000000000000000000n;
+    const FULL_UTILIZATION = 1000000000000000000n;
+    const FULL_UTILIZATION_MINUS_MAX = FULL_UTILIZATION - MAXIMUM_TARGET_UTILIZATION;
+    const STARTING_INTEREST_PER_YEAR = 68493150675n * 60n * 60n * 24n * 365n; // approx 1% APR
+    const MINIMUM_INTEREST_PER_YEAR = 17123287665n * 60n * 60n * 24n * 365n; // approx 0.25% APR
+    const MAXIMUM_INTEREST_PER_YEAR = 68493150675000n * 60n * 60n * 24n * 365n; // approx 1000% APR
+    const INTEREST_ELASTICITY = 28800000000000000000000000000000000000000n; // Half or double in 28800 seconds (8 hours) if linear
+    const FACTOR_PRECISION = 1000000000000000000n;
+
     class KashiCooker {
         constructor(pair, web3, userAddress) {
             this.web3 = web3
@@ -452,7 +463,6 @@
             pairsChecked: function() {
                 return this.pairs.filter(pair => pair.checked && pair.collateral && pair.asset && pair.collateral.loaded && pair.asset.loaded).map(pair => {
                     if (!pair.collateralFrom) { 
-                        console.log(pair.collateral.bentoBalance)
                         pair.collateralFrom = pair.collateral.bentoBalance ? "bento" : "wallet" 
                     }
                     objAssign(pair, {
@@ -497,6 +507,7 @@
                     })
 
                     objAssign(pair, {
+                        currentInterestPerYear: pair.interestAccrue(pair.interestPerYear),
                         supplyAPR: takeFee(pair.interestPerYear * pair.utilization) / 1000000000000000000n,
                         maxBorrowable: BigInt.min(pair.maxBorrowableOracle, pair.maxBorrowableStored),
 
@@ -506,6 +517,7 @@
                     })
 
                     objAssign(pair, {
+                        currentSupplyAPR: takeFee(pair.currentInterestPerYear * pair.utilization) / 1000000000000000000n,
                         newMaxBorrowable: BigInt.min(pair.newMaxBorrowableOracle, pair.newMaxBorrowableStored),
                     })
 
@@ -535,6 +547,8 @@
                 if (deployParams[2].value.toLowerCase() == this.web3.peggedoracle.address.toLowerCase()) {
                     oracleName = "Pegged"
                     oracleDescription = "The exchangeRate is fixed and will never change."
+                } else {
+                    console.log("Uknown oracle:", deployParams[2].value)
                 }
                 if (!oracleName) { return }
 
@@ -555,6 +569,32 @@
                         asset: app.assetManager.addAsset({ address: pair.assetAddress }),
                         accrue: function(amount) {
                             return ((amount * this.accrueInfo.interestPerSecond * (app.time / 1000n - this.accrueInfo.lastAccrued)) / 1000000000000000000n)
+                        },
+                        interestAccrue: function(interest) {
+                            if (!this.totalBorrow.base) {
+                                return STARTING_INTEREST_PER_YEAR;
+                            }
+
+                            let currentInterest = interest
+                            const elapsedTime = (app.time / 1000n - this.accrueInfo.lastAccrued)
+                            if (elapsedTime <= 0) { return currentInterest }
+                            if (this.utilization < MINIMUM_TARGET_UTILIZATION) {
+                                const underFactor = (MINIMUM_TARGET_UTILIZATION - this.utilization) * FACTOR_PRECISION / MINIMUM_TARGET_UTILIZATION;
+                                const scale = INTEREST_ELASTICITY + underFactor * underFactor * elapsedTime;
+                                currentInterest = currentInterest * INTEREST_ELASTICITY / scale;
+
+                                if (currentInterest < MINIMUM_INTEREST_PER_YEAR) {
+                                    currentInterest = MINIMUM_INTEREST_PER_YEAR; // 0.25% APR minimum
+                                }
+                            } else if (this.utilization > MAXIMUM_TARGET_UTILIZATION) {
+                                const overFactor = (this.utilization - MAXIMUM_TARGET_UTILIZATION) * FACTOR_PRECISION / FULL_UTILIZATION_MINUS_MAX;
+                                const scale = INTEREST_ELASTICITY + overFactor * overFactor * elapsedTime;
+                                currentInterest = currentInterest * scale / INTEREST_ELASTICITY;
+                                if (currentInterest > MAXIMUM_INTEREST_PER_YEAR) {
+                                    currentInterest = MAXIMUM_INTEREST_PER_YEAR; // 1000% APR maximum
+                                }
+                            }
+                            return currentInterest
                         },
                         collateralFromBento: false,
                         addCollateralAmount: "",
