@@ -83,8 +83,11 @@
                                                             <input type="radio" id="collateralFromChain" value="wallet" v-model="pair.collateralFrom" autocomplete="off">
                                                             <label for="collateralFromChain">Wallet</label>
                                                         </small>
-                                                    </div>                                        
-                                                    <div v-if="pair.userCollateralShare && pair.safeMaxBorrowableLeft > 0n" class="mt-3" style="max-width: 400px;">
+                                                    </div>
+                                                    <div v-else="" class="mt-3">
+                                                        You don't have any {{ pair.collateral.symbol }} for collateral, so you can't borrow.
+                                                    </div>                                       
+                                                    <div v-if="pair.newUserCollateralAmount && pair.safeMaxBorrowableLeft > 0n" class="mt-3" style="max-width: 400px;">
                                                         <div class="mb-1">
                                                             <div class="float-right pt-1"><small>${{ pair.userBorrowUSD.print(6, 2) }}</small></div>
                                                             Borrowed: {{ pair.currentUserBorrowAmount.print(pair.asset.decimals, 0) }} {{ pair.asset.symbol }}
@@ -117,6 +120,9 @@
                                                     
                                                     <div v-if="app.debug">
                                                         <h5 class="card-title mt-3">Testing Info</h5>
+                                                        Borrow interest (in contract): {{ pair.interestPerYear }}<br>
+                                                        Borrow interest (in contract): {{ pair.interestPerYear }}<br>
+
                                                         Rate (oracle): {{ pair.oracleExchangeRate.print(pair.collateral.decimals + 18n - pair.asset.decimals, 1) }}<br>
                                                         Rate (stored): {{ pair.currentExchangeRate.print(pair.collateral.decimals + 18n - pair.asset.decimals, 1) }}<br>
         
