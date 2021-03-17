@@ -187,7 +187,8 @@
                     xsushiSupply: 0n,
                     sushiBarAllowance: 0n,
                     pendingSushi: 0n,
-                    timestamp: 0n
+                    timestamp: 0n,
+                    kashiApproved: false
                 },
                 mounted: function () {
                     this.time = BigInt(Date.now());
@@ -220,7 +221,7 @@
                     },
                     poll: async function () {
                         console.log(this.manager.currency)
-                        const info = rpcToObj(await this.manager.web3.boringhelper.getUIInfo(this.manager.address || "0x0000000000000000000000000000000000000000", [], this.manager.currency).call())
+                        const info = rpcToObj(await this.manager.web3.boringhelper.getUIInfo(this.manager.address || "0x0000000000000000000000000000000000000000", [], this.manager.currency, [this.manager.web3.kashipair.address]).call())
                         console.log(info)
                         this.ethRate = info.ethRate
                         this.btcRate = info.btcRate ? this.ethRate * 100000000n / info.btcRate : 0n
@@ -238,6 +239,8 @@
 
                         this.pendingSushi = info.pendingSushi
                         this.timestamp = info.blockTimeStamp
+
+                        this.kashiApproved = info.masterContractApproved[0]
 
                         await this.assetManager.poll();
                     },
@@ -306,7 +309,7 @@
 
             async find(full) {
                 const balances = []
-                rpcToObj(await this.web3.boringhelper2.findBalances(this.address, await this.tokenAddresses(full)).call()).filter(t => t.balance != 0n || t.bentoBalance != 0n).forEach(b => {
+                rpcToObj(await this.web3.boringhelper.findBalances(this.address, await this.tokenAddresses(full)).call()).filter(t => t.balance != 0n || t.bentoBalance != 0n).forEach(b => {
                     const asset = this.addAsset(this.tokenLookup(b.token))
                     asset.balance = b.balance
                     asset.bentoBalance = b.bentoBalance
@@ -375,7 +378,7 @@
 
             async poll() {
                 if (this.address) {
-                    let balances = await this.web3.boringhelper3.getBalances(this.address, this.assets.map(a => a.address).filter(a => a != ETHEREUM_ADDRESS)).call()
+                    let balances = await this.web3.boringhelper.getBalances(this.address, this.assets.map(a => a.address).filter(a => a != ETHEREUM_ADDRESS)).call()
                     balances.forEach(b => {
                         let asset = this.assetmap[b.token.toLowerCase()]
                         objAssign(asset, rpcToObj(b))

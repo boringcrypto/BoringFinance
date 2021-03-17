@@ -371,22 +371,28 @@ contract BoringHelper is Ownable {
         uint256 btcRate;
         uint256 pendingSushi;
         uint256 blockTimeStamp;
+        bool[] masterContractApproved;
     }
 
     function getUIInfo(
         address who,
         IFactory[] calldata factoryAddresses,
-        IERC20 currency
+        IERC20 currency,
+        address[] calldata masterContracts
     ) public view returns (UIInfo memory) {
         UIInfo memory info;
         info.ethBalance = who.balance;
 
         info.factories = new Factory[](factoryAddresses.length);
-
         for (uint256 i = 0; i < factoryAddresses.length; i++) {
             IFactory factory = factoryAddresses[i];
             info.factories[i].factory = factory;
             info.factories[i].allPairsLength = factory.allPairsLength();
+        }
+
+        info.masterContractApproved = new bool[](masterContracts.length);
+        for (uint256 i = 0; i < masterContracts.length; i++) {
+            info.masterContractApproved[i] = bentoBox.masterContractApproved(masterContracts[i], who);
         }
 
         if (currency != IERC20(0)) {
