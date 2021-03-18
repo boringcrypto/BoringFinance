@@ -197,3 +197,384 @@ Vue.component("eventreader", {
     template:
         "<web3 :manager='manager' :isglobal='isglobal' :init='init' :close='close'><slot v-if='status.loading'></slot></web3>",
 })
+
+class Value {
+    constructor(value, name) {
+        this.value = BigInt(value || 0n)
+        this.name = name
+    }
+
+    get str() {
+        if (this.value.print) {
+            return this.value.print(this.asset.decimals, 2)
+        }
+        console.warn("Cannot print value for Value", this.name)
+    }
+
+    get number() {
+        return this.value.toDec(this.asset.decimals)
+    }
+
+    get set() {
+        return this.value != 0n
+    }
+}
+
+class AssetValue extends Value {
+    constructor(value, asset, name) {
+        if (!asset) {
+            console.warn("Missing asset")
+        }
+        super(value, name)
+        this.asset = asset
+    }
+}
+
+class Amount extends AssetValue {
+    constructor(value, asset, name) {
+        if (value instanceof Value) {
+            if (value instanceof Amount) {
+                value = value.value
+            } else {
+                console.warn("Wrong type, not Amount", this.name)
+            }
+        }
+        super(value, asset, name)
+    }
+
+    get str() {
+        if (this.value.print) {
+            return this.value.print(this.asset.decimals, 2) + ' ' + this.asset.symbol
+        }
+        console.warn("Cannot print value for Amount", this.name)
+    }
+
+    get amount() {
+        return this
+    }
+
+    get share() {
+        return new Share(this.asset.bentoAmount ? this.value * this.asset.bentoShare / this.asset.bentoAmount : 0n, this.asset, this.name)
+    }
+
+    get usd() {
+        return new USD(this.asset.rate > 0n ? this.value * (app.ethRate || 0n) / this.asset.rate : 0n, this.name)
+    }
+}
+
+class Share extends AssetValue {
+    constructor(value, asset, name) {
+        if (value instanceof Value) {
+            if (value instanceof Share) {
+                value = value.value
+            } else {
+                console.warn("Wrong type, not Amount", this.name)
+            }
+        }
+        super(value, asset, name)
+    }
+
+    get str() {
+        if (this.value.print) {
+            return this.value.print(0, 0) + ' ' + this.asset.symbol + ' shares'
+        }
+        console.warn("Cannot print value for Share", this.name)        
+    }
+    
+    get amount() {
+        return new Amount(this.asset.bentoShare ? this.value * this.asset.bentoAmount / this.asset.bentoShare : 0n, this.asset, this.name)
+    }
+
+    get share() {
+        return this
+    }
+
+    get usd() {
+        return this.amount.usd
+    }
+}
+
+class USD extends Value {
+    get str() {
+        if (this.value.print) {
+            return this.value.print(6, 2)
+        }
+        console.warn("Cannot print value for USD", this.name)
+    }
+}
+
+class Pair {
+    constructor(pair, web3) {
+        this.address = pair.address
+        this.collateralAddress = pair.collateralAddress
+        this.assetAddress = pair.assetAddress
+        this.oracle = pair.oracle
+        this.oracleData = pair.oracleData
+        this.added = false
+        this.collateral = app.assetManager.addAsset({ address: pair.collateralAddress })
+        this.asset = app.assetManager.addAsset({ address: pair.assetAddress })
+        this.oracle = pair.oracle
+
+        if (pair.oracle == web3.peggedoracle.address.toLowerCase()) {
+            this.oracleName = "Pegged"
+            this.oracleDescription = "The exchange rate is fixed and will never change. This oracle may be used when both collateral and asset are pegged to the same underlying asset, such as USDT and DAI. But if either the collateral or the asset loses it's peg permanently, no liquidiations will happen as the exchange rate will stay the same. The benefit is that this pair unaffected by market manipulation."
+            this.oracleVerified = true
+        }
+
+        this.addCollateralAmount = ""
+        this.addAssetAmount = ""
+        this.borrowAmount = ""
+        this.collateralFrom = ""
+        this.supplyFrom = ""
+    }
+
+    update(pair) {
+        Vue.set(this, "totalCollateral", new Share(pair.totalCollateralShare, this.collateral, "totalCollateral"))
+        Vue.set(this, "userCollateral", new Share(pair.userCollateralShare, this.collateral, "userCollateral"))
+
+        Vue.set(this, "totalAsset", new AssetRebase(pair.totalAsset, this))
+        Vue.set(this, "userAsset", new Fraction(pair.userAssetFraction, this, "userAssetFraction"))
+
+        Vue.set(this, "totalBorrow", new BorrowRebase(pair.totalBorrow, this))
+        Vue.set(this, "userBorrow", new Part(pair.userBorrowPart, this, "userBorrowPart"))
+
+        Vue.set(this, "currentExchangeRate", pair.currentExchangeRate)
+        Vue.set(this, "oracleExchangeRate", pair.oracleExchangeRate)
+        Vue.set(this, "accrueInfo", pair.accrueInfo)
+
+        // Calculated
+        Vue.set(this, "timeElapsed", app.timestamp - this.accrueInfo.lastAccrued)
+        Vue.set(this, "interestPerYear", this.accrueInfo.interestPerSecond * 60n * 60n * 24n * 365n)
+
+        Vue.set(this, "totalBorrowable", new Share(this.totalAsset.elastic > 1000n ? this.totalAsset.elastic - 1000n : 0n, this.asset, "totalBorrowable"))
+
+        Vue.set(this, "fee", new Fraction(this.accrueInfo.feesEarnedFraction, this, "fee"))
+
+        Vue.set(this, "checked", true)
+    }
+
+    accrue(amount) {
+        return ((amount * this.accrueInfo.interestPerSecond * this.timeElapsed) / 1000000000000000000n)
+    }
+
+    interestAccrue(interest) {
+        if (!this.totalBorrow.base) {
+            return STARTING_INTEREST_PER_YEAR;
+        }
+
+        let currentInterest = interest
+        if (this.timeElapsed <= 0) { return currentInterest }
+        if (this.utilization < MINIMUM_TARGET_UTILIZATION) {
+            const underFactor = (MINIMUM_TARGET_UTILIZATION - this.utilization) * FACTOR_PRECISION / MINIMUM_TARGET_UTILIZATION;
+            const scale = INTEREST_ELASTICITY + underFactor * underFactor * this.timeElapsed;
+            currentInterest = currentInterest * INTEREST_ELASTICITY / scale;
+
+            if (currentInterest < MINIMUM_INTEREST_PER_YEAR) {
+                currentInterest = MINIMUM_INTEREST_PER_YEAR; // 0.25% APR minimum
+            }
+        } else if (this.utilization > MAXIMUM_TARGET_UTILIZATION) {
+            const overFactor = (this.utilization - MAXIMUM_TARGET_UTILIZATION) * FACTOR_PRECISION / FULL_UTILIZATION_MINUS_MAX;
+            const scale = INTEREST_ELASTICITY + overFactor * overFactor * this.timeElapsed;
+            currentInterest = currentInterest * scale / INTEREST_ELASTICITY;
+            if (currentInterest > MAXIMUM_INTEREST_PER_YEAR) {
+                currentInterest = MAXIMUM_INTEREST_PER_YEAR; // 1000% APR maximum
+            }
+        }
+        return currentInterest
+    }
+}
+
+class PairValue extends Value {
+    constructor(value, pair, name) {
+        if (!pair) {
+            console.warn("Missing pair")
+        }
+        super(value, name)
+        this.pair = pair
+    }
+
+    get share() {
+        return this.amount.share
+    }
+
+    get usd() {
+        return this.amount.usd
+    }
+}
+
+class Part extends PairValue {
+    constructor(value, pair, name) {
+        if (value instanceof Value) {
+            if (value instanceof Part) {
+                value = value.value
+            } else {
+                console.warn("Wrong type, not Part", this.name, this.pair)
+            }
+        }
+        super(value, pair, name)
+    }
+
+    get str() {
+        if (this.value.print) {
+            return this.value.print(0, 0) + ' ' + this.asset.symbol + ' parts'
+        }
+        console.warn("Cannot print value for Part", this.name, this.pair)        
+    }
+    
+    get amount() {
+        return new Amount(this.pair.totalBorrow.base ? this.value * this.pair.totalBorrow.elastic / this.pair.totalBorrow.base : 0n, this.pair.asset, this.name)
+    }
+
+    get part() {
+        return this
+    }
+}
+
+class BorrowAmount extends PairValue {
+    constructor(value, pair, name) {
+        if (value instanceof Value) {
+            if (value instanceof BorrowAmount) {
+                value = value.value
+            } else {
+                console.warn("Wrong type, not BorrowAmount", this.name, this.pair)
+            }
+        }
+        super(value, pair, name)
+    }
+
+    get str() {
+        return this.amount.str
+    }
+    
+    get amount() {
+        return new Amount(this.value, this.pair.asset, this.name)
+    }
+
+    get part() {
+        return new Part(this.pair.totalBorrow.elastic ? this.value * this.pair.totalBorrow.base / this.pair.totalBorrow.elastic : 0n, this.pair, this.name)
+    }
+
+    get currentAmount() {
+        //amount * 9n / 10n
+        const accrued = ((this.amount * this.pair.accrueInfo.interestPerSecond * (app.timestamp - this.pair.accrueInfo.lastAccrued)) / 1000000000000000000n)
+
+        return this.amount.value + takeFee(pair.accrue(pair.userBorrow.amount.value))
+    }
+}
+
+class Fraction extends PairValue {
+    constructor(value, pair, name) {
+        if (value instanceof Value) {
+            if (value instanceof Fraction) {
+                value = value.value
+            } else {
+                console.warn("Wrong type, not Fraction", this.name, this.pair)
+            }
+        }
+        super(value, pair, name)
+    }
+
+    get str() {
+        if (this.value.print) {
+            return this.value.print(0, 0) + ' ' + this.pair.asset.symbol + ' fractions'
+        }
+        console.warn("Cannot print value for Fraction", this.name, this.pair)        
+    }
+    
+    get amount() {
+        return this.share.amount
+    }
+
+    get share() {
+        return new Share(this.pair.totalAsset.toElastic(this.value), this.pair.asset, this.name)
+    }
+
+    get usd() {
+        return this.amount.usd
+    }
+}
+
+class AssetShare extends PairValue {
+    constructor(value, pair, name) {
+        if (value instanceof Value) {
+            if (value instanceof Fraction) {
+                value = value.value
+            } else {
+                console.warn("Wrong type, not Fraction", this.name, this.pair)
+            }
+        }
+        super(value, pair, name)
+    }
+
+    get str() {
+        if (this.value.print) {
+            return this.value.print(0, 0) + ' ' + this.asset.symbol + ' fractions'
+        }
+        console.warn("Cannot print value for Fraction", this.name, this.pair)        
+    }
+    
+    get amount() {
+        return this.share.amount
+    }
+
+    get share() {
+        return new Share(this.pair.totalAsset.toElastic(this.value), this.pair.asset, this.name)
+    }
+
+    get usd() {
+        return this.amount.usd
+    }
+}
+
+class Rebase {
+    constructor(rebase, pair, name) {
+        this.base = rebase.base
+        this.elastic = rebase.elastic
+        this.pair = pair
+        this.name = name
+    }
+
+    toElastic(base) {
+        return rebase(base, this.base, this.elastic)
+    }
+
+    toBase(elastic, rebaseObj) {
+        return rebase(elastic, this.elastic, this.base)
+    }
+}
+
+class AssetRebase extends Rebase {
+    constructor(rebase, pair) {
+        super(rebase, pair, "totalAsset")
+    }
+
+    get fraction() {
+        return new Fraction(this.base, this.pair, this.name)
+    }
+
+    get amount() {
+        return this.share.amount
+    }
+
+    get share() {
+        return new AssetShare(this.elastic, this.pair, this.name)
+    }
+}
+
+class BorrowRebase extends Rebase {
+    constructor(rebase, pair) {
+        super(rebase, pair, "totalBorrow")
+    }
+
+    get part() {
+        return new Part(this.base, this.pair, this.name)
+    }
+
+    get amount() {
+        return new BorrowAmount(this.elastic, this.pair, this.name)
+    }
+
+    get current() {
+        return new BorrowAmount(this.elastic + this.pair.accrue(this.elastic), this.pair, "current" + this.name)
+    }
+}

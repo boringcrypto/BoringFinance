@@ -21,7 +21,11 @@ JSON.parseBigInt = function (str) {
 objAssign = function (to, from) {
     if (window.Vue) {
         for (let i in from) {
-            Vue.set(to, i, from[i])
+            if (to[i] instanceof Value) {
+                to[i].value = from[i] instanceof Value ? from[i].value : from[i]
+            } else {
+                Vue.set(to, i, from[i])
+            }
         }
     } else {
         Object.assign(to, from)
@@ -39,7 +43,7 @@ rpcToObj = function (rpc_obj, obj) {
                 if (isNaN(i)) {
                     // Not always correct, but overall useful
                     try {
-                        obj[i] =
+                        const value =
                             isNaN(rpc_obj[i]) ||
                             i.indexOf("name") != -1 ||
                             i.indexOf("symbol") != -1 ||
@@ -48,6 +52,12 @@ rpcToObj = function (rpc_obj, obj) {
                             typeof rpc_obj[i] == "object"
                                 ? rpcToObj(rpc_obj[i])
                                 : BigInt(rpc_obj[i])
+
+                        if (obj[i] instanceof Value) {
+                            obj[i].value = value
+                        } else {
+                            obj[i] = value
+                        }
                     } catch (e) {
                         console.log("rpcToObj error", rpc_obj[i], typeof rpc_obj[i])
                     }
@@ -58,6 +68,14 @@ rpcToObj = function (rpc_obj, obj) {
         return rpc_obj.map(item => rpcToObj(item));
     }
     return rpc_obj
+}
+
+paramsToObj = function (params, obj) {
+    if (!obj) {
+        obj = {}
+    }
+    params.forEach(param => obj[param.name] = param.value)
+    return obj
 }
 
 groupBy = function(data, key) {
@@ -374,7 +392,7 @@ window.DB = {
     },
 }
 
-appVersion = 2
+appVersion = 3
 
 DB.get("version", (version) => {
     if (version != appVersion) {

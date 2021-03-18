@@ -1,0 +1,61 @@
+<template id="component_template">
+    <div class="input-group">
+        <input ref="number" class="form-control" type="number" :value="value" @input="update" @focus="maxed = false">
+        <div class="input-group-append">
+            <span class="input-group-text" style="cursor: pointer;" @click="maximize">Max</span>
+        </div>
+    </div>
+</template>
+<script>
+    addComponent('numberinput', {
+        props: ["value", "max"],
+        data: function() {
+            return {
+                maxed: false
+            }
+        },
+        watch: {
+            max: function () {
+                if (this.maxed) {
+                    this.$refs.number.value = this.max
+                    this.update()
+                }
+            }
+        },
+        methods: {
+            maximize: function() {
+                this.maxed = true
+                this.$refs.number.value = this.max
+                this.update()
+            },
+            update: function() {
+                this.$emit('input', this.$refs.number.value)
+            }
+        }
+    });
+</script>
+
+<template id="component_alert">
+    <div :class="'alert alert-' + alertClass" role="alert">
+        <i :class="iconClass"></i> <slot></slot>
+    </div>
+</template>
+<script>
+    addComponent('alert', {
+        props: ["type"],
+        computed: {
+            alertClass: function() {
+                return {
+                    info: "secondary",
+                    error: "danger"
+                }[this.type || "info"]
+            },
+            iconClass: function() {
+                return {
+                    info: "fas fa-info-circle",
+                    error: "fas fa-bomb"
+                }[this.type || "info"]
+            }
+        }
+    }, "#component_alert");
+</script>

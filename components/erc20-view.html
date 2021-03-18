@@ -12,20 +12,20 @@
                     <th class="text-right">Value</th>
                 </tr>
             </thead>
-            <template v-for="asset in assetsOrdered" v-if="(asset.balance > 0n || asset.bentoBalance > 0n) && !asset.hide">
+            <template v-for="asset in assetsOrdered" v-if="(asset.balance.set || asset.bentoBalance > 0n) && !asset.hide">
                 <tr style="cursor: pointer;" data-toggle="collapse" :data-target="'.erc20' + asset.address" @click="loadInfo(asset)">
                     <td v-if="manager.chainId=='0x1'" class="py-2 px-0" style="width: 28px"><img class="rounded"
                             :src="logo_url(asset)" style="width: 28px; height: 28px;" onerror="this.style.display='none'"/>
                     </td>
                     <td>{{ asset.symbol }}</td>
                     <td class="text-right d-none d-sm-table-cell">
-                        <span v-if="asset.balance && typeof(asset.decimals) == 'bigint'">
-                            {{ asset.balance.print(asset.decimals, 0) }}
+                        <span v-if="asset.balance.set && typeof(asset.decimals) == 'bigint'">
+                            {{ asset.balance.str }}
                         </span>
                     </td>
                     <td class="text-right d-none d-sm-table-cell">
-                        <span v-if="asset.bentoBalance && typeof(asset.decimals) == 'bigint' && asset.bentoAmount">
-                            {{ asset.bentoUserAmount.print(asset.decimals, 0) }}
+                        <span v-if="asset.bentoBalance.set && typeof(asset.decimals) == 'bigint' && asset.bentoAmount">
+                            {{ asset.bentoBalance.amount.str }}
                         </span>
                     </td>
                     <td>                                   
@@ -43,7 +43,7 @@
                         <span v-if="asset.rate && app.ethRate && !asset.hide_value">
                             ${{ asset.usdValue.print(6, 2) }}
                             <span class="d-inline d-sm-none"><br><small
-                                    v-if="typeof(asset.decimals) == 'bigint'">{{ asset.balance.print(asset.decimals, 2) }}</small></span>
+                                    v-if="typeof(asset.decimals) == 'bigint'">{{ asset.balance.str }}</small></span>
                         </span>
                     </td>
                 </tr>
@@ -51,28 +51,28 @@
                     <td colspan="6">
                         <div :class="'erc20' + asset.address">
                             <h4>{{ asset.name }} ({{ asset.symbol }}) <a v-if="!asset.isNative" :href="'https://etherscan.io/token/' + asset.address" target="_blank"><i class="fas fa-external-link-alt"></i></a></h4>
-                            <div v-if="asset.balance" class="card mb-3">
+                            <div v-if="asset.balance.set" class="card mb-3">
                                 <div class="card-body">
                                     <h5 class="card-title">Deposit to BentoBox</h5>
-                                    <p>You have {{ asset.balance.print(asset.decimals, 0) }} {{ asset.symbol }} outside the BentoBox.</p>
+                                    <p>You have {{ asset.balance.str }} {{ asset.symbol }} outside the BentoBox.</p>
                                     <div class="input-group" style="max-width: 350px;">
                                         <input class="form-control" type="number" v-model="depositAmount">
                                         <div class="input-group-append">
-                                            <span class="input-group-text" style="cursor: pointer;" @click="depositAmount = asset.balance.toDec(asset.decimals)">Max</span>
+                                            <span class="input-group-text" style="cursor: pointer;" @click="depositAmount = asset.balance.number">Max</span>
                                         </div>
                                         <button v-if="asset.bentoAllowance < Decimal(depositAmount).toInt(asset.decimals)" type="button" class="btn btn-sm btn-primary ml-2" @click='approveAll(asset)'>Approve</button>
                                         <button v-else="" type="button" class="btn btn-sm btn-primary ml-2" @click='deposit(asset)' :disabled="!Number(depositAmount)">Deposit</button>
                                     </div>
                                 </div>
                             </div>
-                            <div v-if="asset.bentoBalance" class="card mb-3">
+                            <div v-if="asset.bentoBalance.set" class="card mb-3">
                                 <div class="card-body">
                                     <h5 class="card-title">Withdraw from BentoBox</h5>
-                                    <p>You have {{ asset.bentoUserAmount.print(asset.decimals, 0) }} {{ asset.symbol }} in the BentoBox.</p>
+                                    <p>You have {{ asset.bentoBalance.amount.str }} in the BentoBox.</p>
                                     <div class="input-group mb-3" style="max-width: 350px;">
                                         <input class="form-control" type="number" v-model="withdrawAmount">
                                         <div class="input-group-append">
-                                            <span class="input-group-text" style="cursor: pointer;" @click="withdrawAmount = asset.bentoUserAmount.toDec(asset.decimals)">Max</span>
+                                            <span class="input-group-text" style="cursor: pointer;" @click="withdrawAmount = asset.bentoBalance.amount.number">Max</span>
                                         </div>
                                         <button type="button" class="btn btn-sm btn-primary ml-2" @click='withdraw(asset)' :disabled="!withdrawAmount">Withdraw</button>
                                     </div>
@@ -169,8 +169,7 @@
             assetsOrdered: function () {
                 if (!app.ethRate) { return [] };
                 let assets = this.assets.map(a => {
-                    a.bentoUserAmount = a.bentoShare > 0n ? (a.bentoBalance || 0n) * (a.bentoAmount || 0n) / a.bentoShare : 0n
-                    a.usdValue = a.rate > 0n ? ((a.bentoBalance || 0n) + (a.balance || 0n)) * (app.ethRate || 0n) / a.rate : 0n
+                    a.usdValue = a.rate > 0n ? (a.bentoBalance.value + a.balance.value) * (app.ethRate || 0n) / a.rate : 0n
                     a.isNative = a.address == ETHEREUM_ADDRESS
                     return a;
                 });
@@ -183,7 +182,7 @@
                 let total = 0n;
                 for (i in this.assetsOrdered) {
                     if (this.assets[i].rate > 0n && this.app.ethRate > 0n && !this.assets[i].hide_value) {
-                        total += ((this.assets[i].balance + this.assets[i].bentoUserAmount) * this.app.ethRate / this.assets[i].rate)
+                        total += ((this.assets[i].balance.value + this.assets[i].bentoBalance.amount.value) * this.app.ethRate / this.assets[i].rate)
                     }
                 }
                 return total;
@@ -225,7 +224,7 @@
                 this.web3.bentobox
                     .withdraw(
                         asset.address == this.manager.wrappedNative && !this.withdrawAsWETH ? ETHEREUM_ADDRESS : asset.address, 
-                        this.address, this.address, 0n, asset.bentoBalance)
+                        this.address, this.address, 0n, asset.bentoBalance.value)
                     .send({ from: this.address });
             },
             loadInfo: async function (asset) {

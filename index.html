@@ -220,15 +220,13 @@
                         this.assetManager.init();
                     },
                     poll: async function () {
-                        console.log(this.manager.currency)
                         const info = rpcToObj(await this.manager.web3.boringhelper.getUIInfo(this.manager.address || "0x0000000000000000000000000000000000000000", [], this.manager.currency, [this.manager.web3.kashipair.address]).call())
-                        console.log(info)
                         this.ethRate = info.ethRate
                         this.btcRate = info.btcRate ? this.ethRate * 100000000n / info.btcRate : 0n
                         this.sushiRate = info.sushiRate ? this.ethRate * 1000000000000000000n / info.sushiRate : 0n
                         this.ethBalance = info.ethBalance
                         if (this.assetManager.assetmap[ETHEREUM_ADDRESS]) {
-                            this.assetManager.assetmap[ETHEREUM_ADDRESS].balance = info.ethBalance
+                            this.assetManager.assetmap[ETHEREUM_ADDRESS].balance = new Amount(info.ethBalance, this.assetManager.assetmap[ETHEREUM_ADDRESS], "ETH balance")
                         }
 
                         this.sushiBalance = info.sushiBalance
@@ -261,6 +259,8 @@
             await load_component('xsushi-view');
             await load_component('slp-view');
             await load_component('univ2lp-view');
+
+            await load_component('numberinput');
 
             createApp();
 
@@ -311,8 +311,8 @@
                 const balances = []
                 rpcToObj(await this.web3.boringhelper.findBalances(this.address, await this.tokenAddresses(full)).call()).filter(t => t.balance != 0n || t.bentoBalance != 0n).forEach(b => {
                     const asset = this.addAsset(this.tokenLookup(b.token))
-                    asset.balance = b.balance
-                    asset.bentoBalance = b.bentoBalance
+                    asset.balance.value = b.balance
+                    asset.bentoBalance.value = b.bentoBalance
                 })
             }
             
@@ -324,8 +324,8 @@
                     objAssign(this.assetmap[asset.address], asset)
                 } else {
                     asset.handler = asset.handler || "ERC20Handler"
-                    asset.balance = asset.balance || 0n
-                    asset.bentoBalance = asset.bentoBalance || 0n
+                    asset.balance = new Amount(asset.balance, asset, "balance")
+                    asset.bentoBalance = new Share(asset.bentoBalance, asset, "bentoBalance")
                     asset.bentoAmount = asset.bentoAmount || 0n
                     asset.bentoShare = asset.bentoShare || 0n
                     asset.hide_value = asset.hide_value || false
@@ -387,25 +387,6 @@
                 }
 
                 return this;
-            }
-
-            addOld(asset) {
-                asset.address = asset.address.toLowerCase();
-                asset.view = asset.view || "erc20";
-                asset.handler = asset.handler || this._handlerMap["ERC20Handler"];
-
-                if (this._assetmap[asset.address] && this._assetmap[asset.address].view == asset.view) return this._assetmap[asset.address];
-
-                if (this._allAssetsMap[asset.address]) {
-                    asset.name = asset.name || this._allAssetsMap[asset.address].name;
-                    asset.symbol = asset.symbol || this._allAssetsMap[asset.address].symbol;
-                    asset.decimals = asset.decimals || this._allAssetsMap[asset.address].decimals;
-                }
-                asset.balance = asset.balance || 0n;
-                asset.hide_value = asset.hide_value || false;
-                this.assets.push(asset);
-                this._assetmap[asset.address] = asset;
-                return asset;
             }
 
             get(address) {

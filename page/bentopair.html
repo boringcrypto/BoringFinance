@@ -237,7 +237,6 @@
             this.pair.contract = this.web3.contract("lendingpair", this.pair.pair).methods;
 
             await app.assetManager.getTokenInfo();
-            console.log(this.pair);
         },
         methods: {
             collateralToInt: function (field_input) {
