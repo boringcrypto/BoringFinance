@@ -96,14 +96,18 @@
                     </thead>
                     <tr v-for="pair in pairsChecked" v-if="pair.checked" @click="$router.push('/kashipair/' + pair.address)" style="cursor: pointer;">
                         <td v-if="pair.collateral">
-                            <img class="rounded float-left" :src="pair.collateral.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
+                            <img class="rounded" :src="pair.collateral.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
                             {{ pair.collateral.symbol }}
                         </td>
                         <td v-if="pair.asset">
-                            <img class="rounded float-left" :src="pair.asset.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
+                            <img class="rounded" :src="pair.asset.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
                             {{ pair.asset.symbol }}
                         </td>
-                        <td>{{ pair.oracleName }} {{ pair.oracleValid }} {{ pair.oracleError }} {{ pair.oracleWarning }}</td>
+                        <td>
+                            {{ pair.oracleName }}
+                            <span v-if="pair.oracleValid"><i class="fas fa-check"></i></span>
+                            <span v-else=""><i class="fas fa-ban"></i></span>
+                        </td>
                         <td class="text-right">
                             {{ pair.currentExchangeRate.print(pair.collateral.decimals + 18n - pair.asset.decimals, 1) }}
                         </td>
@@ -301,6 +305,9 @@
             pair_handler: async function(log, web3, row, decoded) {
                 console.log("PAIR", log, row,decoded, this.web3.eth.abi.decodeParameters(["address", "address", "address", "bytes"], decoded.data))
                 let deployParams = this.web3.eth.abi.decodeParameters(["address", "address", "address", "bytes"], decoded.data)
+                if (deployParams[2].toLowerCase() != web3.peggedoracle.address.toLowerCase() && deployParams[2].toLowerCase() != web3.chainlinkoracle.address.toLowerCase()) {
+                    return
+                }
 
                 return {
                     address: decoded.cloneAddress.toLowerCase(),
@@ -358,6 +365,7 @@
                     console.log(this.pairs.map(pair => pair.address))
                     const kashiInfo = rpcToObj(await this.web3.boringhelper.pollKashiPairs(this.address, this.pairs.map(pair => pair.address)).call());
                     kashiInfo.forEach((pair, i) => { this.pairs[i].update(pair) })
+                    await app.assetManager.poll()
                 }
             },
             create: async function () {
@@ -365,14 +373,28 @@
                 let collateral = this.newCollateral.address.toLowerCase() // to
                 let multiply = "0x0000000000000000000000000000000000000000"
                 let multiplyMatches = Object.values(this.mappings).filter(m => m.from == asset && m.to == collateral)
-                /*let oracleData
+                let oracleData = ""
                 if (multiplyMatches.length) {
-                    multiply = multiplyMatches[0]
-                    const oracleData = await this.web3.chainlinkoracle.getDataParameter(exchangeRate).call()
+                    match = multiplyMatches[0]
+                    multiply = match.address
+                    console.log(multiplyMatches[0])
+                    let decimals = 18n + BigInt(match.decimals) - BigInt(this.newCollateral.decimals) + BigInt(this.newAsset.decimals)
+                    console.log("18 + ", BigInt(match.decimals), "-", BigInt(this.newCollateral.decimals), "+", BigInt(this.newAsset.decimals))
+                    console.log("DEC", decimals)
+                    oracleData = await this.web3.chainlinkoracle.getDataParameter(multiply, "0x0000000000000000000000000000000000000000", 10n ** decimals).call()
                 } else {
-
-                }*/
-
+                    let divideMatches = Object.values(this.mappings).filter(m => m.from == collateral && m.to == asset)
+                    if (divideMatches.length) {
+                        match = divideMatches[0]
+                        divide = match.address
+                        let decimals = 36n - BigInt(match.decimals) - BigInt(this.newCollateral.decimals) + BigInt(this.newAsset.decimals)
+                        console.log("36 -", BigInt(match.decimals), "-", BigInt(this.newCollateral.decimals), "+", BigInt(this.newAsset.decimals))
+                        console.log("DEC", decimals)
+                        oracleData = await this.web3.chainlinkoracle.getDataParameter("0x0000000000000000000000000000000000000000", divide, 10n ** decimals).call()
+                    } else {
+                    }
+                }
+                console.log(collateral, asset, this.web3.chainlinkoracle.address, oracleData)
                 
                 const kashiData = this.web3.eth.abi.encodeParameters(['address', 'address', 'address', 'bytes'], [collateral, asset, this.web3.chainlinkoracle.address, oracleData])
                 await this.web3.bentobox.deploy(this.web3.kashipair.address, kashiData, true).send({ from: this.address })

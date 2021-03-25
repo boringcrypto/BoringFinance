@@ -321,10 +321,16 @@ addContract("peggedoracle", abis.peggedoracle, {
     "0x2a": "0x6cbfbB38498Df0E1e7A4506593cDB02db9001564"
 })
 
-addContract("chainlinkoracle", abis.peggedoracle, {
+addContract("chainlinkoraclev1", abis.chainlinkoracle, {
     "0x1": "0xD766147Bc5A0044a6b4f4323561B162870FcBb48",
     "0x3": "0xD766147Bc5A0044a6b4f4323561B162870FcBb48",
     "0x2a": "0xD766147Bc5A0044a6b4f4323561B162870FcBb48"
+})
+
+addContract("chainlinkoracle", abis.chainlinkoracle, {
+    "0x1": "0x00632CFe43d8F9f8E6cD0d39Ffa3D4fa7ec73CFB",
+    "0x3": "0x00632CFe43d8F9f8E6cD0d39Ffa3D4fa7ec73CFB",
+    "0x2a": "0x00632CFe43d8F9f8E6cD0d39Ffa3D4fa7ec73CFB"
 })
 
 addContract("boringhelper", abis.boringhelper, { 
@@ -429,7 +435,7 @@ class LogMonitor {
         this.address = address
         this.topics = topics.map((t) => (t === null ? t : t.length == 42 ? "0x000000000000000000000000" + t.substr(2) : t))
         this.process = process
-        this.key = address + JSON.stringify(topics) + version
+        this.key = manager.chainId + address + JSON.stringify(topics) + version
         this.status = status
         this.step = step
         this.onSynced = onSynced

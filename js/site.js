@@ -490,14 +490,21 @@ class Pair {
             } else {
                 this.oracleValid = true
             }
-        } else if (this.oracle.toLowerCase() == this.web3.chainlinkoracle.address.toLowerCase()) {
-            this.oracleName = "Chainlink"
+        } else if (this.oracle.toLowerCase() == this.web3.chainlinkoracle.address.toLowerCase() || this.oracle.toLowerCase() == this.web3.chainlinkoraclev1.address.toLowerCase()) {
+            const params = this.web3.eth.abi.decodeParameters(['address', 'address', 'uint256'], this.oracleData)
+            let decimals = 36n
+            if (this.oracle.toLowerCase() == this.web3.chainlinkoraclev1.address.toLowerCase()) {
+                this.oracleName = "Chainlink (old)"
+            }
+            if (this.oracle.toLowerCase() == this.web3.chainlinkoracle.address.toLowerCase()) {
+                this.oracleName = "Chainlink"
+                decimals += 18n
+            }
             this.oracleDescription = "The Chainlink oracle uses external reporters to get a median price. Currently the cost of maintaining most of these oracles is sponsored by Chainlink. Most tend to stay within 1-2% of the spot price. If Chainlink stops sponsering an oracle, it may go stale."
             this.oracleWarning = ""
-            const params = this.web3.eth.abi.decodeParameters(['address', 'address', 'uint256'], this.oracleData)
+            this.oracleParams = params
             let from = ""
             let to = ""
-            let decimals = 36n
             if (params[0] != "0x0000000000000000000000000000000000000000") {
                 if (!ChainlinkMapping[params[0]]) {
                     this.oracleValid = false
@@ -505,6 +512,7 @@ class Pair {
                     console.log("Missing Chainlink oracle", params[0])
                     return
                 } else {
+                    decimals -= 18n - ChainlinkMapping[params[0]].decimals
                     from = ChainlinkMapping[params[0]].from
                     to = ChainlinkMapping[params[0]].to
                     this.oracleWarning += ChainlinkMapping[params[0]].warning || ""
@@ -518,7 +526,7 @@ class Pair {
                     return
                 } else {
                     this.oracleWarning += ChainlinkMapping[params[1]].warning || ""
-                    decimals -= 18n
+                    decimals -= ChainlinkMapping[params[1]].decimals
                     if (!to) {
                         from = ChainlinkMapping[params[1]].to
                         to = ChainlinkMapping[params[1]].from
