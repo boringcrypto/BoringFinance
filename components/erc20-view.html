@@ -12,7 +12,7 @@
                     <th class="text-right">Value</th>
                 </tr>
             </thead>
-            <template v-for="asset in assetsOrdered" v-if="(asset.balance.set || asset.bentoBalance > 0n) && !asset.hide">
+            <template v-for="asset in assetsOrdered" v-if="(asset.balance.set || asset.bentoBalance.value > 0n) && !asset.hide">
                 <tr style="cursor: pointer;" data-toggle="collapse" :data-target="'.erc20' + asset.address" @click="loadInfo(asset)">
                     <td v-if="manager.chainId=='0x1'" class="py-2 px-0" style="width: 28px"><img class="rounded"
                             :src="logo_url(asset)" style="width: 28px; height: 28px;" onerror="this.style.display='none'"/>
@@ -31,12 +31,6 @@
                     <td>                                   
                         <span v-if="asset.bentoAllowance > 100000000000000000000000000000000000000000000000000000000000000000000000000000n || asset.address == '0x0000000000000000000000000000000000000000'">
                             <i style="color: green" class="fas fa-check"></i>
-                        </span>
-                        <span v-else-if="asset.bentoAllowance > 0n">
-                            <i style="color: orange" class="fas fa-ruler"></i>
-                        </span>
-                        <span v-else-if="asset.bentoAllowance === 0n">
-                            <i style="color: lightcoral" class="fas fa-circle"></i>
                         </span>
                     </td>
                     <td class="text-right">
@@ -83,27 +77,6 @@
                                             Withdraw as WETH (default is ETH)
                                         </label>
                                     </div>                                                                
-                                </div>
-                            </div>
-                            <div v-if="asset.address != '0x0000000000000000000000000000000000000000'" class="card mb-3">
-                                <div class="card-body">
-                                    <h5 class="card-title">Approve to BentoBox</h5>
-                                    <span v-if="asset.bentoAllowance > 100000000000000000000000000000000000000000000000000000000000000000000000000000n">
-                                        <p><i style="color: green" class="fas fa-check"></i> You have approved all your {{ asset.symbol }} to the BentoBox.</p>
-                                    </span>
-                                    <span v-else-if="asset.bentoAllowance > 0n">
-                                        <p><i style="color: orange" class="fas fa-ruler"></i> You have approved {{ asset.bentoAllowance.print(asset.decimals, 0) }} {{ asset.symbol }} to the BentoBox.</p>
-                                    </span>
-                                    <span v-else-if="asset.bentoAllowance === 0n">
-                                        <p><i style="color: lightcoral" class="fas fa-circle"></i> You have not approved {{ asset.symbol }} to the BentoBox.</p>
-                                    </span>
-
-                                    <div class="input-group mb-3" style="max-width: 350px;">
-                                        <input class="form-control" type="number" v-model="approveAmount">
-                                        <button type="button" class="btn btn-sm btn-primary ml-2" @click='approve(asset, Decimal(approveAmount).toInt(asset.decimals))' :disabled="!approveAmount">Approve</button>
-                                    </div>
-                                    <button type="button" class="btn btn-sm btn-primary" @click='approveAll(asset)'>Approve All</button>
-                                    <button type="button" class="btn btn-sm btn-primary" @click='unapprove(asset)'>Unapprove</button>
                                 </div>
                             </div>
                             <div v-if="asset.strategy || asset.pendingStrategy || address.toLowerCase() == app.bentoBoxOwner.toLowerCase()" class="card mb-3">

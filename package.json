@@ -6,6 +6,6 @@
         "coverage": "hardhat coverage"
     },
     "devDependencies": {
-        "@sushiswap/hardhat-framework": "sushiswap/hardhat-framework"
+        "@sushiswap/hardhat-framework": "sushiswap/hardhat-framework#78d0e9fd686b578c895b3404eefe22300002c74b"
     }
 }

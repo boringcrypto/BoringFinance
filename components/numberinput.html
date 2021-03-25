@@ -37,7 +37,14 @@
 
 <template id="component_alert">
     <div :class="'alert alert-' + alertClass" role="alert">
-        <i :class="iconClass"></i> <slot></slot>
+        <div class="d-flex">
+            <div>
+                <h4><i :class="iconClass"></i></h4>
+            </div>
+            <div class="ml-2">
+                <slot></slot>
+            </div>
+        </div>
     </div>
 </template>
 <script>

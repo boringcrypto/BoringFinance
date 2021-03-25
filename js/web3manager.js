@@ -11,6 +11,8 @@ class Web3Manager {
         this.connected = false
         this.chainId = ""
 
+        this.ready = false
+
         let self = this
 
         if (window.ethereum) {
@@ -67,19 +69,21 @@ class Web3Manager {
         self.hash = ""
         self.header = {}
 
-        self.subscription = self.web3.eth.subscribe("newBlockHeaders", (error, result) => {
+        self.subscription = self.web3.eth.subscribe("newBlockHeaders", async (error, result) => {
             if (error) {
                 return
             }
+            console.log("Current block is", result.number)
+            await app.poll()
 
             self.block = result.number
             self.hash = result.hash
             self.header = result.header
-            console.log("Current block is", self.block)
         })
 
         self.block = await this.web3.eth.getBlockNumber()
         console.log("Current block is", self.block)
+        console.log("Web3 Manager Initialized")
     }
 
     onDisconnected(self) {
@@ -112,32 +116,6 @@ class Web3Manager {
             let addresses = await window.ethereum.enable()
             this.handleAccountsChanged(this, addresses)
         }
-    }
-
-    async connectWC() {
-        this.wcProvider = await new WalletConnectProvider.default({
-            infuraId: "0b35757c1ff44e90" + "b2494118a98962dc",
-        })
-
-        this.wcProvider.on("disconnect", (code, reason) => {
-            this.onWCDisconnected()
-            console.log(code, reason)
-        })
-
-        try {
-            await this.wcProvider.enable()
-        } catch (err) {
-            return
-        }
-        this.connected = true
-        this.provider = "WalletConnect"
-        this.web3 = new Web3(this.wcProvider)
-        this.handleAccountsChanged(this, await this.web3.eth.getAccounts())
-        this.onConnected(this)
-    }
-
-    onWCDisconnected() {
-        this.connected = false
     }
 
     close() {

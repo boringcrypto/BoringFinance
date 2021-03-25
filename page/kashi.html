@@ -2,295 +2,146 @@
     <div class="my-3">
         <alert v-if="!app.kashiApproved" type="info">To use Kashi with the Bentobox, it needs to be approved. You haven't approved Kashi yet. This will automatically be included when you do your first transaction that requires approval. Once approved, this message will disappear.</alert>
 
-        <ul class="nav nav-pills mb-3" id="myTab" role="tablist">
-            <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#pageBorrow">Borrow</a></li>
+        <ul class="nav nav-pills mb-3 justify-content-center" id="myTab" role="tablist">
+            <li class="nav-item mr-2"><a class="nav-link active" data-toggle="tab" href="#pageBorrow">Borrow</a></li>
             <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#pageSupply">Supply</a></li>
         </ul>
-                <div class="tab-content">
-                    <div id="pageBorrow" class="tab-pane fade show active">
-                        <h4>Your Borrow Pairs</h4>
-                        <table class="table table-hover w-100">
-                            <thead>
-                                <th class="text-right">Collateral</th>
-                                <th class="text-right">Borrow</th>
-                                <th class="text-right">Health</th>
-                                <th class="text-right">
-                                    Interest<br>
-                                    <small>Utilization</small>
-                                </th>
-                                <th></th>
-                            </thead>
-                            <tbody>
-                                <template v-for="pair in pairsChecked" v-if="pair.checked && (pair.added || pair.userCollateral.set || pair.userBorrow.set > 0)">
-                                    <tr style="cursor: pointer;" data-toggle="collapse" :data-target="'.kashiBorrowYours' + pair.address">
-                                        <td class="text-right">
-                                            {{ pair.userCollateral.amount.str }}<br>
-                                            <small>${{ pair.userCollateral.usd.str }}</small>
-                                        </td>
-                                        <td class="text-right">
-                                            {{ pair.currentUserBorrowAmount.print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}<br>
-                                            <small>${{ pair.currentUserBorrowUSD.print(6, 2) }}</small>
-                                        </td>
-                                        <td class="text-right"><health :pair="pair"></health></td>
-                                        <td class="text-right"><interest :pair="pair" :current="false"></interest></td>
-                                        <td><i class="fas fa-chevron-down"></i></td>
-                                    </tr>
-                                    <tr :class="'collapse kashiBorrowYours' + pair.address" style="background-color: #ffffff">
-                                        <td colspan="7">
-                                            <div v-if="!pair.currentExchangeRate" :class="'mx-3 kashiBorrowYours' + pair.address">
-                                                The exchange rate has not been initialized yet on this pair. Depending on the oracle you may have to update more than once with some time inbetween.<br>
-                                                <button type="button" class="btn btn-sm btn-primary mt-3" @click="updateExchangeRate(pair)">Update Exchange Rate</button>
-                                            </div>
-                                            <div v-else="" :class="'mx-3 kashiBorrowYours' + pair.address">
-                                                <alert type="error" v-if="pair.newHealth && pair.newHealth < 1150000000000000000n">You have borrowed a high amount against your collateral. A small change in price may cause you to get liquidated. It is recommended that you add more collateral or repay some of what you have borrowed.</alert>
 
-                                                <div v-if="pair.collateral.bentoBalance.set || pair.collateral.balance.set" class="mt-3" style="max-width: 400px;">
-                                                    <div class="mb-1">
-                                                        <div class="float-right pt-1"><small>${{ pair.userCollateral.usd.str }}</small></div>
-                                                        Collateral: {{ pair.userCollateral.amount.str }}
-                                                        <small v-if="pair.addCollateralAmount" class="text-info">
-                                                            {{ pair.newUserCollateralAmount.print(pair.collateral.decimals, 0) }} {{ pair.collateral.symbol }}
-                                                        </small>
-                                                    </div>
-                                                    <numberinput v-model="pair.addCollateralAmount" :max="pair.collateralFrom == 'bento' ? pair.collateral.bentoBalance.amount.number : pair.collateral.balance.number" key="collateral"></numberinput>
-                                                    <small class="form-text text-muted">
-                                                        <div class="float-right">Max: {{ pair.collateralFrom == 'bento' ? pair.collateral.bentoBalance.amount.str : pair.collateral.balance.str }}</div>
-                                                        Add from
-                                                        <input type="radio" id="collateralFromBento" value="bento" v-model="pair.collateralFrom" autocomplete="off" checked style="height: 10px">
-                                                        <label for="collateralFromBento">BentoBox</label>
-                                                        <input type="radio" id="collateralFromChain" value="wallet" v-model="pair.collateralFrom" autocomplete="off" style="height: 10px">
-                                                        <label for="collateralFromChain">Wallet</label>
-                                                    </small>
-                                                </div>
-                                                <div v-else="" class="mt-3">
-                                                    You don't have any {{ pair.collateral.symbol }} for collateral, so you can't borrow.
-                                                </div>                                       
-                                                <div v-if="pair.newUserCollateralAmount && pair.safeMaxBorrowableLeft > 0n" class="mt-3" style="max-width: 400px;">
-                                                    <div class="mb-1">
-                                                        <div class="float-right pt-1"><small>${{ pair.currentUserBorrowUSD.print(6, 2) }}</small></div>
-                                                        Borrowed: {{ pair.currentUserBorrowAmount.print(pair.asset.decimals, 0) }} {{ pair.asset.symbol }}
-                                                        <small v-if="pair.borrowAmount" class="text-info">
-                                                            {{ pair.newUserBorrowAmount.print(pair.asset.decimals, 0) }} {{ pair.asset.symbol }}
-                                                        </small>
-                                                    </div>
-                                                    <numberinput v-model="pair.borrowAmount" :max="pair.safeMaxBorrowableLeftPossible.toDec(pair.asset.decimals)" key="borrow"></numberinput>
-                                                    <small class="form-text text-muted">
-                                                        Max: {{ pair.safeMaxBorrowableLeftPossible.print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}
-                                                        {{ pair.safeMaxBorrowableLeftPossible < pair.safeMaxBorrowableLeft ? '(limited by liquidity)' : '' }}
-                                                        -
-                                                        instant 0.05% borrow fee and variable interest, currently {{ pair.interestPerYear.print(16, 2) }}%.
-                                                    </small>
+        <div class="tab-content mx-auto" style="max-width: 720;">
+            <div id="pageBorrow" class="tab-pane fade show active">
+                <h4>Your Borrow Positions</h4>
+                <table class="table table-hover w-100">
+                    <thead>
+                        <th>Collateral</th>
+                        <th>Borrow</th>
+                        <th class="text-right">Health</th>
+                        <th class="text-right">Interest</th>
+                    </thead>
+                    <tbody>
+                        <tr v-for="pair in pairsChecked" v-if="pair.checked && (pair.userCollateral.set || pair.userBorrow.set)" @click="$router.push('/kashipair/' + pair.address)" style="cursor: pointer;">
+                            <td class="text-right">
+                                <img class="rounded float-left" :src="pair.collateral.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
+                                {{ pair.userCollateral.amount.str }}<br>
+                                <small>{{ pair.userCollateral.usd.str }}</small>
+                            </td>
+                            <td class="text-right">
+                                <img class="rounded float-left" :src="pair.asset.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
+                                {{ pair.userBorrow.current.str }}<br>
+                                <small>{{ pair.userBorrow.current.usd.str }}</small>
+                            </td>
+                            <td class="text-right"><health :pair="pair"></health></td>
+                            <td class="text-right"><interest :pair="pair" :current="false"></interest></td>
+                        </tr>
+                    </tbody>
+                </table>
 
-                                                    <button 
-                                                        v-if="pair.addCollateralAmount || pair.borrowAmount" 
-                                                        class="btn btn-sm btn-primary mt-3"
-                                                        type="button" @click='borrowAction(pair)'>
-                                                        <span v-if="pair.addCollateralAmount && pair.borrowAmount">Add collateral and Borrow</span>
-                                                        <span v-else-if="pair.addCollateralAmount">Add collateral</span>
-                                                        <span v-else-if="pair.borrowAmount">Borrow</span>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div :class="'mx-3 collapse kashiBorrowYours' + pair.address">
-                                                {{ pair.oracleName }} Oracle<br>
-                                                <small>
-                                                    {{ pair.oracleDescription }}
-                                                </small>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-
-                        <h4>Available Borrow Pairs</h4>
-                        <table class="table w-100 mb-0">
-                            <thead>
-                                <th>Collateral</th>
-                                <th>Borrow</th>
-                                <th>Oracle</th>
-                                <th class="text-right">
-                                    Interest<br>
-                                    <small>Utilization</small>
-                                </th>
-                                <th>Use</th>
-                            </thead>
-                            <template v-for="pair in pairsChecked" v-if="pair.checked && pair.totalAsset.elastic > 1000n">
-                                <tr>
-                                    <td v-if="pair.collateral">{{ pair.collateral.symbol }}</td>
-                                    <td v-if="pair.asset">{{ pair.asset.symbol }}</td>
-                                    <td>{{ pair.oracleName }}</td>
-                                    <td class="text-right"><interest :pair="pair" :current="true"></interest></td>
-                                    <td v-if="!pair.added && !pair.userCollateral.set && !pair.userBorrow.set" @click="pair.added = true" style="cursor: pointer;"><i class="far fa-plus-square"></i></td>
-                                    <td v-else=""></td>
-                                </tr>
-                            </template>
-                        </table>
-                    </div>
-
-                    <div id="pageSupply" class="tab-pane fade">
-                        <h4>Your Supply Pairs</h4>
-                        <table class="table w-100 mb-0">
-                            <thead>
-                                <th>Collateral</th>
-                                <th>Asset</th>
-                                <th>Oracle</th>
-                                <th class="text-right">Rate</th>
-                                <th class="text-right">Utilization</th>
-                                <th class="text-right">Supply APR</th>
-                            </thead>
-                            <template v-for="pair in pairsChecked" v-if="pair.checked">
-                                <tr style="cursor: pointer;" data-toggle="collapse" :data-target="'.kashiSupply' + pair.address">
-                                    <td v-if="pair.collateral">{{ pair.collateral.symbol }}</td>
-                                    <td v-if="pair.asset">{{ pair.asset.symbol }}</td>
-                                    <td>{{ pair.oracleName }}</td>
-                                    <td class="text-right">
-                                        {{ pair.currentExchangeRate.print(pair.collateral.decimals + 18n - pair.asset.decimals, 1) }}
-                                    </td>
-                                    <td class="text-right">{{ pair.utilization.print(16, 2) }}%</td>
-                                    <td class="text-right">{{ pair.supplyAPR.print(16, 2) }}%</td>
-                                </tr>
-                            </template>
-                        </table>
-
-                        <h4>Available Supply Pairs</h4>
-                        <table class="table w-100 mb-0">
-                            <thead>
-                                <th>Collateral</th>
-                                <th>Asset</th>
-                                <th>Oracle</th>
-                                <th class="text-right">Rate</th>
-                                <th class="text-right">Utilization</th>
-                                <th class="text-right">Supply APR</th>
-                            </thead>
-                            <template v-for="pair in pairsChecked" v-if="pair.checked">
-                                <tr style="cursor: pointer;" data-toggle="collapse" :data-target="'.kashiSupply' + pair.address">
-                                    <td v-if="pair.collateral">{{ pair.collateral.symbol }}</td>
-                                    <td v-if="pair.asset">{{ pair.asset.symbol }}</td>
-                                    <td>{{ pair.oracleName }}</td>
-                                    <td class="text-right">
-                                        {{ pair.currentExchangeRate.print(pair.collateral.decimals + 18n - pair.asset.decimals, 1) }}
-                                    </td>
-                                    <td class="text-right">{{ pair.utilization.print(16, 2) }}%</td>
-                                    <td class="text-right">{{ pair.currentSupplyAPR.print(16, 2) }}%</td>
-                                </tr>
-                                <tr :class="'collapse kashiSupply' + pair.address" style="background-color: #eeeeee">
-                                    <td colspan="7">
-                                        <div v-if="!pair.currentExchangeRate" :class="'mx-3 kashiSupply' + pair.address">
-                                            The exchange rate has not been initialized yet on this pair. Depending on the oracle you may have to update more than once with some time inbetween.<br>
-                                            <button type="button" class="btn btn-sm btn-primary mt-3" @click="updateExchangeRate(pair)">Update Exchange Rate</button>
-                                        </div>
-                                        <div v-else="" :class="'mx-3 mb-3 kashiSupply' + pair.address">
-                                            User assets total: {{ (pair.userAsset.amount.value + pair.userAssetAmountFromBorrows).print(pair.asset.decimals, 0) }} {{ pair.asset.symbol }}<br>
-                                            User collateral: {{ pair.userCollateral.amount.str }}<br>
-                                            User borrowed: {{ pair.currentUserBorrowAmount.print(pair.asset.decimals, 0) }} {{ pair.asset.symbol }}<br>
-                                            Health: {{ pair.health.print(18, 2) }} ({{ pair.healthPercentage.print(16, 2) }}%)<br>
-
-                                            <div v-if="pair.asset.bentoBalance.set || pair.asset.balance.set" class="mt-3" style="max-width: 400px;">
-                                                <div class="float-right pt-1"><small>${{ pair.userAssetUSDTotal.print(6, 2) }}</small></div>
-                                                Supply: {{ pair.userAssetAmountTotal.print(pair.asset.decimals, 0) }} {{ pair.asset.symbol }}
-                                                <numberinput v-model="pair.addAssetAmount" :max="pair.asset.bentoBalance.amount.number"></numberinput>
-                                                <small class="form-text text-muted">
-                                                    <div class="float-right">Max: {{ pair.supplyFrom == 'bento' ? pair.asset.bentoBalance.amount.str : pair.asset.balance.str }}</div>
-                                                    Supply from
-                                                    <input type="radio" id="supplyFromBento" value="bento" v-model="pair.supplyFrom" autocomplete="off" checked style="height: 10px">
-                                                    <label for="supplyFromBento">BentoBox</label>
-                                                    <input type="radio" id="supplyFromChain" value="wallet" v-model="pair.supplyFrom" autocomplete="off" style="height: 10px">
-                                                    <label for="supplyFromChain">Wallet</label>
-                                                    <br>
-                                                    You will earn a variable interest, currently {{ pair.currentSupplyAPR.print(16, 2) }}% per year.
-                                                </small>
-                                                <button 
-                                                    v-if="Number(pair.addAssetAmount)" 
-                                                    class="btn btn-sm btn-primary mt-3"
-                                                    type="button" @click='addAsset(pair)'>
-                                                    Add Supply
-                                                </button>                                                        
-                                            </div>                                        
-                                            
-                                            <div v-if="app.debug">
-                                                <h5 class="card-title mt-3">Testing Info</h5>
-                                                TotalCollateral share: {{ pair.totalCollateral.share.str }}<br>
-                                                TotalAsset ratio (share : fraction): {{ pair.totalAsset.elastic }} : {{ pair.totalAsset.base }}<br>
-                                                TotalBorrow ratio (share : part): {{ pair.totalBorrow.elastic }} : {{ pair.totalBorrow.base }}<br>
-                                                <br>
-                                                Total collateral: {{ pair.totalCollateral.amount.str }}<br>
-                                                Total assets: {{ (pair.totalAsset.amount.value + pair.totalBorrow.current.value).print(pair.asset.decimals) }} {{ pair.asset.symbol }}<br>
-                                                Total borrowed: {{ pair.totalBorrow.current.str }}<br>
-                                                <br>
-                                                User assets fraction: {{ pair.userAsset.str }}<br>
-                                                User assets share: {{ pair.userAsset.share.str }}<br>
-                                                <br>
-                                                User assets: {{ pair.userAsset.amount.str }}<br>
-                                                User assets from borrows: {{ pair.userAssetAmountFromBorrows.print(pair.asset.decimals) }} {{ pair.asset.symbol }}<br>
-                                                <br>
-                                                User Solvency (oracle): {{ pair.userSolvencyRatioOracle.print(16, 2) }}%<br>
-                                                User Solvency (stored): {{ pair.userSolvencyRatioStored.print(16, 2) }}%<br>
-                                                <br>
-                                                Max borrowable (oracle): {{ (pair.maxBorrowableOracle - pair.currentUserBorrowAmount).print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}<br>
-                                                Max borrowable (stored): {{ (pair.maxBorrowableStored - pair.currentUserBorrowAmount).print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}<br>
-                                                Max borrowable (min): {{ (pair.maxBorrowable - pair.currentUserBorrowAmount).print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}<br>
-                                                Safe Max borrowable: {{ pair.safeMaxBorrowableLeft.print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}<br>
-                                                Safe Max borrowable and available: {{ pair.safeMaxBorrowableLeftPossible.print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}<br>
-                                                <br>
-                                                Fee fractions: {{ pair.fee.str }}<br>
-                                                Fee shares: {{ pair.fee.share.str }}<br>
-                                                Fee assets: {{ pair.fee.amount.str }}<br>
-                                                Fee assets from borrows: {{ pair.feeAssetAmountFromBorrows.print(pair.asset.decimals) }} {{ pair.asset.symbol }}<br>
-                                                Fee assets accrued: {{ pair.feeAssetAmountAccrued.print(pair.asset.decimals) }} {{ pair.asset.symbol }}<br>
-                                                Fee assets total: {{ (pair.fee.amount.value + pair.feeAssetAmountFromBorrows + pair.feeAssetAmountAccrued).print(pair.asset.decimals) }} {{ pair.asset.symbol }}<br>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </template>
-                        </table>
-                    </div>
-                </div>
-
-        <div v-if="app.debug" class="card">
-            <div class="card-body">
-                <h4>Add Kashi Lending Pair</h4>
-                <div class="form-group">
-                    <label for="collateralSelect">Collateral (long)</label>
-                    <select class="form-control" id="collateralSelect" v-model="newCollateral">
-                        <option v-for="asset in assets" :value="asset">{{ asset.symbol }}</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="assetSelect">Asset to borrow (short)</label>
-                    <select class="form-control" id="assetSelect" v-model="newAsset">
-                        <option v-for="asset in assets" :value="asset">{{ asset.symbol }}</option>
-                    </select>
-                </div>
-                <div v-if="web3.peggedoracle">
-                    <div class="form-group">
-                        <label>Exchange Rate</label>
-                        <input class="form-control" type="number" v-model="rate">
-                    </div>
-                    <button type="button" class="btn btn-sm btn-primary" @click='create'>Create Lending Pair</button>                            
-                </div>
+                <h4>Available Pairs</h4>
+                <table class="table w-100 mb-0">
+                    <thead>
+                        <th>Collateral</th>
+                        <th>Borrow</th>
+                        <th>Oracle</th>
+                        <th class="text-right">Interest</th>
+                    </thead>
+                    <tr v-for="pair in pairsChecked" v-if="pair.checked && pair.totalAsset.elastic > 1000n" @click="$router.push('/kashipair/' + pair.address)" style="cursor: pointer;">
+                        <td v-if="pair.collateral">
+                            <img class="rounded float-left" :src="pair.collateral.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
+                            {{ pair.collateral.symbol }}
+                        </td>
+                        <td v-if="pair.asset">
+                            <img class="rounded float-left" :src="pair.asset.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
+                            {{ pair.asset.symbol }}
+                        </td>
+                        <td>{{ pair.oracleName }}</td>
+                        <td class="text-right"><interest :pair="pair" :current="true"></interest></td>
+                    </tr>
+                </table>
             </div>
-            <div v-if="manager.web3.faucet.address" class="card">
-                <div class="card-body">
-                    <h4>Faucet</h4>
-                    <p>To get some tokens to play with, use the faucet...</p>
-                    <p>
-                        You'll receive a bunch of tokens to play with.
-                    </p>
-                    <button class="btn btn-primary mb-3" @click="drip">Gimme, gimme, gimme!</button>
 
-                    <h4>Approve</h4>
-                    <button type="button" class="btn btn-sm btn-primary" @click='approve'>Approve Kashi Lending</button>                            
+            <div id="pageSupply" class="tab-pane fade">
+                <h4>Your Supply Positions</h4>
+                <table class="table w-100 mb-0">
+                    <thead>
+                        <th>Pair</th>
+                        <th>Supplied</th>
+                        <th>Oracle</th>
+                        <th class="text-right">Utilization</th>
+                        <th class="text-right">Supply APR</th>
+                    </thead>
+                    <tr v-for="pair in pairsChecked" v-if="pair.checked && pair.userAsset.set" @click="$router.push('/kashipair/' + pair.address)" style="cursor: pointer;">
+                        <td v-if="pair.collateral">
+                            <img class="rounded" :src="pair.collateral.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
+                            <img class="rounded" :src="pair.asset.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
+                            {{ pair.collateral.symbol }}/{{ pair.asset.symbol }}
+                        </td>
+                        <td v-if="pair.asset">
+                            {{ pair.userAsset.amount.str }}<br>
+                            <small>{{ pair.userAsset.usd.str }}</small>
+                        </td>
+                        <td>{{ pair.oracleName }} {{ pair.oracleValid }}</td>
+                        <td class="text-right">{{ pair.utilization.print(16, 2) }}%</td>
+                        <td class="text-right">{{ pair.supplyAPR.print(16, 2) }}%</td>
+                    </tr>
+                </table>
+
+                <h4>Available Pairs</h4>
+                <table class="table w-100 mb-0">
+                    <thead>
+                        <th>Collateral</th>
+                        <th>Asset</th>
+                        <th>Oracle</th>
+                        <th class="text-right">Rate</th>
+                        <th class="text-right">Utilization</th>
+                        <th class="text-right">Supply APR</th>
+                    </thead>
+                    <tr v-for="pair in pairsChecked" v-if="pair.checked" @click="$router.push('/kashipair/' + pair.address)" style="cursor: pointer;">
+                        <td v-if="pair.collateral">
+                            <img class="rounded float-left" :src="pair.collateral.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
+                            {{ pair.collateral.symbol }}
+                        </td>
+                        <td v-if="pair.asset">
+                            <img class="rounded float-left" :src="pair.asset.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
+                            {{ pair.asset.symbol }}
+                        </td>
+                        <td>{{ pair.oracleName }} {{ pair.oracleValid }} {{ pair.oracleError }} {{ pair.oracleWarning }}</td>
+                        <td class="text-right">
+                            {{ pair.currentExchangeRate.print(pair.collateral.decimals + 18n - pair.asset.decimals, 1) }}
+                        </td>
+                        <td class="text-right">{{ pair.utilization.print(16, 2) }}%</td>
+                        <td class="text-right">{{ pair.currentSupplyAPR.print(16, 2) }}%</td>
+                    </tr>
+                </table>
+
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h4>Add Kashi Lending Pair</h4>
+                        <p>
+                            If you want to supply to a pair that isn't listed yet, you can use this tool to create a new pair based on Chainlink oracles.
+                        </p>
+                        <div class="form-group">
+                            <label for="collateralSelect">Collateral (long)</label>
+                            <select class="form-control" id="collateralSelect" v-model="newCollateral">
+                                <option v-for="asset in chainlinkTokens" :value="asset">{{ asset.symbol }}</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="assetSelect">Asset to borrow (short)</label>
+                            <select class="form-control" id="assetSelect" v-model="newAsset">
+                                <option v-for="asset in chainlinkTokens" :value="asset">{{ asset.symbol }}</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-primary" @click='create'>Create Lending Pair</button>                            
+                    </div>
                 </div>
             </div>
         </div>
 
-        <web3 :manager="manager" :poll="poll"></web3>
+        <web3 :manager="manager" :init="init" :poll="poll"></web3>
+
         <eventreader
             :manager="manager"
-            :address="'0xccb146728f6D94Fe22D1030E7FA369bd33916824'"
-            :topics="['0xd62166f3c2149208e51788b1401cc356bf5da1fc6c7886a32e18570f57d88b3b', '0x000000000000000000000000d57469335e06ed52b57278a0ff4ecb62bad05e99']"
+            :address="web3.bentobox.address"
+            :topics="['0xd62166f3c2149208e51788b1401cc356bf5da1fc6c7886a32e18570f57d88b3b', '0x000000000000000000000000' + web3.kashipair.address.slice(2)]"
             :handler="pair_handler"
             :output="pairsRaw"
             :abi="abis.bentobox"
@@ -397,6 +248,8 @@
         }
 
         async cook() {
+            console.log(this)
+
             return this.contract.cook(
                 this.actions,
                 this.values,
@@ -430,7 +283,9 @@
                 rate: 1,
                 pairsRaw: [],
                 pairs: [],
-                pairsMap: {}
+                pairsMap: {},
+                mappings: ChainlinkMapping,
+                chainlinkTokens: chainlinkTokens.map(t => app.assetManager.addAsset({address: t}))
             };
         },
         mounted: async function() {
@@ -438,169 +293,96 @@
         computed: {
             pairsChecked: function() {
                 return this.pairs.filter(pair => pair.checked && pair.collateral && pair.asset && pair.collateral.loaded && pair.asset.loaded).map(pair => {
-                    if (!pair.collateralFrom) { pair.collateralFrom = pair.collateral.bentoBalance.set ? "bento" : "wallet" }
-                    if (!pair.supplyFrom) { pair.supplyFrom = pair.asset.bentoBalance.set ? "bento" : "wallet" }
-
-                    objAssign(pair, {
-                        utilization: pair.totalBorrow.current.set ? pair.totalBorrow.current.value * 1000000000000000000n / (pair.totalAsset.amount.value + pair.totalBorrow.current.value) : 0n,
-                        userAssetAmountFromBorrows: rebase(pair.userAsset.value, pair.totalAsset.base, pair.totalBorrow.current.value),
-                        currentUserBorrowAmount: pair.userBorrow.amount.value + takeFee(pair.accrue(pair.userBorrow.amount.value)),
-
-                        userSolvencyRatioOracle: pair.userCollateral.amount.value ? pair.userBorrow.amount.value * pair.oracleExchangeRate / pair.userCollateral.amount.value : 0n,
-                        userSolvencyRatioStored: pair.userCollateral.amount.value ? pair.userBorrow.amount.value * pair.currentExchangeRate / pair.userCollateral.amount.value : 0n,
-
-                        maxBorrowableOracle: pair.oracleExchangeRate ? (pair.userCollateral.amount.value * 75n / 100n) * 1000000000000000000n / pair.oracleExchangeRate : 0n,
-                        maxBorrowableStored: pair.currentExchangeRate ? (pair.userCollateral.amount.value * 75n / 100n) * 1000000000000000000n / pair.currentExchangeRate : 0n,
-
-                        feeAssetAmountFromBorrows: rebase(pair.accrueInfo.feesEarnedFraction, pair.totalAsset.base, pair.totalBorrow.current.value),
-                        feeAssetAmountAccrued: pair.accrue(pair.totalBorrow.elastic) * 1n / 10n,
-
-                        newUserCollateralAmount: pair.userCollateral.amount.value + (pair.addCollateralAmount ? Decimal(pair.addCollateralAmount).toInt(pair.collateral.decimals) : 0n),
-                        newUserBorrowAmount: pair.userBorrow.amount.value + (pair.borrowAmount ? addBorrowFee(Decimal(pair.borrowAmount).toInt(pair.asset.decimals)) : 0n),
-                    })
-
-                    objAssign(pair, {
-                        userAssetAmountTotal: pair.userAsset.amount.value + pair.userAssetAmountFromBorrows,
-                        currentUserBorrowUSD: pair.asset.rate > 0n ? pair.currentUserBorrowAmount * (app.ethRate || 0n) / pair.asset.rate : 0n,
-
-                        currentInterestPerYear: pair.interestAccrue(pair.interestPerYear),
-                        supplyAPR: takeFee(pair.interestPerYear * pair.utilization) / 1000000000000000000n,
-                        maxBorrowable: BigInt.min(pair.maxBorrowableOracle, pair.maxBorrowableStored),
-
-                        newCurrentUserBorrowAmount: pair.newUserBorrowAmount + takeFee(pair.accrue(pair.newUserBorrowAmount)),
-                        newMaxBorrowableOracle: pair.oracleExchangeRate ? (pair.newUserCollateralAmount * 75n / 100n) * 1000000000000000000n / pair.oracleExchangeRate : 0n,
-                        newMaxBorrowableStored: pair.currentExchangeRate ? (pair.newUserCollateralAmount * 75n / 100n) * 1000000000000000000n / pair.currentExchangeRate : 0n,
-                    })
-
-                    objAssign(pair, {
-                        userAssetUSDTotal: pair.asset.rate > 0n ? pair.userAssetAmountTotal * (app.ethRate || 0n) / pair.asset.rate : 0n,
-
-                        currentSupplyAPR: takeFee(pair.currentInterestPerYear * pair.utilization) / 1000000000000000000n,
-                        newMaxBorrowable: BigInt.min(pair.newMaxBorrowableOracle, pair.newMaxBorrowableStored),
-                    })
-
-                    objAssign(pair, {
-                        safeMaxBorrowable: pair.newMaxBorrowable * 95n * 10000n / 100n / 10005n,
-                        healthPercentage: pair.maxBorrowable ? pair.currentUserBorrowAmount * 1000000000000000000n / pair.maxBorrowable : 0n,
-                        health: pair.currentUserBorrowAmount ? pair.maxBorrowable * 1000000000000000000n / pair.currentUserBorrowAmount : 0n,
-                        newHealthPercentage: pair.newMaxBorrowable ? pair.newCurrentUserBorrowAmount * 1000000000000000000n / pair.newMaxBorrowable : 0n,
-                        newHealth: pair.newCurrentUserBorrowAmount ? pair.newMaxBorrowable * 1000000000000000000n / pair.newCurrentUserBorrowAmount : 0n
-                    })
-
-                    objAssign(pair, {
-                        safeMaxBorrowableLeft: pair.safeMaxBorrowable - pair.currentUserBorrowAmount,
-                        safeMaxBorrowableLeftPossible: BigInt.min(pair.safeMaxBorrowable - pair.currentUserBorrowAmount, pair.totalBorrowable.amount.value)
-                    })
-
                     return pair
                 })
-            }
+            },
         },
         methods: {
             pair_handler: async function(log, web3, row, decoded) {
-                let deployParams = paramsToObj(web3.decode.kashipair.decodeMethod(
-                    "0x247fd03c" + (decoded.data ? decoded.data.substr(2) : "")
-                ).params);
+                console.log("PAIR", log, row,decoded, this.web3.eth.abi.decodeParameters(["address", "address", "address", "bytes"], decoded.data))
+                let deployParams = this.web3.eth.abi.decodeParameters(["address", "address", "address", "bytes"], decoded.data)
 
                 return {
                     address: decoded.cloneAddress.toLowerCase(),
-                    collateralAddress: deployParams.collateral_.toLowerCase(),
-                    assetAddress: deployParams.asset_.toLowerCase(),
-                    oracle: deployParams.oracle_.toLowerCase(),
-                    oracleData: deployParams.oracleData_
+                    collateralAddress: deployParams[0].toLowerCase(),
+                    assetAddress: deployParams[1].toLowerCase(),
+                    oracle: deployParams[2].toLowerCase(),
+                    oracleData: deployParams[3]
                 }
             },
             pairs_synced: async function() {
                 this.pairsRaw.forEach(pair => {
                     if (!this.pairsMap[pair.address]) {
                         newPair = new Pair(pair, this.web3)
-                        if (!newPair.oracleVerified) { return }
+                        //if (!newPair.oracleVerified) { return }
                         this.pairs.push(this.pairsMap[newPair.address] = newPair)
                     }
                 })
                 await this.poll()
             },
+            init: async function() {
+                for (let address in this.mappings) {
+                    const mapping = this.mappings[address]
+                    objAssign(mapping, {
+                        address: address,
+                        fromAsset: app.assetManager.addAsset({ address: mapping.from }),
+                        toAsset: app.assetManager.addAsset({ address: mapping.to }),
+                    })
+                }
+                /*await app.assetManager.getTokenInfo()
+                await app.poll()
+                for (let address in this.mappings) {
+                    const mapping = this.mappings[address]
+                    const multiplierDecimals = mapping.decimals - BigInt(mapping.toAsset.decimals) + BigInt(mapping.fromAsset.decimals)
+                    console.log(mapping)
+                    let onchainRate = 0n
+                    if (mapping.fromAsset.rate && mapping.toAsset.rate)
+                    {
+                        onchainRate = mapping.toAsset.rate
+                        if (multiplierDecimals > 0n) { onchainRate *= 10n ** multiplierDecimals }
+                        if (multiplierDecimals < 0n) { onchainRate *= 10n ** -multiplierDecimals }
+                        onchainRate /= mapping.fromAsset.rate
+                    }
+
+                    objAssign(mapping, {
+                        chainlinkRate: BigInt(await this.web3.contract("chainlinkproxy", address).methods.latestAnswer().call()),
+                        onchainRate: onchainRate
+                    })
+                    if (this.chainlinkTokens.indexOf(mapping.fromAsset.address) == -1) {
+                        this.chainlinkTokens.push(mapping.fromAsset.address)
+                    }
+                }*/
+            },
             poll: async function() {
-                const kashiInfo = rpcToObj(await this.web3.boringhelper.pollKashiPairs(this.address, this.pairs.map(pair => pair.address)).call());
-                kashiInfo.forEach((pair, i) => { this.pairs[i].update(pair) })
+                if (this.pairs.length) {
+                    console.log(this.pairs.map(pair => pair.address))
+                    const kashiInfo = rpcToObj(await this.web3.boringhelper.pollKashiPairs(this.address, this.pairs.map(pair => pair.address)).call());
+                    kashiInfo.forEach((pair, i) => { this.pairs[i].update(pair) })
+                }
             },
             create: async function () {
-                const exchangeRate = Decimal(this.rate).toInt(this.newCollateral.decimals + 18n - this.newAsset.decimals)
-                const oracleData = await this.web3.peggedoracle.getDataParameter(exchangeRate).call()
-                const kashiData = await this.web3.kashipair.getInitData(this.newCollateral.address, this.newAsset.address, this.web3.peggedoracle.address, oracleData).call()
+                let asset = this.newAsset.address.toLowerCase()  // from
+                let collateral = this.newCollateral.address.toLowerCase() // to
+                let multiply = "0x0000000000000000000000000000000000000000"
+                let multiplyMatches = Object.values(this.mappings).filter(m => m.from == asset && m.to == collateral)
+                /*let oracleData
+                if (multiplyMatches.length) {
+                    multiply = multiplyMatches[0]
+                    const oracleData = await this.web3.chainlinkoracle.getDataParameter(exchangeRate).call()
+                } else {
+
+                }*/
+
+                
+                const kashiData = this.web3.eth.abi.encodeParameters(['address', 'address', 'address', 'bytes'], [collateral, asset, this.web3.chainlinkoracle.address, oracleData])
                 await this.web3.bentobox.deploy(this.web3.kashipair.address, kashiData, true).send({ from: this.address })
             },
-            drip: async function () {
-                await this.web3.faucet.drip().send({ from: this.address })
+            createPegged: async function () {
+                const exchangeRate = Decimal(this.rate).toInt(this.newCollateral.decimals + 18n - this.newAsset.decimals)
+                const oracleData = await this.web3.peggedoracle.getDataParameter(exchangeRate).call()
+                const kashiData = this.web3.eth.abi.encodeParameters(['address', 'address', 'address', 'bytes'], [this.newCollateral.address, this.newAsset.address, this.web3.peggedoracle.address, oracleData])
+                await this.web3.bentobox.deploy(this.web3.kashipair.address, kashiData, true).send({ from: this.address })
             },
-            updateExchangeRate: async function(pair) {
-                await this.web3.contract("kashipair", pair.address).methods.updateExchangeRate().send({ from: this.address })
-            },
-            addAsset: async function (pair) {
-                const amount = Decimal(pair.addAssetAmount).toInt(pair.asset.decimals)
-                if (pair.supplyFrom == "wallet" && pair.asset.bentoAllowance < amount) {
-                    await this.approveTokenAll(pair.asset)
-                }
-
-                if (app.kashiApproved && pair.supplyFrom == 'bento') {
-                    const share = await this.web3.bentobox.toShare(pair.asset.address, amount, true).call()
-                    await this.web3.contract("kashipair", pair.address).methods.addAsset(this.address, false, share).send({ from: this.address })
-                } else {
-                    const cooker = new KashiCooker(pair, this.web3, this.address)
-                    if (!app.kashiApproved) {
-                        await cooker.approve()
-                    }
-                    if (pair.addAssetAmount) {
-                        await cooker.addAsset(pair.addAssetAmount)
-                    }
-                    await cooker.cook()
-                }
-            },
-            approve: async function () {
-                await this.web3.bentobox.setMasterContractApproval(this.address, this.web3.kashipair.address, true, 0, "0x", "0x").send({ from: this.address })
-            },
-            approveToken: async function (token, amount) {
-                await this.web3
-                    .contract("erc20", token.address)
-                    .methods.approve(this.web3.bentobox.address, amount)
-                    .send({ from: this.address });
-            },
-            approveTokenAll: async function (token) {
-                await this.approveToken(token, "115792089237316195423570985008687907853269984665640564039457584007913129639935")
-            },
-            borrowAction: async function (pair) {
-                const amount = Decimal(pair.addCollateralAmount).toInt(pair.collateral.decimals)
-                if (pair.collateralFrom == "wallet" && pair.collateral.bentoAllowance < amount) {
-                    await this.approveTokenAll(pair.collateral)
-                }
-
-                if (app.kashiApproved) {
-                    if (pair.addCollateralAmount && pair.collateralFrom == "bento" && !pair.borrowAmount) {
-                        const share = await this.web3.bentobox.toShare(pair.collateral.address, amount, true).call()
-                        await this.web3.contract("kashipair", pair.address).methods.addCollateral(this.address, false, share).send({ from: this.address })
-                        return
-                    } else if (pair.borrowAmount && !pair.addCollateralAmount) {
-                        const amount = Decimal(pair.borrowAmount).toInt(pair.asset.decimals)
-                        await this.web3.contract("kashipair", pair.address).methods.borrow(this.address, amount).send({ from: this.address })
-                        return
-                    }
-                }
-                const cooker = new KashiCooker(pair, this.web3, this.address)
-                if (!app.kashiApproved) {
-                    await cooker.approve()
-                }
-                if (pair.addCollateralAmount) {
-                    if (pair.collateralFrom == 'bento') {
-                        await cooker.addCollateral(pair.addCollateralAmount)
-                    } else {
-                        await cooker.depositCollateral(pair.addCollateralAmount)
-                    }
-                }
-                if (pair.borrowAmount) {
-                    await cooker.borrow(pair.borrowAmount)
-                }
-                await cooker.cook()
-            }
         },
     };
 
@@ -613,7 +395,7 @@
                 return "green"
             }
         },
-        template: "<span :style=\"color ? 'color: ' + color + ';' : ''\">{{ pair.health.print(18, 2) }}<br><small>{{ pair.healthPercentage.print(16, 2) }}%</small></span>"
+        template: "<span :style=\"color ? 'color: ' + color + ';' : ''\">{{ pair.health.print(18, 2) }}</span>"
     })
 
     Vue.component("interest", {
@@ -630,11 +412,8 @@
                 return "fas fa-minus-circle"
             }
         },
-        template: "<span>{{ (current ? pair.currentInterestPerYear : pair.interestPerYear).print(16, 2) }}%<i :style=\"color ? 'color: ' + color + ';' : ''\" :class='icon'></i><br><small>{{ pair.utilization.print(16, 0) }}%</small></span>"
+        template: "<span>{{ (current ? pair.currentInterest : pair.interest).print(16, 2) }}% <i :style=\"color ? 'color: ' + color + ';' : ''\" :class='icon'></i></span>"
     })
-
-                                                
-
 
     page_done();
 </script>

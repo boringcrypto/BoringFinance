@@ -1,0 +1,104 @@
+<template id="page_template">
+    <div class="mt-3">
+        <web3 :manager="manager" :init="init"></web3>
+        [
+        <div v-for="token in tokens">
+            {{ token }},
+        </div>
+        ]
+    </div>
+</template>
+<script>
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    app.page = {
+        props: ["manager", "web3", "address", "assets", "time"],
+        data: function () {
+            return {
+                tokens: []
+            };
+        },
+        computed: {
+        },
+        methods: {
+            init: async function() {
+                const tokens = (await $.ajax("data/tokenlist_" + this.manager.chainId + ".json")).map((a) => {
+                    a.address = a.address.toLowerCase()
+                    a.DOMAIN_SEPARATOR = undefined
+                    return rpcToObj(a)
+                })
+                const tokenMap = Object.assign({}, ...tokens.map(t => ({[t.address.toLowerCase()]: t})))
+                console.log(tokenMap)
+
+
+                const missingAssets = tokens.filter(a => 
+                        typeof(a.name) == 'undefined' ||
+                        typeof(a.symbol) == 'undefined' ||
+                        typeof(a.decimals) == 'undefined' ||
+                        typeof(a.DOMAIN_SEPARATOR) == 'undefined'
+                    ).map(a => a.address)
+                if (missingAssets.length) {
+                    const tokenInfo = await this.web3.boringhelper.getTokenInfo(missingAssets).call()
+                    tokenInfo.forEach(t => {
+                        objAssign(tokenMap[t.token.toLowerCase()], {
+                            "name": t.name,
+                            "symbol": t.symbol,
+                            "decimals": t.decimals,
+                            "DOMAIN_SEPARATOR": t.DOMAIN_SEPARATOR == "0x0000000000000000000000000000000000000000000000000000000000000000" ? "NO" : t.DOMAIN_SEPARATOR
+                        })
+                    })
+                }
+
+                const coingecko_list = Object.assign({}, ...(await $.ajax("https://api.coingecko.com/api/v3/coins/list?include_platform=true")).map(t => ({[t.platforms.ethereum?.toLowerCase()]: t})))
+
+                for (let i in tokens) {
+                    const t = tokens[i]
+                    if (!t.gecko_id) {
+                        t.gecko_id = coingecko_list[t.address.toLowerCase()]?.id
+                    }
+                    if (t.gecko_id && typeof(t.rebase) == 'undefined') {
+                        await sleep(750)
+                        const info = await $.ajax("https://api.coingecko.com/api/v3/coins/" + t.gecko_id + "?tickers=false&market_data=false&community_data=false&developer_data=false&sparkline=false")
+                        t.rebase = info.categories.indexOf("Rebase Tokens") != -1
+                        if (info.public_notice) {
+                            t.rawnotice = info.public_notice
+                        }
+                    }
+
+                    if (t.handler == 'SLPHandler' || t.handler == 'UniV2LPHandler') {
+                        if (!t.token0) {
+                            t.token0 = await this.web3.contract("pair", t.address).methods.token0().call()
+                        }
+                        if (!t.token1) {
+                            t.token1 = await this.web3.contract("pair", t.address).methods.token1().call()
+                        }
+                    }
+
+                    this.tokens.push(JSON.stringify(t, (key, value) =>
+                        typeof value === 'bigint'
+                            ? value.toString()
+                            : value // return everything else unchanged
+                    ))
+                }
+                
+                console.log("Finding logos")
+                tokens.forEach(async t => {
+                    if (!t.handler) {
+                        let uri = t.logoURI || t.logo || 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/' + Web3.utils.toChecksumAddress(t.address) + '/logo.png';
+                        if (t.logo) { delete t.logo }
+                        try {
+                            await $.ajax(uri)
+                            t.logoURI = uri
+                        }
+                        catch {
+                            delete t.logoURI
+                        }
+                    }
+                })
+            }
+        },
+    };
+    page_done();
+</script>

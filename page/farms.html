@@ -1,90 +1,96 @@
 <template id="page_template">
     <div class="mt-3">
-        <web3 :manager="manager" :init="init" :poll="poll"></web3>
         <h1>SushiSwap Farms</h1>
-        <p v-if="farms.length > 0">
-            Current emission is {{ sushiPerBlock.print(18, 2) }} SUSHI/block. About ${{ (100n * app.sushiRate * farms[45].allocPoint / totalAllocPoint).print(6, 2) }}/block.
-            Daily this is around {{ (65000000n * farms[45].allocPoint / totalAllocPoint).print(2, 2) }} SUSHI or ${{ (650000n * app.sushiRate * farms[45].allocPoint / totalAllocPoint).print(6, 0) }}.<br>
-        </p>
-        <p v-if="farms.length > 0">
-            Being locked for 6 months: {{ lockedUpPercentage.print(16, 2) }}%
-        </p>
-        <table class="table table-hover w-100 mb-0">
-            <thead>
-                <tr>
-                    <th v-if="manager.chainId=='0x1'" colspan=2>Farm</th>
-                    <th v-else="">Farm</th>
-                    <th class="d-none d-lg-table-cell text-right"></th>
-                    <th class="text-right d-none d-sm-table-cell">SUSHI/block</th>
-                    <th class="text-right">$/day</th>
-                    <th class="text-right">TVL</th>
+        <web3 :manager="manager" :init="init" :poll="poll">
+            <p v-if="farms.length > 0">
+                Current emission is {{ sushiPerBlock.print(18, 2) }} SUSHI/block. About ${{ (100n * app.sushiRate * farms[45].allocPoint / totalAllocPoint).print(6, 2) }}/block.
+                Daily this is around {{ (65000000n * farms[45].allocPoint / totalAllocPoint).print(2, 2) }} SUSHI or ${{ (650000n * app.sushiRate * farms[45].allocPoint / totalAllocPoint).print(6, 0) }}.<br>
+            </p>
+            <p v-if="farms.length > 0">
+                Being locked for 6 months: {{ lockedUpPercentage.print(16, 2) }}%
+            </p>
+            <table class="table table-hover w-100 mb-0">
+                <thead>
+                    <tr>
+                        <th v-if="manager.chainId=='0x1'" colspan=2>Farm</th>
+                        <th v-else="">Farm</th>
+                        <th class="d-none d-lg-table-cell text-right"></th>
+                        <th class="text-right d-none d-sm-table-cell">SUSHI/block</th>
+                        <th class="text-right">$/day</th>
+                        <th class="text-right">TVL</th>
+                    </tr>
+                </thead>
+                <tr v-if="farms.length == 0">
+                    <td colspan="6">
+                        There are no active farms.
+                    </td>
                 </tr>
-            </thead>
-        <template v-for="farm in sortedFarms" v-if="farm.allocPoint > 0 || farm.balance > 0">
-            <tr style="cursor: pointer;" data-toggle="collapse" :data-target="'.erc20' + farm.pid">
-                <td v-if="manager.chainId=='0x1'" class="py-2 px-0" style="width: 66px">
-                    <img v-if="farm.isPair" class="rounded" :src="logo_url(farm.token0)" style="width: 28px; height: 28px;" onerror="this.src='/img/no-icon.png'"/>
-                    <img v-if="farm.isPair" class="rounded" :src="logo_url(farm.token1)" style="width: 28px; height: 28px;" onerror="this.src='/img/no-icon.png'"/>
-                </td>
-                <td>
-                    <span class="d-inline" v-if="farm.isPair">
-                        {{ farm.token0asset.symbol }}-{{ farm.token1asset.symbol }}
-                    </span>
-                    <span v-else="">
-                        {{ farm.symbol }}
-                    </span>
-                </td>
-                <td class="d-none d-lg-table-cell text-right">
-                    <span v-if="farm.isPair">
-                        {{ farm.reserve0.print(farm.token0asset.decimals, 0) }} {{ farm.token0asset.symbol }} - {{ farm.reserve1.print(farm.token1asset.decimals, 0) }} {{ farm.token1asset.symbol }}
-                    </span>
-                </td>
-                <td class="text-right">{{ (100000000000000000000n * farm.allocPoint / totalAllocPoint).print(18, 2) }}</td>
-                <td class="text-right">
-                    ${{ (6500n * 100000000000000000000n * farm.allocPoint * app.sushiRate / totalAllocPoint / (1000000000000000000n - lockedUpPercentage)).print(6, 0) }}
-                </td>
-                <td class="text-right">
-                    <span v-if="farm.tvl">
-                        ${{ farm.tvl.print(24, 0) }}
-                    </span>
-                </td>
-            </tr>
-            <tr :class="'collapse erc20' + farm.pid">
-                <td colspan="5">
-                    <div :class="'erc20' + farm.pid">
-                        Pool ID is {{ farm.pid }}. Allocation points is {{ farm.allocPoint }}. <span v-if="farm.isPair">This is a swap pair of {{ farm.token0asset.name }} and {{ farm.token1asset.name }}.</span>
-                        <br>
-                        <span v-if="farm.isPair && farm.token0asset">
-                            {{ farm.reserve0.print(farm.token0asset.decimals, 0) }} {{ farm.token0asset.symbol }}<br>
-                            {{ farm.reserve1.print(farm.token1asset.decimals, 0) }} {{ farm.token1asset.symbol }}<br>
-                        </span>
-                        <span v-if="farm.balance">
-                            You have {{ farm.balance.print(18, 0) }} staked tokens.
-                            <div class="input-group mb-3" style="max-width: 350px;">
-                                <input class="form-control" type="number" v-model="unstakeAmount">
-                                <div class="input-group-append">
-                                    <span class="input-group-text" style="cursor: pointer;" @click="unstakeAmount = farm.balance.toDec(18)">Max</span>
-                                </div>
-                                <button type="button" class="btn btn-sm btn-primary" @click='unstake(farm.pid)'>Unstake</button>
+                <template v-for="farm in sortedFarms" v-if="(farm.allocPoint > 0 || farm.balance) && (!farm.isPair || farm.reserve0)">
+                    <tr style="cursor: pointer;" data-toggle="collapse" :data-target="'.erc20' + farm.pid">
+                        <td v-if="manager.chainId=='0x1'" class="py-2 px-0" style="width: 66px">
+                            <img v-if="farm.isPair" class="rounded" :src="logo_url(farm.token0)" style="width: 28px; height: 28px;" onerror="this.src='/img/no-icon.png'"/>
+                            <img v-if="farm.isPair" class="rounded" :src="logo_url(farm.token1)" style="width: 28px; height: 28px;" onerror="this.src='/img/no-icon.png'"/>
+                        </td>
+                        <td>
+                            <span class="d-inline" v-if="farm.isPair">
+                                {{ farm.token0asset.symbol }}-{{ farm.token1asset.symbol }}
+                            </span>
+                            <span v-else="">
+                                {{ farm.symbol }}
+                            </span>
+                        </td>
+                        <td class="d-none d-lg-table-cell text-right">
+                            <span v-if="farm.isPair">
+                                {{ farm.reserve0.print(farm.token0asset.decimals, 0) }} {{ farm.token0asset.symbol }} - {{ farm.reserve1.print(farm.token1asset.decimals, 0) }} {{ farm.token1asset.symbol }}
+                            </span>
+                        </td>
+                        <td class="text-right">{{ (100000000000000000000n * farm.allocPoint / totalAllocPoint).print(18, 2) }}</td>
+                        <td class="text-right">
+                            ${{ (6500n * 100000000000000000000n * farm.allocPoint * app.sushiRate / totalAllocPoint / (1000000000000000000n - lockedUpPercentage)).print(6, 0) }}
+                        </td>
+                        <td class="text-right">
+                            <span v-if="farm.tvl">
+                                ${{ farm.tvl.print(24, 0) }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr :class="'collapse erc20' + farm.pid">
+                        <td colspan="5">
+                            <div :class="'erc20' + farm.pid">
+                                Pool ID is {{ farm.pid }}. Allocation points is {{ farm.allocPoint }}. <span v-if="farm.isPair">This is a swap pair of {{ farm.token0asset.name }} and {{ farm.token1asset.name }}.</span>
+                                <br>
+                                <span v-if="farm.isPair && farm.token0asset">
+                                    {{ farm.reserve0.print(farm.token0asset.decimals, 0) }} {{ farm.token0asset.symbol }}<br>
+                                    {{ farm.reserve1.print(farm.token1asset.decimals, 0) }} {{ farm.token1asset.symbol }}<br>
+                                </span>
+                                <span v-if="farm.balance && farm.balance">
+                                    You have {{ farm.balance.print(18, 0) }} staked tokens.
+                                    <div class="input-group mb-3" style="max-width: 350px;">
+                                        <input class="form-control" type="number" v-model="unstakeAmount">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text" style="cursor: pointer;" @click="unstakeAmount = farm.balance.value.toDec(18)">Max</span>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-primary" @click='unstake(farm.pid)'>Unstake</button>
+                                    </div>
+                                    You have {{ farm.pending.print(18,0) }} SUSHI pending for harvest.<br>
+                                    <button type="button" class="btn btn-sm btn-primary mb-3" @click='harvest(farm.pid)'>Harvest</button><br>
+                                </span>
+                                <span v-if="farm.lpBalance">
+                                    You have {{ farm.lpBalance.print(18, 0) }} unstaked tokens.
+                                    <div class="input-group mb-3" style="max-width: 350px;">
+                                        <input class="form-control" type="number" v-model="stakeAmount">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text" style="cursor: pointer;" @click="stakeAmount = farm.lpBalance.toDec(18)">Max</span>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-primary" @click='stake(farm.pid)'>Stake</button>
+                                    </div>
+                                </span>
                             </div>
-                            You have {{ farm.pending.print(18,0) }} SUSHI pending for harvest.<br>
-                            <button type="button" class="btn btn-sm btn-primary mb-3" @click='harvest(farm.pid)'>Harvest</button><br>
-                        </span>
-                        <span v-if="farm.lpBalance">
-                            You have {{ farm.lpBalance.print(18, 0) }} unstaked tokens.
-                            <div class="input-group mb-3" style="max-width: 350px;">
-                                <input class="form-control" type="number" v-model="stakeAmount">
-                                <div class="input-group-append">
-                                    <span class="input-group-text" style="cursor: pointer;" @click="stakeAmount = farm.lpBalance.toDec(18)">Max</span>
-                                </div>
-                                <button type="button" class="btn btn-sm btn-primary" @click='stake(farm.pid)'>Stake</button>
-                            </div>
-                        </span>
-                    </div>
-                </td>
-            </tr>
-        </template>    
-        </table>    
+                        </td>
+                    </tr>
+                </template>    
+            </table>    
+        </web3>
     </div>
 </template>
 <script>
@@ -109,7 +115,7 @@
             },
             sortedFarms: function() {
                 return [...this.farms].filter(farm => [29n, 45n].indexOf(farm.pid) == -1).sort((a, b) => Number(b.allocPoint) - Number(a.allocPoint)).map(farm => {
-                    if (farm.isPair && farm.token0asset && farm.token1asset && (farm.token0asset.rate || farm.token1asset.rate)) {
+                    if (farm.isPair && farm.token0asset && farm.token1asset && farm.reserve0 && (farm.token0asset.rate || farm.token1asset.rate)) {
                         if (farm.token0asset.address.toLowerCase() == this.manager.wrappedNative) {
                             farm.tvl = farm.reserve0 * app.ethRate * 2n
                         } else if (farm.token1asset.address.toLowerCase() == this.manager.wrappedNative) {
@@ -146,19 +152,20 @@
                     this.pids = [];
                     for (let i = 0; i < Number(this.farmCount); i++) {
                         this.pids.push(i);
-                    }            
-                    const farms_info = await this.web3.boringhelper.getPools(this.pids).call()
-                    farms_info[1].forEach(farm => {
-                        newFarm = rpcToObj(farm)
-                        if (newFarm.isPair) {
-                            newFarm.token0asset = app.assetManager.addAsset({ address: newFarm.token0 })
-                            newFarm.token1asset = app.assetManager.addAsset({ address: newFarm.token1 })
-                        }
-                        this.farms.push(newFarm)
-                    })
-                    this.totalAllocPoint = BigInt(farms_info[0].totalAllocPoint)
-
-                    await app.assetManager.getTokenInfo()
+                    }
+                    if (this.pids.length) {
+                        const farms_info = await this.web3.boringhelper.getPools(this.pids).call()
+                        farms_info[1].forEach(farm => {
+                            newFarm = rpcToObj(farm)
+                            if (newFarm.isPair) {
+                                newFarm.token0asset = app.assetManager.addAsset({ address: newFarm.token0 })
+                                newFarm.token1asset = app.assetManager.addAsset({ address: newFarm.token1 })
+                            }
+                            this.farms.push(newFarm)
+                        })
+                        this.totalAllocPoint = BigInt(farms_info[0].totalAllocPoint)
+                        await app.assetManager.getTokenInfo()
+                    }
                 }
             },
             poll: async function () {

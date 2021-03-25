@@ -211,7 +211,6 @@ async function signMasterContractApproval(web3, masterContract, user, approved, 
     if (!nonce) {
         console.log("Getting nonce")
         nonce = await web3.bentobox.nonces(user).call()
-        console.log(nonce)
     }
     const message = {
         warning,
@@ -246,7 +245,6 @@ async function signMasterContractApproval(web3, masterContract, user, approved, 
         },
         message: message,
     }
-    console.log(typedData)
 
     return new Promise((resolutionFunc, rejectionFunc) => {
         web3.currentProvider.sendAsync(
@@ -272,35 +270,39 @@ async function signMasterContractApproval(web3, masterContract, user, approved, 
 addContract("sushi", abis.sushi, {
     "0x1": "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2",
     "0x3": "0x07be118a973287c1CaA58AE0c2443a2f37CC06FC",
-    "0x507": "0x9656A6BDb2931899b4982281E70858E6ab029554"
 })
+
 addContract("chef", abis.chef, {
     "0x1": "0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd",
-    "0x3": "0x381AB85844741B7afB02d61aaEF33f4792E3A56d",
-    "0x507": "0x649fce3E0559665999A0455bdA50817ef7520985"
+    "0x3": "0x80c7dd17b01855a6d2347444a0fcc36136a314de",
 })
+
 addContract("factory", abis.factory, {
     "0x1": "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac",
     "0x3": "0xEF2B6f8fDd5c264f2fAAFa1F911486EF7Ac0cF11",
-    "0x507": "0x2Ce3F07dD4c62b56a502E223A7cBE38b1d77A1b5"
+    "0x2a": "0xEF2B6f8fDd5c264f2fAAFa1F911486EF7Ac0cF11",
 })
+
 addContract("router", abis.router, {
     "0x1": "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F",
     "0x3": "0xE411Ff7aAb910Fd471866cfE67D12C06fac18084",
+    "0x2a": "0xE411Ff7aAb910Fd471866cfE67D12C06fac18084",
 })
+
 addContract("bar", abis.bar, {
     "0x1": "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272",
     "0x3": "0xD1c50c6597f0800c6669B17a678c52ED477E4Bd3",
-    "0x507": "0x0A3dF871E8c696c6d303207360Fa6AB08f0Ed01F"
 })
+
 addContract("maker", abis.maker, {
     "0x1": "0xE11fc0B43ab98Eb91e9836129d1ee7c3Bc95df50",
     "0x3": "0x06F1E375aB9eE8D6fD10F85217ceEA1DE",
 })
+
 addContract("bentobox", abis.bentobox, {
-    "0x1": "0xB5891167796722331b7ea7824F036b3Bdcb4531C",
-    "0x3": "0xccb146728f6D94Fe22D1030E7FA369bd33916824",
-    "0x507": "0xFD3a166cE22f42AA1aa2d9dfF4dF824856A7bD7C"
+    "0x1": "0xF5BCE5077908a1b7370B9ae04AdC565EBd643966",
+    "0x3": "0xF5BCE5077908a1b7370B9ae04AdC565EBd643966",
+    "0x2a": "0xF5BCE5077908a1b7370B9ae04AdC565EBd643966"
 })
 
 addContract("timelock", abis.timelock, {
@@ -308,19 +310,32 @@ addContract("timelock", abis.timelock, {
 })
 
 addContract("kashipair", abis.kashipair, { 
-    "0x3": "0xD57469335E06eD52B57278A0Ff4ECB62bAd05e99"
+    "0x1": "0x74A81CB5b6996d9347b864b9a1492a6509e51e65",
+    "0x3": "0x74A81CB5b6996d9347b864b9a1492a6509e51e65",
+    "0x2a": "0x74A81CB5b6996d9347b864b9a1492a6509e51e65"
 });
 
 addContract("peggedoracle", abis.peggedoracle, {
-    "0x1": "0x4C19068BE73EB00A42432D3FE7da952815BB0485",
-    "0x3": "0x1E8B2C9aA29360Bf0B7B385Cc82073000Af9BAAf"
+    "0x1": "0x6cbfbB38498Df0E1e7A4506593cDB02db9001564",
+    "0x3": "0x6cbfbB38498Df0E1e7A4506593cDB02db9001564",
+    "0x2a": "0x6cbfbB38498Df0E1e7A4506593cDB02db9001564"
 })
 
-addContract("faucet", abis.faucet, { "0x3": "0xe62661131645fcdf45b17910e490ea845201e819" });
+addContract("chainlinkoracle", abis.peggedoracle, {
+    "0x1": "0xD766147Bc5A0044a6b4f4323561B162870FcBb48",
+    "0x3": "0xD766147Bc5A0044a6b4f4323561B162870FcBb48",
+    "0x2a": "0xD766147Bc5A0044a6b4f4323561B162870FcBb48"
+})
+
 addContract("boringhelper", abis.boringhelper, { 
-    "0x1": "0x0297ed96304eE102eCDA5571DC9eC6bfEF26AEe5",
-    "0x3": "0xe3BfB820d18cc5c9cC371b1e1d5199CBFCf69B64",
-    "0x507": "0x2A81a0b32392400B53D1173212f5955617F8A36A"
+    "0x1": "0x11Ca5375AdAfd6205E41131A4409f182677996E6",
+    "0x3": "0x11Ca5375AdAfd6205E41131A4409f182677996E6",
+    "0x2a": "0x11Ca5375AdAfd6205E41131A4409f182677996E6",
+});
+
+addContract("faucet", abis.faucet, { 
+    "0x3": "0xe62661131645fcdf45b17910e490ea845201e819",
+    "0x2a": "0x5546e0295c7bb85b2fC00883B6025BA0Db06e50A"
 });
 
 addContract("salary", abis.salary, { 
@@ -339,6 +354,12 @@ settings = {
         native_token: { "address": ETHEREUM_ADDRESS, "name": "Ethereum", "symbol": "ETH", "decimals": 18n, "rate": 1000000000000000000n },
         currency: "0x292c703A980fbFce4708864Ae6E8C40584DAF323"
     },
+    "0x2a": {
+        chainName: "Kovan",
+        native_token: { "address": ETHEREUM_ADDRESS, "name": "Ethereum", "symbol": "ETH", "decimals": 18n, "rate": 1000000000000000000n },
+        currency: "0x07de306FF27a2B630B1141956844eB1552B956B5",
+        wrappedNative: "0xd0A1E359811322d97991E03f863a0C30C2cF029C"
+    },
     "0x507": {
         chainName: "Moonbeam Alpha",
         native_token: { "address": ETHEREUM_ADDRESS, "name": "Moonbeam Alphanet", "symbol": "DEV", "decimals": 18n, "rate": 1000000000000000000n },
@@ -349,10 +370,10 @@ settings = {
 
 //addContract("peggedoracle", abis.peggedoracle, { "0x1": "0x461386ec09FfDd372af72f1f278ff7a730E5b8D1", "0x3": "0xb5C8A2d1C8d393Dace7b3C1D98f35d645A1cD1fc" });
 //addContract("compoundoracle", abis.compoundoracle, { "0x1": "0x70f4EF6cC5f7B2c29056d1b4dbfd26D5cAf857Cc", "0x3": "0xf1EFAf821B7FE3CCdFA1dC2b7c553B08BC53d707" });
-//addContract("sushiswapslp0oracle", abis.sushiswapslporacle, { "0x3": "0xFDf9eECBC041fa126290108b86527dBA7c8eFC3e" });
-//addContract("sushiswapslp1oracle", abis.sushiswapslporacle, { "0x3": "0xAcf73db053bA1a1DF51bC3BC0BfcA6C2ada5cFeC" });
+//addContract("sushiswapslp0oracle", abis.sushiswapslporacle, { "0x3": "0x66F03B0d30838A3fee971928627ea6F59B236065" });
+//addContract("sushiswapslp1oracle", abis.sushiswapslporacle, { "0x3": "0x0D51b575591F8f74a2763Ade75D3CDCf6789266f" });
 //const masterContract = "0x2bc401e64Be212E435339872208E7b07F5eB3Eb6";
-//const sushiswapper = "0xc870551cbfE40D7Bb272273D156123E18924Bc68";
+//const sushiswapper = "0x1766733112408b95239aD1951925567CB1203084";
 const WETH = "0xc778417E063141139Fce010982780140Aa0cD5Ab".toLowerCase()
 
 /*addContract("univ2tosushi", abis.univ2tosushi, { "0x1": "0x81660B6731bEa5f9c08266331241c900bF2936FC" });

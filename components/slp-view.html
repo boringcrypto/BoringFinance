@@ -1,5 +1,7 @@
 <template id="component_template">
     <div>
+        <web3 :manager="manager" :init="init" :poll="poll"></web3>
+
         <img src="img/SushiSwap.svg" height="20" class="float-left mr-1 mt-1"><h3> SushiSwap <span class="float-right">${{ total.print(6, 2) }}</span></h3>
         <h5>SushiSwap Liquidity Pools</h5>
         <table class="table w-100 mb-0">
@@ -8,32 +10,32 @@
                 <th class="text-right">Balance</th>
                 <th class="text-right">Value</th>
             </thead>
-            <template v-for="asset in assets" v-if="asset.balance != 0n">
+            <template v-for="asset in assets" v-if="asset.balance.value != 0n && asset.token0asset">
                 <tr style="cursor: pointer;" data-toggle="collapse" :data-target="'.slpunstaked' + asset.address">
                     <td>{{ asset.symbol }}</td>
                     <td class="text-right">
-                        <span v-if="asset.totalSupply">
-                            {{ (asset.balance * asset.reserve0 / asset.totalSupply).print(asset.token0asset.decimals, 2) }}
+                        <span v-if="asset.reserve0">
+                            {{ (asset.balance.value * asset.reserve0 / asset.totalSupply).print(asset.token0asset.decimals, 2) }}
                             {{ asset.token0asset.symbol }}<br />
-                            {{ (asset.balance * asset.reserve1 / asset.totalSupply).print(asset.token1asset.decimals, 2) }}
+                            {{ (asset.balance.value * asset.reserve1 / asset.totalSupply).print(asset.token1asset.decimals, 2) }}
                             {{ asset.token1asset.symbol }}
                         </span>
                     </td>
                     <td class="text-right">
                         <span
-                            v-if="app.ethRate && asset.token0asset && asset.token0asset.rate && !asset.token0asset.hide_value && asset.token1asset.rate && !asset.token1asset.hide_value">
-                            ${{ (((asset.balance * asset.reserve0 / asset.totalSupply) * app.ethRate / asset.token0asset.rate) + ((asset.balance * asset.reserve1 / asset.totalSupply) * app.ethRate / asset.token1asset.rate)).print(6, 2) }}
+                            v-if="app.ethRate && asset.reserve0 && asset.token0asset && asset.token0asset.rate && !asset.token0asset.hide_value && asset.token1asset.rate && !asset.token1asset.hide_value">
+                            ${{ (((asset.balance.value * asset.reserve0 / asset.totalSupply) * app.ethRate / asset.token0asset.rate) + ((asset.balance.value * asset.reserve1 / asset.totalSupply) * app.ethRate / asset.token1asset.rate)).print(6, 2) }}
                         </span>
                     </td>
                 </tr>
-                <tr :class="'collapse slpunstaked' + asset.address">
+                <tr :class="'collapse slpunstaked' + asset.address" v-if="false">
                     <td colspan="4">
                         <div :class="'slpunstaked' + asset.address">
                             <div class="input-group mb-3">
                                 <input class="form-control" type="number" v-model="stakeAmount"><br>
                                 <div class="input-group-append">
                                     <span class="input-group-text" style="cursor: pointer;"
-                                        @click="stakeAmount = asset.balance.toDec(18)">Max</span>
+                                        @click="stakeAmount = asset.balance.value.toDec(18)">Max</span>
                                 </div>
                             </div>
                             <button type="button" class="btn btn-sm btn-primary">Stake</button>
@@ -46,11 +48,28 @@
 </template>
 <script>
     addComponent('SLPHandler', {
-        props: ["assets", "app", "web3", "address"],
+        props: ["assets", "app", "web3", "address", "manager"],
         data: function () {
             return {
                 stakeAmount: 0,
                 unstakeAmount: 0
+            }
+        },
+        computed: {
+            assetMap: function() {
+                const map = {}
+                this.assets.forEach(a => map[a.address.toLowerCase()] = a)
+                return map
+            },
+            total: function () {
+                let total = 0n;
+                for (let i in this.assets) {
+                    let asset = this.assets[i];
+                    if (asset.reserve0 && this.app.ethRate && asset.token0asset.rate && !asset.token0asset.hide_value && asset.token1asset.rate && !asset.token1asset.hide_value && asset.balance.value) {
+                        total += ((asset.balance.value * asset.reserve0 / asset.totalSupply) * this.app.ethRate / asset.token0asset.rate) + ((asset.balance.value * asset.reserve1 / asset.totalSupply) * this.app.ethRate / asset.token1asset.rate);
+                    }
+                }
+                return total;
             }
         },
         methods: {
@@ -59,40 +78,23 @@
             },
             unstake: async function (pid) {
                 this.web3.chef.withdraw(pid, this.unstakeAmount.toInt(18)).send({ from: this.address });
+            },
+            init: async function () {
+                console.log("INIT")
+                this.assets.forEach(asset => {
+                    objAssign(asset, {
+                        token0asset: app.assetManager.addAsset({ address: asset.token0 }),
+                        token1asset: app.assetManager.addAsset({ address: asset.token1 })
+                    })
+                })
+                console.log("INIT", this.assets)
+                await app.assetManager.poll();
+            },
+            poll: async function () {
+                const info = rpcToObj(await this.web3.boringhelper.pollPairs(this.address, this.assets.map(a => a.address)).call())
+                info.forEach(a => objAssign(this.assetMap[a.token.toLowerCase()], a))
+                console.log("POLL", this.assets)
             }
         },
-        computed: {
-            total: function () {
-                let total = 0n;
-                /*for (let i in this.assets) {
-                    let asset = this.assets[i];
-                    if (this.app.ethRate && asset.token0asset.rate && !asset.token0asset.hide_value && asset.token1asset.rate && !asset.token1asset.hide_value && asset.balance) {
-                        total += ((asset.balance * asset.reserve0 / asset.totalSupply) * this.app.ethRate / asset.token0asset.rate) + ((asset.balance * asset.reserve1 / asset.totalSupply) * this.app.ethRate / asset.token1asset.rate);
-                    }
-                }*/
-                return total;
-            }
-        }
     });
-
-    class SLPHandler {
-        constructor(assets) {
-            this.assets = assets
-            this.farms = []
-            this.pids = []
-        }
-
-        async init() {
-        }
-
-        async find(address, allAssets) {
-        }
-
-        async info(assets) {
-        }
-
-        async poll(address, assets) {
-            console.log("Polling SLP", address, assets)
-        }
-    }
 </script>

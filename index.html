@@ -42,20 +42,14 @@
             crossorigin="anonymous"
         ></script>
         <script
-            src="https://unpkg.com/vue-async-computed@3.9.0"
-            integrity="sha384-Wg7bbwm5XaGZ9qYiWLSqRAYDj2jg3iEXPZDCeIVKwII7U48bjduw6+BdmWf5N3EE"
-            crossorigin="anonymous"
-        ></script>
-        <script
             src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.2.11/dist/web3.min.js"
             integrity="sha384-ov1JhoOZ+CNgADocviQd7922YCzI4v0xlGUxWiVKBjwNOk/K+oDSbFiXEFpL4Cf1"
             crossorigin="anonymous"
         ></script>
-        <!-- script src="https://unpkg.com/@walletconnect/web3-provider@1.3.1" crossorigin="anonymous"></script -->
         <script src="js/abi-decode.js"></script>
         <script src="js/ens.js"></script>
         <script src="js/abis.js"></script>
-        <script src="js/sushiswap.js"></script>
+        <script src="js/boringweb3.js"></script>
         <script src="js/web3manager.js"></script>
         <script src="js/site.js"></script>
 
@@ -72,23 +66,35 @@
         </script>
     </head>
 
-    <body class="bg">
+    <body>
         <div id="app" class="d-none">
-            <web3 :manager="manager" :isglobal="true" :init="init" :poll="poll"></web3>
+            <web3 :manager="manager" :isglobal="true" :preready="true" :init="init"></web3>
             <div class="sticky-top">
                 <nav class="navbar navbar-light bg-light">
-                    <router-link class="nav-link" to="/"><i class="fas fa-home"></i></router-link>
+                    <router-link class="navbar-brand" to="/"><i class="fas fa-home"></i></router-link>
+
                     <router-link class="nav-link" to="/kashi">Kashi</router-link>
-                    <router-link class="nav-link" to="/feeds">Feeds</router-link>
-                    <router-link v-if="manager.web3 && manager.web3.bar.address" class="nav-link" to="/sushibar">Bar</router-link>
-                    <router-link class="nav-link" to="/farms">Farms</router-link>
-                    <router-link v-if="manager.chainId == '0x1'" class="nav-link" to="/timelock">Lock</router-link>
+                    <router-link v-if="manager.web3 && manager.web3.chef.address" class="nav-link d-none d-sm-block" to="/farms">Farms</router-link>
+                    <router-link v-if="manager.web3 && manager.web3.bar.address" class="nav-link d-none d-sm-block" to="/sushibar">Bar</router-link>
+                    <router-link v-if="manager.web3 && manager.web3.chef.address" class="nav-link d-none d-md-block" to="/vesting">Vesting</router-link>
+                    <router-link v-if="manager.chainId == '0x1'" class="nav-link d-none d-md-block" to="/timelock">Lock</router-link>
+
+                    <div class="nav-item dropdown d-md-none">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Apps
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <router-link v-if="manager.web3 && manager.web3.chef.address" class="nav-link d-sm-none" to="/farms">Farms</router-link>
+                            <router-link v-if="manager.web3 && manager.web3.bar.address" class="nav-link" to="/sushibar">Bar</router-link>
+                            <router-link v-if="manager.web3 && manager.web3.chef.address" class="nav-link" to="/vesting">Vesting</router-link>
+                            <router-link v-if="manager.chainId == '0x1'" class="nav-link" to="/timelock">Lock</router-link>
+                        </div>
+                    </div>                    
                     <div class="ml-auto"></div>
                     <div class="text-right d-none d-sm-block mr-2" v-if="manager.chainId != '0x1' && manager.chainName">{{ manager.chainName }}</div>
-                    <div class="text-right d-none d-sm-block mr-2" v-if="manager.native_token">{{ ethBalance.print(18, 2) }} {{ manager.native_token.symbol }}</div>
-                    <div class="nav-item dropdown p-0">
+                    <div class="nav-item dropdown">
                         <a
-                            class="nav-link dropdown-toggle p-0"
+                            class="nav-link dropdown-toggle"
                             href="#"
                             id="navbarDropdown"
                             role="button"
@@ -100,39 +106,42 @@
                             <span v-else="">{{ manager.address.substr(0, 10) }}</span>
                         </a>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-                            <a v-for="address in manager.addresses" class="dropdown-item" @click="manager.address=address" href="#"
-                                >{{ address.substr(0, 10) }}</a
-                            >
+                            <div class="dropdown-item d-block d-sm-none" v-if="manager.chainId != '0x1' && manager.chainName"><small>{{ manager.chainName }}</small></div>
+                            <a v-for="address in manager.addresses" class="dropdown-item" @click="manager.address=address" href="#">
+                                {{ address.substr(0, 10) }}
+                            </a>
                             <input v-on:keyup.enter="addCustomAddress" class="dropdown-item" placeholder="Custom address" />
                         </div>
-                        <div class="text-right d-sm-none" v-if="manager.chainId != '0x1' && manager.chainName">{{ manager.chainName }}</div>
-                        <div class="text-right d-sm-none" v-if="manager.native_token">{{ ethBalance.print(18, 2) }} {{ manager.native_token.symbol }}</div>
                     </div>
                 </nav>
                 <nav class="navbar bg-dark py-1">
-                    <div v-if="ethRate" class="navbar-text my-auto p-0" style="color: #eeeeee">ETH ${{ ethRate.print(6, 2) }}</div>
+                    <div v-if="ethRate" class="navbar-text my-auto p-0" style="color: #eeeeee; min-width: 100px;">ETH ${{ ethRate.print(6, 2) }}</div>
                     &nbsp;
                     <div v-if="btcRate" class="navbar-text my-auto p-0" style="color: #eeeeee">BTC ${{ btcRate.print(6, 2) }}</div>
                     &nbsp;
-                    <div v-if="sushiRate" class="navbar-text my-auto p-0" style="color: #eeeeee">SUSHI ${{ sushiRate.print(6, 2) }}</div>
-                </nav>
-                <nav v-if="!manager.connected && manager.provider === 'WalletConnect'" class="navbar bg-dark py-1">
-                    <p></p>
-                    <button class="btn btn-primary" @click="connectWC">Reconnect WalletConnect</button>
+                    <div class="navbar-text my-auto p-0 text-right" style="color: #eeeeee; min-width: 100px;"><span v-if="sushiRate">SUSHI ${{ sushiRate.print(6, 2) }}</span></div>
                 </nav>
             </div>
             <div class="container-fluid">
-                <div class="text-center mt-3" v-if="!manager.address && manager.provider">
-                    <button class="btn btn-lg btn-primary" @click="connect">Connect Metamask</button>
-                    <button class="btn btn-lg btn-primary" @click="connectWC">Connect WalletConnect</button>
-                </div>
-                <div class="text-center mt-3" v-if="!manager.provider">
-                    <div class="alert alert-warning" role="alert">
-                        Web3 provider, such as MetaMask not found. You can install <a href="https://metamask.io/" target="_blank">MetaMask from here</a>.
-                    </div>
+                <div class="text-center mt-3 mt-sm-5" v-if="!manager.address || !manager.provider">
+                    <button v-if="manager.provider" class="btn btn-lg btn-primary" @click="connect">Connect Metamask</button>
+                    <alert v-if="manager.provider != 'MetaMask'" class="mt-3 mt-sm-5 text-left">
+                        <span v-if="manager.provider && manager.provider != 'MetaMask'">
+                            <h4>Not MetaMask</h4>
+                            A wallet (web3) provider was found, but it's not MetaMask. This app was designed for use with MetaMask, other wallets may or may not work.
+                        </span>
+                        <span v-if="!manager.provider">
+                            <h4>No MetaMask</h4>
+                            No wallet (web3) provider was found.
+                        </span>
+                        <span v-if="manager.provider != 'MetaMask'">
+                            <br><br>You can install <a href="https://metamask.io/download.html" target="_blank">MetaMask from here</a>. It's available for iOS and Android. Chrome, Firefox, Brave and Edge extentions are available for desktop users.<br>
+                            <a class="btn btn-lg btn-primary mt-3 w-100" href="https://metamask.io/download.html" target="_blank">Download Metamask</a>
+                        </span>
+                    </alert>
                 </div>
                 <router-view
-                    v-if="assetManager && manager && manager.address"
+                    v-if="assetManager && manager && manager.address && manager.ready"
                     :address="manager.address"
                     :block="manager.block"
                     :header="manager.header"
@@ -197,14 +206,18 @@
                     this.manager = new Web3Manager();
                 },
                 watch: {
-                    "manager.chainId": async function() {
-                        if (this.assetManager) {
+                    "manager.chainId": async function(newChainId, oldChainId) {
+                        if (this.assetManager && oldChainId) {
+                            console.log("ChainId changed:", oldChainId, ">", newChainId)
                             await this.assetManager.init();
+                            await this.poll();
                         }
                     },
-                    "manager.address": async function () {
-                        if (this.assetManager) {
+                    "manager.address": async function (newAddress, oldAddress) {
+                        if (this.assetManager && oldAddress) {
+                            console.log("Address changed:", oldAddress, ">", newAddress)
                             await this.assetManager.init();
+                            await this.poll();
                         }
                     },
                 },
@@ -217,27 +230,19 @@
                     },
                     init: async function () {
                         this.assetManager = await new AssetManager(this.manager, this.assets);
-                        this.assetManager.init();
+                        await this.assetManager.init()
+                        await this.poll()
+                        this.manager.ready = true
                     },
                     poll: async function () {
                         const info = rpcToObj(await this.manager.web3.boringhelper.getUIInfo(this.manager.address || "0x0000000000000000000000000000000000000000", [], this.manager.currency, [this.manager.web3.kashipair.address]).call())
-                        this.ethRate = info.ethRate
+                        Object.assign(this, info)
                         this.btcRate = info.btcRate ? this.ethRate * 100000000n / info.btcRate : 0n
                         this.sushiRate = info.sushiRate ? this.ethRate * 1000000000000000000n / info.sushiRate : 0n
-                        this.ethBalance = info.ethBalance
                         if (this.assetManager.assetmap[ETHEREUM_ADDRESS]) {
                             this.assetManager.assetmap[ETHEREUM_ADDRESS].balance = new Amount(info.ethBalance, this.assetManager.assetmap[ETHEREUM_ADDRESS], "ETH balance")
                         }
-
-                        this.sushiBalance = info.sushiBalance
-                        this.sushiBarBalance = info.sushiBarBalance
-                        this.xsushiBalance = info.xsushiBalance
-                        this.xsushiSupply = info.xsushiSupply
-                        this.sushiBarAllowance = info.sushiBarAllowance
-
-                        this.pendingSushi = info.pendingSushi
                         this.timestamp = info.blockTimeStamp
-
                         this.kashiApproved = info.masterContractApproved[0]
 
                         await this.assetManager.poll();
@@ -266,12 +271,14 @@
 
             await load_page("/", "dashboard");
             await load_page("/kashi", "kashi");
-            await load_page("/bentopair/:address", "bentopair");
+            await load_page("/kashipair/:address", "kashipair");
             await load_page("/sushibar", "sushibar");
+            await load_page("/vesting", "vesting");
             await load_page("/timelock", "timelock");
             await load_page("/farms", "farms");
             await load_page("/feeds", "feeds");
             await load_page("/stats", "stats");
+            await load_page("/tokenlist", "tokenlist");
         });
 
         class AssetManager extends Web3Component {
@@ -279,6 +286,7 @@
                 super(options);
                 this.assets = assets;
                 this.assetmap = {};
+                this.loaded = false;
             }
 
             empty() {
@@ -287,10 +295,10 @@
             }
 
             async tokenList(full) {
-                console.log("Tokenlist")
                 const name = "tokenlist_" + this.chainId + (full ? "_full" : "")
                 const lookup_name = "tokenlist_" + this.chainId + "_lookup"
                 if (!this[name]) {
+                    console.log("Tokenlist")
                     this[name] = (await $.ajax("data/" + name + ".json")).map((a) => rpcToObj(a))
                     this[lookup_name] = {}
                     this[name].forEach(t => this[lookup_name][t.address.toLowerCase()] = t)
@@ -323,6 +331,7 @@
                 if (this.assetmap[asset.address]) {
                     objAssign(this.assetmap[asset.address], asset)
                 } else {
+                    asset.logo = asset.logo || asset.logoURI || "/img/no-icon.png"
                     asset.handler = asset.handler || "ERC20Handler"
                     asset.balance = new Amount(asset.balance, asset, "balance")
                     asset.bentoBalance = new Share(asset.bentoBalance, asset, "bentoBalance")
@@ -349,36 +358,16 @@
                     this.empty();
                     app.bentoBoxOwner = rpcToObj(await this.web3.bentobox.owner().call())
                     await this.find();
-                    console.log(this.options.native_token)
                     this.addAsset(this.options.native_token)
-
-                    for (let i in this.handlers) {
-                        await this.handlers[i].init();
-                    }
-
-                    await this.onAddress();
                 }
 
                 return this;
             }
 
-            async onAddress() {
-                if (this.address) {
-                    for (let i in this.handlers) {
-                        await this.handlers[i].find(this.address, this.allAssets);
-                    }
-
-                    for (let i in this.handlers) {
-                        await this.handlers[i].info(this.assets.filter((a) => a.handler == this.handlers[i]));
-                    }
-
-                    this.poll();
-                }
-            }
-
             async poll() {
-                if (this.address) {
-                    let balances = await this.web3.boringhelper.getBalances(this.address, this.assets.map(a => a.address).filter(a => a != ETHEREUM_ADDRESS)).call()
+                const addresses = this.assets.map(a => a.address).filter(a => a != ETHEREUM_ADDRESS)
+                if (this.address && addresses.length) {
+                    let balances = await this.web3.boringhelper.getBalances(this.address, addresses).call()
                     balances.forEach(b => {
                         let asset = this.assetmap[b.token.toLowerCase()]
                         objAssign(asset, rpcToObj(b))
@@ -389,12 +378,8 @@
                 return this;
             }
 
-            get(address) {
-                return this._assetmap[address.toLowerCase()];
-            }
-
-            async getTokenInfo() {
-                const missingAssets = this.assets.filter(a => !a.decimals).map(a => a.address)
+            async getTokenInfo(full) {
+                const missingAssets = this.assets.filter(a => !a.decimals || full).map(a => a.address)
                 if (missingAssets.length) {
                     const tokenInfo = await this.web3.boringhelper.getTokenInfo(missingAssets).call()
                     tokenInfo.forEach(t => {
@@ -402,25 +387,11 @@
                             "address": t.token,
                             "name": t.name,
                             "symbol": t.symbol,
-                            "decimals": t.decimals
+                            "decimals": t.decimals,
+                            "DOMAIN_SEPARATOR": t.DOMAIN_SEPARATOR
                         })
                     })
                 }
-
-/*                }
-                let balances = await this.assets.web3.boringhelper.getBalances(
-                address, assets.map(t => t.address)
-            ).call();
-            console.log("ERC20 balances updated")
-
-            for (var i in balances) {
-                let asset = this.assets.get(balances[i].token);
-                objAssign(asset, rpcToObj(balances[i]));
-                if (asset.address == this.manager.wrappedNative) {
-                    asset.rate = 1000000000000000000n;
-                }                
-                await this._handlerMap["ERC20Handler"].info(this.assets.filter((a) => a.handler == this._handlerMap["ERC20Handler"]));
-                await this._handlerMap["ERC20Handler"].poll(this.address, this.assets.filter((a) => a.handler == this._handlerMap["ERC20Handler"]));*/
             }
         }
     </script>

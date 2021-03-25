@@ -120,6 +120,18 @@ library BoringERC20 {
         (bool success, bytes memory data) = address(token).staticcall(abi.encodeWithSelector(0x313ce567));
         return success && data.length == 32 ? abi.decode(data, (uint8)) : 18;
     }
+
+    function DOMAIN_SEPARATOR(IERC20 token) internal view returns (bytes32) {
+        (bool success, bytes memory data) = address(token).staticcall{ gas: 10000 }(abi.encodeWithSelector(0x3644e515));
+        return success && data.length == 32 ? abi.decode(data, (bytes32)) : bytes32(0);
+    }
+
+    function nonces(IERC20 token, address owner) internal view returns (uint256) {
+        (bool success, bytes memory data) = address(token).staticcall{ gas: 5000 }(abi.encodeWithSelector(0x7ecebe00, owner));
+        return success && data.length == 32 
+            ? abi.decode(data, (uint256)) 
+            : uint256(-1); // Use max uint256 to signal failure to retrieve nonce (probably not supported)
+    }
 }
 
 library BoringPair {
@@ -197,6 +209,7 @@ struct AccrueInfo {
 interface IOracle {
     function get(bytes calldata data) external returns (bool success, uint256 rate);
     function peek(bytes calldata data) external view returns (bool success, uint256 rate);
+    function peekSpot(bytes calldata data) external view returns (uint256 rate);
     function symbol(bytes calldata data) external view returns (string memory);
     function name(bytes calldata data) external view returns (string memory);
 }
@@ -436,9 +449,11 @@ contract BoringHelper is Ownable {
 
     struct BalanceFull {
         IERC20 token;
+        uint256 totalSupply;
         uint256 balance;
         uint256 bentoBalance;
         uint256 bentoAllowance;
+        uint256 nonce;
         uint128 bentoAmount;
         uint128 bentoShare;
         uint256 rate;
@@ -449,6 +464,7 @@ contract BoringHelper is Ownable {
         uint256 decimals;
         string name;
         string symbol;
+        bytes32 DOMAIN_SEPARATOR;
     }
 
     function getTokenInfo(address[] calldata addresses) public view returns (TokenInfo[] memory) {
@@ -461,6 +477,7 @@ contract BoringHelper is Ownable {
             infos[i].name = token.name();
             infos[i].symbol = token.symbol();
             infos[i].decimals = token.decimals();
+            infos[i].DOMAIN_SEPARATOR = token.DOMAIN_SEPARATOR();
         }
 
         return infos;
@@ -485,9 +502,11 @@ contract BoringHelper is Ownable {
 
         for (uint256 i = 0; i < addresses.length; i++) {
             IERC20 token = addresses[i];
+            balances[i].totalSupply = token.totalSupply();
             balances[i].token = token;
             balances[i].balance = token.balanceOf(who);
             balances[i].bentoAllowance = token.allowance(who, address(bentoBox));
+            balances[i].nonce = token.nonces(who);
             balances[i].bentoBalance = bentoBox.balanceOf(token, who);
             (balances[i].bentoAmount, balances[i].bentoShare) = bentoBox.totals(token);
             balances[i].rate = getETHRate(token);
@@ -646,6 +665,10 @@ contract BoringHelper is Ownable {
     }
 
     struct KashiPairPoll {
+        IERC20 collateral;
+        IERC20 asset;
+        IOracle oracle;
+        bytes oracleData;
         uint256 totalCollateralShare;
         uint256 userCollateralShare;
         Rebase totalAsset;
@@ -653,6 +676,7 @@ contract BoringHelper is Ownable {
         Rebase totalBorrow;
         uint256 userBorrowPart;
         uint256 currentExchangeRate;
+        uint256 spotExchangeRate;
         uint256 oracleExchangeRate;
         AccrueInfo accrueInfo;
     }
@@ -663,6 +687,10 @@ contract BoringHelper is Ownable {
 
         for (uint256 i = 0; i < len; i++) {
             IKashiPair pair = pairsIn[i];
+            pairs[i].collateral = pair.collateral();
+            pairs[i].asset = pair.asset();
+            pairs[i].oracle = pair.oracle();
+            pairs[i].oracleData = pair.oracleData();
             pairs[i].totalCollateralShare = pair.totalCollateralShare();
             pairs[i].userCollateralShare = pair.userCollateralShare(who); 
             pairs[i].totalAsset = pair.totalAsset();
@@ -672,6 +700,7 @@ contract BoringHelper is Ownable {
 
             pairs[i].currentExchangeRate = pair.exchangeRate();
             (, pairs[i].oracleExchangeRate) = pair.oracle().peek(pair.oracleData());
+            pairs[i].spotExchangeRate = pair.oracle().peekSpot(pair.oracleData());
             pairs[i].accrueInfo = pair.accrueInfo();
         }
 

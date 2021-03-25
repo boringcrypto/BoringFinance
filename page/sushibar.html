@@ -52,7 +52,7 @@
                             <h3 class="card-title">Your Transfers</h3>
                             <eventreader
                                 :manager="manager"
-                                address="0x6b3595068778dd592e39a122f4f5a5cf09c90fe2"
+                                :address="web3.sushi.address"
                                 :topics="['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', manager.address, '0x0000000000000000000000008798249c2e607446efb7ad49ec89dd1865ff4272']"
                                 :handler="transfer_handler"
                                 :output="transfers"
@@ -61,7 +61,7 @@
                             </eventreader>
                             <eventreader
                                 :manager="manager"
-                                address="0x6b3595068778dd592e39a122f4f5a5cf09c90fe2"
+                                :address="web3.sushi.address"
                                 :topics="['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', '0x0000000000000000000000008798249c2e607446efb7ad49ec89dd1865ff4272', manager.address]"
                                 :handler="transfer_handler"
                                 :output="transfers"
@@ -71,7 +71,7 @@
 
                             <eventreader
                                 :manager="manager"
-                                address="0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272"
+                                :address="web3.bar.address"
                                 :topics="['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', null, manager.address]"
                                 :handler="directTransfer_handler"
                                 :output="directTransfers"
@@ -80,7 +80,7 @@
                             </eventreader>
                             <eventreader
                                 :manager="manager"
-                                address="0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272"
+                                :address="web3.bar.address"
                                 :topics="['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', manager.address]"
                                 :handler="directTransfer_handler"
                                 :output="directTransfers"
@@ -297,9 +297,9 @@
         methods: {
             transfer_handler: async function (log, web3, row, decoded) {
                 return {
-                    direction: decoded.to == "0x8798249c2e607446efb7ad49ec89dd1865ff4272" ? "in" : "out",
+                    direction: decoded.to == this.web3.bar.address ? "in" : "out",
                     block: row.block,
-                    amount: decoded.to == "0x8798249c2e607446efb7ad49ec89dd1865ff4272" ? decoded.value : decoded.value * -1n,
+                    amount: decoded.to == this.web3.bar.address ? decoded.value : decoded.value * -1n,
                 };
             },
             directTransfer_handler: async function (log, web3, row, decoded) {
@@ -331,7 +331,7 @@
                     sushi = await this.web3.eth.getPastLogs({
                         fromBlock: blockDown,
                         toBlock: blockUp,
-                        address: "0x6b3595068778dd592e39a122f4f5a5cf09c90fe2",
+                        address: this.web3.sushi.address,
                         topics: [
                             "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
                             null,
@@ -370,8 +370,8 @@
                                 (l) =>
                                     l &&
                                     l.name == "Transfer" &&
-                                    l.address == "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2" &&
-                                    l.events[1].value == "0x8798249c2e607446efb7ad49ec89dd1865ff4272"
+                                    l.address == this.web3.sushi.address &&
+                                    l.events[1].value == this.web3.bar.address
                             )
                             .map((l) => BigInt(l.events[2].value))
                             .sum(0n);
