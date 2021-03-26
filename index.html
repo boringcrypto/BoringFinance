@@ -325,6 +325,9 @@
             }
             
             addAsset(asset) {
+                if (asset.address == "0x0000000000000000000000000000000000000001") {
+                    return { decimals: 8 }
+                }
                 asset.address = asset.address.toLowerCase();
                 objAssign(asset, objAssign(this.tokenLookup(asset.address) || {}, asset))
 

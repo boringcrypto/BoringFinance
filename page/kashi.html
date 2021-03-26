@@ -305,7 +305,13 @@
             pair_handler: async function(log, web3, row, decoded) {
                 console.log("PAIR", log, row,decoded, this.web3.eth.abi.decodeParameters(["address", "address", "address", "bytes"], decoded.data))
                 let deployParams = this.web3.eth.abi.decodeParameters(["address", "address", "address", "bytes"], decoded.data)
-                if (deployParams[2].toLowerCase() != web3.peggedoracle.address.toLowerCase() && deployParams[2].toLowerCase() != web3.chainlinkoracle.address.toLowerCase()) {
+
+                const supported_oracles = [
+                    web3.peggedoracle.address,
+                    web3.chainlinkoracle.address,
+                ].map(a => a.toLowerCase())
+
+                if (supported_oracles.indexOf(deployParams[2].toLowerCase()) == -1) {
                     return
                 }
 
@@ -372,28 +378,37 @@
                 let asset = this.newAsset.address.toLowerCase()  // from
                 let collateral = this.newCollateral.address.toLowerCase() // to
                 let multiply = "0x0000000000000000000000000000000000000000"
+                let divide = "0x0000000000000000000000000000000000000000"
                 let multiplyMatches = Object.values(this.mappings).filter(m => m.from == asset && m.to == collateral)
                 let oracleData = ""
+                let decimals = 0n
                 if (multiplyMatches.length) {
                     match = multiplyMatches[0]
                     multiply = match.address
-                    console.log(multiplyMatches[0])
-                    let decimals = 18n + BigInt(match.decimals) - BigInt(this.newCollateral.decimals) + BigInt(this.newAsset.decimals)
-                    console.log("18 + ", BigInt(match.decimals), "-", BigInt(this.newCollateral.decimals), "+", BigInt(this.newAsset.decimals))
-                    console.log("DEC", decimals)
-                    oracleData = await this.web3.chainlinkoracle.getDataParameter(multiply, "0x0000000000000000000000000000000000000000", 10n ** decimals).call()
+                    decimals = 18n + BigInt(match.decimals) - BigInt(this.newCollateral.decimals) + BigInt(this.newAsset.decimals)
                 } else {
                     let divideMatches = Object.values(this.mappings).filter(m => m.from == collateral && m.to == asset)
                     if (divideMatches.length) {
                         match = divideMatches[0]
                         divide = match.address
-                        let decimals = 36n - BigInt(match.decimals) - BigInt(this.newCollateral.decimals) + BigInt(this.newAsset.decimals)
-                        console.log("36 -", BigInt(match.decimals), "-", BigInt(this.newCollateral.decimals), "+", BigInt(this.newAsset.decimals))
-                        console.log("DEC", decimals)
-                        oracleData = await this.web3.chainlinkoracle.getDataParameter("0x0000000000000000000000000000000000000000", divide, 10n ** decimals).call()
+                        decimals = 36n - BigInt(match.decimals) - BigInt(this.newCollateral.decimals) + BigInt(this.newAsset.decimals)
+                        oracleData = await this.web3.chainlinkoracle.getDataParameter(multiply, divide, 10n ** decimals).call()
                     } else {
+                        mapFrom = Object.values(this.mappings).filter(m => m.from == asset)
+                        mapTo = Object.values(this.mappings).filter(m => m.from == collateral)
+                        const match = mapFrom.map(mfrom => ({ mfrom: mfrom, mto: mapTo.filter(mto => mfrom.to == mto.to) })).filter(path => path.mto.length)
+                        if (match.length) {
+                            console.log("FOUND", match[0].mfrom, match[0].mto[0])
+                            multiply = match[0].mfrom.address
+                            divide = match[0].mto[0].address
+                            decimals = 18n + BigInt(match[0].mfrom.decimals) - BigInt(match[0].mto[0].decimals) - BigInt(this.newCollateral.decimals) + BigInt(this.newAsset.decimals)
+                        } else {
+                            console.log("No path")
+                            return
+                        }
                     }
                 }
+                oracleData = await this.web3.chainlinkoracle.getDataParameter(multiply, divide, 10n ** decimals).call()
                 console.log(collateral, asset, this.web3.chainlinkoracle.address, oracleData)
                 
                 const kashiData = this.web3.eth.abi.encodeParameters(['address', 'address', 'address', 'bytes'], [collateral, asset, this.web3.chainlinkoracle.address, oracleData])
