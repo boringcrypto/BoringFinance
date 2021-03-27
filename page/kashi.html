@@ -20,12 +20,12 @@
                     <tbody>
                         <tr v-for="pair in pairsChecked" v-if="pair.checked && (pair.userCollateral.set || pair.userBorrow.set)" @click="$router.push('/kashipair/' + pair.address + '/borrow')" style="cursor: pointer;">
                             <td class="text-right">
-                                <img class="rounded" :src="pair.collateral.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
+                                <img class="rounded float-left" :src="pair.collateral.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
                                 {{ pair.userCollateral.amount.str }}<br>
                                 <small>{{ pair.userCollateral.usd.str }}</small>
                             </td>
                             <td class="text-right">
-                                <img class="rounded" :src="pair.asset.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
+                                <img class="rounded float-left" :src="pair.asset.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
                                 {{ pair.userBorrow.current.str }}<br>
                                 <small>{{ pair.userBorrow.current.usd.str }}</small>
                             </td>
@@ -35,25 +35,28 @@
                     </tbody>
                 </table>
 
+                <div class="float-right">
+                    <i class="fas fa-search"></i>
+                    <input type="email" class="form-control form-control-sm d-inline" style="width: 100px;" v-model="pairSearch">
+                </div>
                 <h4>Available Pairs</h4>
                 <table class="table w-100 mb-0">
                     <thead>
-                        <th>Collateral</th>
-                        <th>Borrow</th>
-                        <th>Oracle</th>
+                        <th>Collateral/Borrow</th>
                         <th class="text-right">Interest</th>
                         <th class="text-right">Available</th>
                     </thead>
-                    <tr v-for="pair in pairsChecked" v-if="pair.checked && pair.totalAsset.elastic > 1000n" @click="$router.push('/kashipair/' + pair.address + '/borrow')" style="cursor: pointer;">
+                    <tr v-for="pair in pairsChecked" v-if="pair.checked && pair.totalAsset.elastic > 1000n && (!pairSearch || pair.search.indexOf(pairSearch.toLowerCase()) != -1)" @click="$router.push('/kashipair/' + pair.address + '/borrow')" style="cursor: pointer;">
                         <td v-if="pair.collateral">
-                            <img class="rounded float-left" :src="pair.collateral.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
-                            {{ pair.collateral.symbol }}
+                            <div class="float-left pr-2">
+                                <img class="rounded" :src="pair.collateral.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
+                                <img class="rounded" :src="pair.asset.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
+                            </div>
+                            <div>
+                                {{ pair.collateral.symbol }}/{{ pair.asset.symbol }}<br>
+                                <small>{{ pair.oracleName }}</small>
+                            </div>
                         </td>
-                        <td v-if="pair.asset">
-                            <img class="rounded float-left" :src="pair.asset.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
-                            {{ pair.asset.symbol }}
-                        </td>
-                        <td>{{ pair.oracleName }}</td>
                         <td class="text-right"><interest :pair="pair" :current="true"></interest></td>
                         <td class="text-right">
                             {{ pair.totalAsset.amount.str }}<br>
@@ -293,6 +296,7 @@
         props: ["web3", "manager", "address", "block", "assets", "time"],
         data: function () {
             return {
+                pairSearch: "",
                 newCollateral: "",
                 newAsset: "",
                 rate: 1,
@@ -438,12 +442,13 @@
         props: ["pair"],
         computed: {
             color: function() {
+                if (this.pair.health == 0n) { return "green" }
                 if (this.pair.health < 1250000000000000000n) { return "lightcoral" }
                 if (this.pair.health < 1500000000000000000n) { return "orange" }
                 return "green"
             }
         },
-        template: "<span :style=\"color ? 'color: ' + color + ';' : ''\">{{ pair.health.print(18, 2) }}</span>"
+        template: "<span :style=\"color ? 'color: ' + color + ';' : ''\">{{ pair.health ? pair.health.print(18, 2) : '∞' }}</span>"
     })
 
     Vue.component("interest", {

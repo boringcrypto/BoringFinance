@@ -590,6 +590,10 @@ class Pair {
         return new Pair(this.constructor_pair, this.web3).update(this.update_pair)
     }
 
+    get search() {
+        return (this.collateral.symbol + '/' + this.asset.symbol).toLowerCase()
+    }
+
     get timeElapsed() {
         return app.timestamp - this.accrueInfo.lastAccrued
     }
