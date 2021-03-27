@@ -91,6 +91,7 @@
                         </div>
                     </div>                    
                     <div class="ml-auto"></div>
+                    <div v-if="manager && manager.native_token && ethBalance">{{ ethBalance.print(18, 2) }} {{ manager.native_token.symbol }}</div>
                     <div class="text-right d-none d-sm-block mr-2" v-if="manager.chainId != '0x1' && manager.chainName">{{ manager.chainName }}</div>
                     <div class="nav-item dropdown">
                         <a
@@ -271,7 +272,7 @@
 
             await load_page("/", "dashboard");
             await load_page("/kashi", "kashi");
-            await load_page("/kashipair/:address", "kashipair");
+            await load_page("/kashipair/:address/:tab", "kashipair");
             await load_page("/sushibar", "sushibar");
             await load_page("/vesting", "vesting");
             await load_page("/timelock", "timelock");

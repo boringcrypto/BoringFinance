@@ -1,68 +1,112 @@
 <template id="page_template">
     <div class="row my-3">
         <div v-if="pair && pair.checked" class="col mx-auto" style="max-width: 720px">
-            <h3>Borrow {{ pair.asset.symbol }} with {{ pair.collateral.symbol }} <small>{{ pair.oracleName }} Oracle</small></h3>
-            <div>
-                <alert type="error" v-if="!pair.oracleValid">
+            <ul class="nav nav-pills mb-3 justify-content-center" id="myTab" role="tablist">
+                <li class="nav-item mr-2"><a :class="'nav-link' + ($route.params.tab == 'borrow' ? ' active' : '')" data-toggle="tab" style="cursor: pointer;" @click="$router.push('/kashipair/' + $route.params.address + '/borrow')">Borrow</a></li>
+                <li class="nav-item mr-2"><a :class="'nav-link' + ($route.params.tab == 'supply' ? ' active' : '')" data-toggle="tab" style="cursor: pointer;" @click="$router.push('/kashipair/' + $route.params.address + '/supply')">Supply</a></li>
+                <li class="nav-item"><a :class="'nav-link' + ($route.params.tab == 'info' ? ' active' : '')" data-toggle="tab" style="cursor: pointer;" @click="$router.push('/kashipair/' + $route.params.address + '/info')">Info</a></li>
+            </ul>
+
+            <div class="mb-3" v-if="!pair.oracleValid">
+                <alert type="error">
                     Do not use this pair, the Oracle isn't configured correctly. This will most likely lead to loss of funds.<br><br>
                     Reason: {{ pair.oracleError }}
                 </alert>
+            </div>
+
+            <alert v-if="!app.kashiApproved" type="info" class="mb-3">To use Kashi with the Bentobox, it needs to be approved. You haven't approved Kashi yet. This will automatically be included when you do your first transaction that requires approval. Once approved, this message will disappear.</alert>
+
+            <div v-if="$route.params.tab == 'borrow'">
+                <h3>Borrow {{ pair.asset.symbol }} with {{ pair.collateral.symbol }} <small>{{ pair.oracleName }} Oracle</small></h3>
                 <small>
                     {{ pair.oracleDescription }}
                 </small>
+    
+                <alert v-if="!pair.currentExchangeRate" class="my-3">
+                    The exchange rate has not been initialized yet on this pair. Depending on the oracle you may have to update more than once with some time inbetween.<br>
+                    <button type="button" class="btn btn-sm btn-primary mt-3" @click="updateExchangeRate(pair)">Update Exchange Rate</button>
+                </alert>
+                <div v-else="">
+                    <alert type="error" v-if="after.health && after.health < 1150000000000000000n">You have borrowed a high amount against your collateral. A small change in price may cause you to get liquidated. It is recommended that you add more collateral or repay some of what you have borrowed.</alert>
+    
+                    <div class="mt-3" style="max-width: 400px;">
+                        <div class="mb-1">
+                            <div class="float-right pt-1"><small>{{ pair.userCollateral.usd.str }}</small></div>
+                            Collateral: <strong>{{ pair.userCollateral.amount.str }}</strong>
+                            <small v-if="addCollateralAmount" class="text-info">
+                                {{ after.userCollateral.amount.str }}
+                            </small>
+                        </div>
+                        <numberinput v-model="addCollateralAmount" :max="pair.collateralFrom == 'bento' ? pair.collateral.bentoBalance.amount.number : pair.collateral.balance.number" key="collateral"></numberinput>
+                        <small class="form-text text-muted">
+                            <div class="float-right">Max: {{ pair.collateralFrom == 'bento' ? pair.collateral.bentoBalance.amount.str : pair.collateral.balance.str }}</div>
+                            Add from
+                            <input type="radio" id="collateralFromBento" value="bento" v-model="pair.collateralFrom" autocomplete="off" checked style="height: 10px">
+                            <label for="collateralFromBento">BentoBox</label>
+                            <input type="radio" id="collateralFromChain" value="wallet" v-model="pair.collateralFrom" autocomplete="off" style="height: 10px">
+                            <label for="collateralFromChain">Wallet</label>
+                        </small>
+                    </div>
+                    <div class="mt-3" style="max-width: 400px;">
+                        <div class="mb-1">
+                            <div class="float-right pt-1"><small>{{ pair.userBorrow.current.usd.str }}</small></div>
+                            Borrowed: <strong>{{ pair.userBorrow.current.str }}</strong>
+                            <small v-if="borrowAmount" class="text-info">
+                                {{ after.userBorrow.current.str }}
+                            </small>
+                        </div>
+                        <numberinput v-model="borrowAmount" :max="pair.safeMaxBorrowableLeftPossible.toDec(pair.asset.decimals)" key="borrow"></numberinput>
+                        <small class="form-text text-muted">
+                            Max: {{ after.safeMaxBorrowableLeftPossible.print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}
+                            {{ after.safeMaxBorrowableLeftPossible < after.safeMaxBorrowableLeft ? '(limited by liquidity)' : '' }}
+                            -
+                            instant 0.05% borrow fee and variable interest, currently {{ pair.interest.print(16, 2) }}%.
+                        </small>
+                    </div>
+                    <button 
+                        v-if="addCollateralAmount || borrowAmount" 
+                        class="btn btn-sm btn-primary mt-3"
+                        type="button" @click='borrowAction(pair)'>
+                        <span v-if="addCollateralAmount && borrowAmount">Add collateral and Borrow</span>
+                        <span v-else-if="addCollateralAmount">Add collateral</span>
+                        <span v-else-if="borrowAmount">Borrow</span>
+                    </button>
+                </div>
             </div>
 
-            <alert v-if="!app.kashiApproved" type="info">To use Kashi with the Bentobox, it needs to be approved. You haven't approved Kashi yet. This will automatically be included when you do your first transaction that requires approval. Once approved, this message will disappear.</alert>
+            <div v-if="$route.params.tab == 'supply'">
+                <h3>Supply {{ pair.asset.symbol }} to borrowers with {{ pair.collateral.symbol }} <small>{{ pair.oracleName }} Oracle</small></h3>
+                <small>
+                    {{ pair.oracleDescription }}
+                </small>
 
-            <alert v-if="!pair.currentExchangeRate" class="mt-3">
-                The exchange rate has not been initialized yet on this pair. Depending on the oracle you may have to update more than once with some time inbetween.<br>
-                <button type="button" class="btn btn-sm btn-primary mt-3" @click="updateExchangeRate(pair)">Update Exchange Rate</button>
-            </alert>
-            <div v-else="">
-                <alert type="error" v-if="after.health && after.health < 1150000000000000000n">You have borrowed a high amount against your collateral. A small change in price may cause you to get liquidated. It is recommended that you add more collateral or repay some of what you have borrowed.</alert>
-
-                <div class="mt-3" style="max-width: 400px;">
-                    <div class="mb-1">
-                        <div class="float-right pt-1"><small>{{ pair.userCollateral.usd.str }}</small></div>
-                        Collateral: <strong>{{ pair.userCollateral.amount.str }}</strong>
-                        <small v-if="addCollateralAmount" class="text-info">
-                            {{ after.userCollateral.amount.str }}
+                <alert v-if="!pair.currentExchangeRate" class="my-3">
+                    The exchange rate has not been initialized yet on this pair. Depending on the oracle you may have to update more than once with some time inbetween.<br>
+                    <button type="button" class="btn btn-sm btn-primary mt-3" @click="updateExchangeRate(pair)">Update Exchange Rate</button>
+                </alert>
+                <div v-else="">
+                    <div class="mt-3" style="max-width: 400px;">
+                        <div class="float-right pt-1"><small>{{ pair.userAsset.full.usd.str }}</small></div>
+                        Supply: {{ pair.userAsset.full.str }}
+                        <numberinput v-model="pair.addAssetAmount" :max="pair.supplyFrom == 'bento' ? pair.asset.bentoBalance.amount.number : pair.asset.balance.number"></numberinput>
+                        <small class="form-text text-muted">
+                            <div class="float-right">Max: {{ pair.supplyFrom == 'bento' ? pair.asset.bentoBalance.amount.str : pair.asset.balance.str }}</div>
+                            Supply from
+                            <input type="radio" id="supplyFromBento" value="bento" v-model="pair.supplyFrom" autocomplete="off" checked style="height: 10px">
+                            <label for="supplyFromBento">BentoBox</label>
+                            <input type="radio" id="supplyFromChain" value="wallet" v-model="pair.supplyFrom" autocomplete="off" style="height: 10px">
+                            <label for="supplyFromChain">Wallet</label>
+                            <br>
+                            You will earn a variable interest, currently {{ pair.currentSupplyAPR.print(16, 2) }}% per year.
                         </small>
-                    </div>
-                    <numberinput v-model="addCollateralAmount" :max="pair.collateralFrom == 'bento' ? pair.collateral.bentoBalance.amount.number : pair.collateral.balance.number" key="collateral"></numberinput>
-                    <small class="form-text text-muted">
-                        <div class="float-right">Max: {{ pair.collateralFrom == 'bento' ? pair.collateral.bentoBalance.amount.str : pair.collateral.balance.str }}</div>
-                        Add from
-                        <input type="radio" id="collateralFromBento" value="bento" v-model="pair.collateralFrom" autocomplete="off" checked style="height: 10px">
-                        <label for="collateralFromBento">BentoBox</label>
-                        <input type="radio" id="collateralFromChain" value="wallet" v-model="pair.collateralFrom" autocomplete="off" style="height: 10px">
-                        <label for="collateralFromChain">Wallet</label>
-                    </small>
+                        <button 
+                            v-if="Number(pair.addAssetAmount)" 
+                            class="btn btn-sm btn-primary mt-3"
+                            type="button" @click='addAsset(pair)'>
+                            Add Supply
+                        </button>                                                        
+                    </div>                                        
                 </div>
-                <div class="mt-3" style="max-width: 400px;">
-                    <div class="mb-1">
-                        <div class="float-right pt-1"><small>{{ pair.userBorrow.current.usd.str }}</small></div>
-                        Borrowed: <strong>{{ pair.userBorrow.current.str }}</strong>
-                        <small v-if="borrowAmount" class="text-info">
-                            {{ after.userBorrow.current.str }}
-                        </small>
-                    </div>
-                    <numberinput v-model="borrowAmount" :max="pair.safeMaxBorrowableLeftPossible.toDec(pair.asset.decimals)" key="borrow"></numberinput>
-                    <small class="form-text text-muted">
-                        Max: {{ after.safeMaxBorrowableLeftPossible.print(pair.asset.decimals, 2) }} {{ pair.asset.symbol }}
-                        {{ after.safeMaxBorrowableLeftPossible < after.safeMaxBorrowableLeft ? '(limited by liquidity)' : '' }}
-                        -
-                        instant 0.05% borrow fee and variable interest, currently {{ pair.interest.print(16, 2) }}%.
-                    </small>
-                </div>
-                <button 
-                    v-if="addCollateralAmount || borrowAmount" 
-                    class="btn btn-sm btn-primary mt-3"
-                    type="button" @click='borrowAction(pair)'>
-                    <span v-if="addCollateralAmount && borrowAmount">Add collateral and Borrow</span>
-                    <span v-else-if="addCollateralAmount">Add collateral</span>
-                    <span v-else-if="borrowAmount">Borrow</span>
-                </button>
             </div>
 
             <h3 class="mt-3">Pair Information</h3>
@@ -97,70 +141,46 @@
                 </div>
             </div>
 
-            <div>
+            <div v-if="$route.params.tab == 'info'">
+                <h5 class="card-title mt-3">Testing Info</h5>
                 User assets total: {{ pair.userAsset.full.str }}<br>
                 User collateral: {{ pair.userCollateral.amount.str }}<br>
                 User borrowed: {{ pair.userBorrow.current.str }}<br>
                 Health: {{ pair.health.print(18, 2) }} ({{ pair.healthPercentage.print(16, 2) }}%)<br>
 
-                <div v-if="pair.asset.bentoBalance.set || pair.asset.balance.set" class="mt-3" style="max-width: 400px;">
-                    <div class="float-right pt-1"><small>{{ pair.userAsset.full.usd.str }}</small></div>
-                    Supply: {{ pair.userAsset.full.str }}
-                    <numberinput v-model="pair.addAssetAmount" :max="pair.supplyFrom == 'bento' ? pair.asset.bentoBalance.amount.number : pair.asset.balance.number"></numberinput>
-                    <small class="form-text text-muted">
-                        <div class="float-right">Max: {{ pair.supplyFrom == 'bento' ? pair.asset.bentoBalance.amount.str : pair.asset.balance.str }}</div>
-                        Supply from
-                        <input type="radio" id="supplyFromBento" value="bento" v-model="pair.supplyFrom" autocomplete="off" checked style="height: 10px">
-                        <label for="supplyFromBento">BentoBox</label>
-                        <input type="radio" id="supplyFromChain" value="wallet" v-model="pair.supplyFrom" autocomplete="off" style="height: 10px">
-                        <label for="supplyFromChain">Wallet</label>
-                        <br>
-                        You will earn a variable interest, currently {{ pair.currentSupplyAPR.print(16, 2) }}% per year.
-                    </small>
-                    <button 
-                        v-if="Number(pair.addAssetAmount)" 
-                        class="btn btn-sm btn-primary mt-3"
-                        type="button" @click='addAsset(pair)'>
-                        Add Supply
-                    </button>                                                        
-                </div>                                        
-                
-                <div v-if="!app.debug">
-                    <h5 class="card-title mt-3">Testing Info</h5>
-                    Collateral Bento: {{ pair.collateral.bentoAmount }} : {{ pair.collateral.bentoShare }}<br>
-                    Asset Bento: {{ pair.asset.bentoAmount }} : {{ pair.asset.bentoShare }}<br>
+                Collateral Bento: {{ pair.collateral.bentoAmount }} : {{ pair.collateral.bentoShare }}<br>
+                Asset Bento: {{ pair.asset.bentoAmount }} : {{ pair.asset.bentoShare }}<br>
 
-                    TotalCollateral share: {{ pair.totalCollateral.share.str }}<br>
-                    TotalAsset ratio (share : fraction): {{ pair.totalAsset.elastic }} : {{ pair.totalAsset.base }}<br>
-                    TotalBorrow ratio (share : part): {{ pair.totalBorrow.elastic }} : {{ pair.totalBorrow.base }}<br>
-                    FullAsset ratio (amount : fraction): {{ pair.fullAsset.elastic }} : {{ pair.fullAsset.base }}<br>
-                    <br>
-                    Total collateral: {{ pair.totalCollateral.amount.str }}<br>
-                    Total assets: {{ pair.fullAsset.amount.str }}<br>
-                    Total borrowed: {{ pair.totalBorrow.current.str }}<br>
-                    Total assets: {{ pair.totalAsset.amount.value }} + {{ pair.totalBorrow.current.value }} {{ pair.asset.symbol }}<br>
-                    <br>
-                    User assets fraction: {{ pair.userAsset.str }}<br>
-                    User assets share: {{ pair.userAsset.share.str }}<br>
-                    <br>
-                    User assets: {{ pair.userAsset.full.str }}<br>
-                    <br>
-                    Max borrowable (oracle): {{ (after.maxBorrowableOracle - after.userBorrow.current.value).print(after.asset.decimals, 2) }} {{ after.asset.symbol }}<br>
-                    Max borrowable (stored): {{ (after.maxBorrowableStored - after.userBorrow.current.value).print(after.asset.decimals, 2) }} {{ after.asset.symbol }}<br>
-                    Max borrowable (min): {{ (after.maxBorrowable - after.userBorrow.current.value).print(after.asset.decimals, 2) }} {{ after.asset.symbol }}<br>
-                    Safe Max borrowable: {{ after.safeMaxBorrowableLeft.print(after.asset.decimals, 2) }} {{ after.asset.symbol }}<br>
-                    Safe Max borrowable and available: {{ after.safeMaxBorrowableLeftPossible.print(after.asset.decimals, 2) }} {{ after.asset.symbol }}<br>
-                    <br>
-                    Fee fractions: {{ pair.fee.str }}<br>
-                    Fee shares: {{ pair.fee.share.str }}<br>
-                    Fee assets: {{ pair.fee.full.str }}<br>
-                    <br>
-                    After user collateral: {{ after.userCollateral.amount.str }}
-                    After total collateral: {{ after.totalCollateral.amount.str }}
-                </div>
+                TotalCollateral share: {{ pair.totalCollateral.share.str }}<br>
+                TotalAsset ratio (share : fraction): {{ pair.totalAsset.elastic }} : {{ pair.totalAsset.base }}<br>
+                TotalBorrow ratio (share : part): {{ pair.totalBorrow.elastic }} : {{ pair.totalBorrow.base }}<br>
+                FullAsset ratio (amount : fraction): {{ pair.fullAsset.elastic }} : {{ pair.fullAsset.base }}<br>
+                <br>
+                Total collateral: {{ pair.totalCollateral.amount.str }}<br>
+                Total assets: {{ pair.fullAsset.amount.str }}<br>
+                Total borrowed: {{ pair.totalBorrow.current.str }}<br>
+                Total assets: {{ pair.totalAsset.amount.value }} + {{ pair.totalBorrow.current.value }} {{ pair.asset.symbol }}<br>
+                <br>
+                User assets fraction: {{ pair.userAsset.str }}<br>
+                User assets share: {{ pair.userAsset.share.str }}<br>
+                <br>
+                User assets: {{ pair.userAsset.full.str }}<br>
+                <br>
+                Max borrowable (oracle): {{ (after.maxBorrowableOracle - after.userBorrow.current.value).print(after.asset.decimals, 2) }} {{ after.asset.symbol }}<br>
+                Max borrowable (stored): {{ (after.maxBorrowableStored - after.userBorrow.current.value).print(after.asset.decimals, 2) }} {{ after.asset.symbol }}<br>
+                Max borrowable (min): {{ (after.maxBorrowable - after.userBorrow.current.value).print(after.asset.decimals, 2) }} {{ after.asset.symbol }}<br>
+                Safe Max borrowable: {{ after.safeMaxBorrowableLeft.print(after.asset.decimals, 2) }} {{ after.asset.symbol }}<br>
+                Safe Max borrowable and available: {{ after.safeMaxBorrowableLeftPossible.print(after.asset.decimals, 2) }} {{ after.asset.symbol }}<br>
+                <br>
+                Fee fractions: {{ pair.fee.str }}<br>
+                Fee shares: {{ pair.fee.share.str }}<br>
+                Fee assets: {{ pair.fee.full.str }}<br>
+                <br>
+                After user collateral: {{ after.userCollateral.amount.str }}
+                After total collateral: {{ after.totalCollateral.amount.str }}
             </div>
         </div>
-        <web3 :manager="manager" :poll="poll"></web3>
+        <web3 :manager="manager" :init="init" :poll="poll"></web3>
     </div>
 </template>
 <script>
@@ -173,7 +193,7 @@
                 borrowAmount: "",
                 newCollateral: "",
                 newAsset: "",
-                rate: 1,
+                rate: 1
             };
         },
         computed: {
@@ -194,7 +214,7 @@
             }
         },
         methods: {
-            poll: async function() {
+            init: async function() {
                 const pair = rpcToObj(await this.web3.boringhelper.pollKashiPairs(this.address, [this.$route.params.address]).call())[0];
                 this.pair = new Pair({
                     address: this.$route.params.address,
@@ -203,6 +223,10 @@
                     oracle: pair.oracle,
                     oracleData: pair.oracleData,
                 }, this.web3)
+                window.pair = this.pair
+            },
+            poll: async function() {
+                const pair = rpcToObj(await this.web3.boringhelper.pollKashiPairs(this.address, [this.$route.params.address]).call())[0];
                 this.pair.update(pair)
             },
             updateExchangeRate: async function(pair) {

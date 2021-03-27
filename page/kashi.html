@@ -18,14 +18,14 @@
                         <th class="text-right">Interest</th>
                     </thead>
                     <tbody>
-                        <tr v-for="pair in pairsChecked" v-if="pair.checked && (pair.userCollateral.set || pair.userBorrow.set)" @click="$router.push('/kashipair/' + pair.address)" style="cursor: pointer;">
+                        <tr v-for="pair in pairsChecked" v-if="pair.checked && (pair.userCollateral.set || pair.userBorrow.set)" @click="$router.push('/kashipair/' + pair.address + '/borrow')" style="cursor: pointer;">
                             <td class="text-right">
-                                <img class="rounded float-left" :src="pair.collateral.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
+                                <img class="rounded" :src="pair.collateral.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
                                 {{ pair.userCollateral.amount.str }}<br>
                                 <small>{{ pair.userCollateral.usd.str }}</small>
                             </td>
                             <td class="text-right">
-                                <img class="rounded float-left" :src="pair.asset.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
+                                <img class="rounded" :src="pair.asset.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
                                 {{ pair.userBorrow.current.str }}<br>
                                 <small>{{ pair.userBorrow.current.usd.str }}</small>
                             </td>
@@ -42,8 +42,9 @@
                         <th>Borrow</th>
                         <th>Oracle</th>
                         <th class="text-right">Interest</th>
+                        <th class="text-right">Available</th>
                     </thead>
-                    <tr v-for="pair in pairsChecked" v-if="pair.checked && pair.totalAsset.elastic > 1000n" @click="$router.push('/kashipair/' + pair.address)" style="cursor: pointer;">
+                    <tr v-for="pair in pairsChecked" v-if="pair.checked && pair.totalAsset.elastic > 1000n" @click="$router.push('/kashipair/' + pair.address + '/borrow')" style="cursor: pointer;">
                         <td v-if="pair.collateral">
                             <img class="rounded float-left" :src="pair.collateral.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
                             {{ pair.collateral.symbol }}
@@ -54,6 +55,10 @@
                         </td>
                         <td>{{ pair.oracleName }}</td>
                         <td class="text-right"><interest :pair="pair" :current="true"></interest></td>
+                        <td class="text-right">
+                            {{ pair.totalAsset.amount.str }}<br>
+                            <small>{{ pair.totalAsset.amount.usd.str }}</small>
+                        </td>
                     </tr>
                 </table>
             </div>
@@ -68,7 +73,7 @@
                         <th class="text-right">Utilization</th>
                         <th class="text-right">Supply APR</th>
                     </thead>
-                    <tr v-for="pair in pairsChecked" v-if="pair.checked && pair.userAsset.set" @click="$router.push('/kashipair/' + pair.address)" style="cursor: pointer;">
+                    <tr v-for="pair in pairsChecked" v-if="pair.checked && pair.userAsset.set" @click="$router.push('/kashipair/' + pair.address + '/supply')" style="cursor: pointer;">
                         <td v-if="pair.collateral">
                             <img class="rounded" :src="pair.collateral.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
                             <img class="rounded" :src="pair.asset.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
@@ -94,7 +99,7 @@
                         <th class="text-right">Utilization</th>
                         <th class="text-right">Supply APR</th>
                     </thead>
-                    <tr v-for="pair in pairsChecked" v-if="pair.checked" @click="$router.push('/kashipair/' + pair.address)" style="cursor: pointer;">
+                    <tr v-for="pair in pairsChecked" v-if="pair.oracleValid" @click="$router.push('/kashipair/' + pair.address + '/supply')" style="cursor: pointer;">
                         <td v-if="pair.collateral">
                             <img class="rounded" :src="pair.collateral.logoURI || '/img/no-icon.png'" style="width: 28px; height: 28px;" onerror="this.style.display='/img/no-icon.png'"/>
                             {{ pair.collateral.symbol }}
@@ -105,8 +110,6 @@
                         </td>
                         <td>
                             {{ pair.oracleName }}
-                            <span v-if="pair.oracleValid"><i class="fas fa-check"></i></span>
-                            <span v-else=""><i class="fas fa-ban"></i></span>
                         </td>
                         <td class="text-right">
                             {{ pair.currentExchangeRate.print(pair.collateral.decimals + 18n - pair.asset.decimals, 1) }}
@@ -137,6 +140,14 @@
                         <button type="button" class="btn btn-sm btn-primary" @click='create'>Create Lending Pair</button>                            
                     </div>
                 </div>
+
+                <h4>All Pairs</h4>
+                    <div v-for="pair in pairsChecked" v-if="pair.oracleValid" @click="$router.push('/kashipair/' + pair.address + '/info')" style="cursor: pointer;">
+                        {{ pair.collateral.symbol }}/{{ pair.asset.symbol }}-{{ pair.oracleName }}
+                        {{ pair.currentExchangeRate.print(pair.collateral.decimals + 18n - pair.asset.decimals, 1) }}
+                        {{ pair.address }}
+                    </div>
+                </table>                
             </div>
         </div>
 
@@ -449,7 +460,7 @@
                 return "fas fa-minus-circle"
             }
         },
-        template: "<span>{{ (current ? pair.currentInterest : pair.interest).print(16, 2) }}% <i :style=\"color ? 'color: ' + color + ';' : ''\" :class='icon'></i></span>"
+        template: "<span>{{ (current ? pair.currentInterest : pair.interestPerYear).print(16, 2) }}% <i :style=\"color ? 'color: ' + color + ';' : ''\" :class='icon'></i></span>"
     })
 
     page_done();

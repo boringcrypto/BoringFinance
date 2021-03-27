@@ -602,6 +602,10 @@ class Pair {
     }
 
     get interest() {
+        return this.accrueInfo.interestPerSecond
+    }
+
+    get interestPerYear() {
         return this.accrueInfo.interestPerSecond * 60n * 60n * 24n * 365n
     }
 
@@ -640,8 +644,8 @@ class Pair {
     calculate() {
         Vue.set(this, "totalBorrowable", new Share(this.totalAsset.elastic > 1000n ? this.totalAsset.elastic - 1000n : 0n, this.asset))
 
-        Vue.set(this, "currentInterest", this.interestAccrue(this.interest))
-        Vue.set(this, "supplyAPR", takeFee(this.interest * this.utilization) / 1000000000000000000n)
+        Vue.set(this, "currentInterest", this.interestAccrue(this.interest) * 60n * 60n * 24n * 365n)
+        Vue.set(this, "supplyAPR", takeFee(this.interestPerYear * this.utilization) / 1000000000000000000n)
         Vue.set(this, "currentSupplyAPR", takeFee(this.currentInterest * this.utilization) / 1000000000000000000n)
 
         Vue.set(this, "healthPercentage", this.maxBorrowable ? this.userBorrow.current.value * 1000000000000000000n / this.maxBorrowable : 0n)
