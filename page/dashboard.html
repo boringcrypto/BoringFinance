@@ -19,14 +19,12 @@
                     </div>
                 </eventreader>
                 <div class="jumbotron">
-                    This is experimental, these number may not be correct.<br>
-                    <br>
                     Your pending SUSHI at lockup start: {{ pendingSushiAtStart.print(18, 4) }}<br>
                     Your currently pending SUSHI: {{ pendingSushi.print(18, 4) }}<br>
-                    Your harvested SUSHI since lockup: {{ harvestedSushi.print(18, 4) }}<br>
+                    Your harvested SUSHI during lockup: {{ harvestedSushi.print(18, 4) }}<br>
                     <br>
-                    Estimated in lockup:
-                    {{ ((pendingSushi - pendingSushiAtStart + harvestedSushi) * 2n).print(18, 4) }}
+                    Total in lockup:
+                    {{ (sushiInLockup).print(18, 4) }}
                 </div>
             </div>
         </div>
@@ -39,7 +37,8 @@
             return {
                 harvests: [],
                 pendingSushi: 0n,
-                pendingSushiAtStart: 0n
+                pendingSushiAtStart: 0n,
+                sushiInLockup: 0n
             }
         },
         computed: {
@@ -62,7 +61,7 @@
         },
         methods: {
             harvest_handler: function (log, web3, row, decoded) {
-                if (row.block >= 10959148) {
+                if (row.block >= 10959148 && row.block <= 12171394) {
                     return decoded.value;
                 }
             },
@@ -75,6 +74,10 @@
                 let pids = [...Array(parseInt(numberOfPools)).keys()];
                 let result = await this.web3.pending.getPendingSushi(this.address, pids).call();
                 this.pendingSushi = result[1].map(p => BigInt(p.pendingSushi)).sum(0n);
+
+                if (!this.addresslistEnd) { this.addresslistEnd = await $.ajax('addresslist-vesting-end.json') };
+                let endInfo = this.addresslistEnd[this.address];
+                this.sushiInLockup = endInfo ? BigInt(endInfo) : 0n;
             }
         }
     };
